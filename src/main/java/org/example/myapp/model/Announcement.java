@@ -49,4 +49,84 @@ public class Announcement {
     private List<Photo> photos;
 
     // getters and setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getPostingDateTime() {
+        return postingDateTime;
+    }
+
+    public void setPostingDateTime(LocalDateTime postingDateTime) {
+        this.postingDateTime = postingDateTime;
+    }
+
+    public Sender getSender() {
+        return sender;
+    }
+
+    public void setSender(Sender sender) {
+        this.sender = sender;
+    }
+
+    public Courier getCourier() {
+        return courier;
+    }
+
+    public void setCourier(Courier courier) {
+        this.courier = courier;
+    }
+
+    public AnnouncementDimensions getDimensions() {
+        return dimensions;
+    }
+
+    public void setDimensions(AnnouncementDimensions dimensions) {
+        this.dimensions = dimensions;
+    }
+
+    public AnnouncementWeight getWeight() {
+        return weight;
+    }
+
+    public void setWeight(AnnouncementWeight weight) {
+        this.weight = weight;
+    }
+
+    public List<Stop> getStops() {
+        return stops;
+    }
+
+    public void setStops(List<Stop> stops) {
+        this.stops = stops;
+    }
+
+    public List<Photo> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<Photo> photos) {
+        this.photos = photos;
+    }
+
 }
