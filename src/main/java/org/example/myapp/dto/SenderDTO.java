@@ -6,3 +6,4 @@ public class SenderDTO {
     public String phone;
     public String email;
 }
+

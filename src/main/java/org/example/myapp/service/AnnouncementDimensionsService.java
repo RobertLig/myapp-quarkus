@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import org.example.myapp.model.AnnouncementDimensions;
 import org.example.myapp.repository.AnnouncementDimensionsRepository;
+import org.example.myapp.dto.AnnouncementDimensionsDTO;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -33,4 +34,23 @@ public class AnnouncementDimensionsService {
     public boolean delete(Long id) {
         return dimensionsRepository.deleteById(id);
     }
+
+    public AnnouncementDimensionsDTO toDTO(AnnouncementDimensions d) {
+        AnnouncementDimensionsDTO dto = new AnnouncementDimensionsDTO();
+        dto.width = d.getWidth();
+        dto.height = d.getHeight();
+        dto.length = d.getLength();
+        dto.unit = d.getUnit();
+        return dto;
+    }
+
+    public AnnouncementDimensions toEntity(AnnouncementDimensionsDTO dto) {
+        AnnouncementDimensions d = new AnnouncementDimensions();
+        d.setWidth(dto.width);
+        d.setHeight(dto.height);
+        d.setLength(dto.length);
+        d.setUnit(dto.unit);
+        return d;
+    }
+
 }

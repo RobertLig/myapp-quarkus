@@ -4,16 +4,16 @@ import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class AnnouncementWeight {
-    private double weight;
-    private String unit; // "kg" or "lb"
 
-    // getters and setters
-    public Double getWeight() {
-        return weight;
+    private double value;
+    private String unit;
+
+    public double getValue() {
+        return value;
     }
 
-    public void setWeight(Double weight) {
-        this.weight = weight;
+    public void setValue(double value) {
+        this.value = value;
     }
 
     public String getUnit() {

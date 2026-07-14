@@ -73,12 +73,36 @@ public class Announcement {
         this.description = description;
     }
 
+    public String getPostingPlace() {
+        return postingPlace;
+    }
+
+    public void setPostingPlace(String postingPlace) {
+        this.postingPlace = postingPlace;
+    }
+
+    public String getReceptionPlace() {
+        return receptionPlace;
+    }
+
+    public void setReceptionPlace(String receptionPlace) {
+        this.receptionPlace = receptionPlace;
+    }
+
     public LocalDateTime getPostingDateTime() {
         return postingDateTime;
     }
 
     public void setPostingDateTime(LocalDateTime postingDateTime) {
         this.postingDateTime = postingDateTime;
+    }
+
+    public LocalDateTime getReceptionDateTime() {
+        return receptionDateTime;
+    }
+
+    public void setReceptionDateTime(LocalDateTime receptionDateTime) {
+        this.receptionDateTime = receptionDateTime;
     }
 
     public Sender getSender() {

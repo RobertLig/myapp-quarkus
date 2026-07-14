@@ -4,3 +4,4 @@ public class PhotoDTO {
     public Long id;
     public String url;
 }
+

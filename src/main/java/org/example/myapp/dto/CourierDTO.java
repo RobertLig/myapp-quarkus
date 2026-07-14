@@ -5,3 +5,4 @@ public class CourierDTO {
     public String name;
     public String phone;
 }
+

@@ -7,14 +7,20 @@ public class AnnouncementDTO {
     public Long id;
     public String title;
     public String description;
-    public LocalDateTime createdAt;
-
-    public SenderDTO sender;
-    public CourierDTO courier;
 
     public AnnouncementDimensionsDTO dimensions;
     public AnnouncementWeightDTO weight;
 
+    public String postingPlace;
+    public String receptionPlace;
+
+    public LocalDateTime postingDateTime;
+    public LocalDateTime receptionDateTime;
+
+    public SenderDTO sender;
+    public CourierDTO courier;
+
     public List<StopDTO> stops;
     public List<PhotoDTO> photos;
 }
+

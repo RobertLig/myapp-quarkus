@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import org.example.myapp.model.Courier;
 import org.example.myapp.repository.CourierRepository;
+import org.example.myapp.dto.CourierDTO;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -32,5 +33,21 @@ public class CourierService {
     @Transactional
     public boolean delete(Long id) {
         return courierRepository.deleteById(id);
+    }
+
+    public CourierDTO toDTO(Courier courier) {
+        CourierDTO dto = new CourierDTO();
+        dto.id = courier.getId();
+        dto.name = courier.getName();
+        dto.phone = courier.getPhone();
+        return dto;
+    }
+
+    public Courier toEntity(CourierDTO dto) {
+        Courier courier = new Courier();
+        courier.setId(dto.id);
+        courier.setName(dto.name);
+        courier.setPhone(dto.phone);
+        return courier;
     }
 }

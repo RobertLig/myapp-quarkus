@@ -6,3 +6,4 @@ public class StopDTO {
     public Double latitude;
     public Double longitude;
 }
+

@@ -9,7 +9,7 @@ public class Stop {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String place;
+    private String address;
     private double latitude;
     private double longitude;
 
@@ -25,12 +25,12 @@ public class Stop {
         this.id = id;
     }
 
-    public String getPlace() {
-        return place;
+    public String getAddress() {
+        return address;
     }
 
-    public void setPlace(String place) {
-        this.place = place;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public Double getLatitude() {
@@ -48,5 +48,4 @@ public class Stop {
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
-
 }

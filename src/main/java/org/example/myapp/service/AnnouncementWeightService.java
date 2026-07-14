@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import org.example.myapp.model.AnnouncementWeight;
 import org.example.myapp.repository.AnnouncementWeightRepository;
+import org.example.myapp.dto.AnnouncementWeightDTO;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -32,5 +33,19 @@ public class AnnouncementWeightService {
     @Transactional
     public boolean delete(Long id) {
         return weightRepository.deleteById(id);
+    }
+
+    public AnnouncementWeightDTO toDTO(AnnouncementWeight w) {
+        AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
+        dto.value = w.getValue();
+        dto.unit = w.getUnit();
+        return dto;
+    }
+
+    public AnnouncementWeight toEntity(AnnouncementWeightDTO dto) {
+        AnnouncementWeight w = new AnnouncementWeight();
+        w.setValue(dto.value);
+        w.setUnit(dto.unit);
+        return w;
     }
 }
