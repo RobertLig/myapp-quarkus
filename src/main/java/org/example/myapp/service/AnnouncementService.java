@@ -206,4 +206,16 @@ public class AnnouncementService {
         photo.setUrl(dto.url);
         return photo;
     }
+
+    public PaginationResponse<AnnouncementDTO> getPaginated(int page, int size) {
+        List<Announcement> entities = announcementRepository.findPaginated(page, size);
+        long total = announcementRepository.countAll();
+
+        List<AnnouncementDTO> dtos = entities.stream()
+                .map(this::toDTO)
+                .toList();
+
+        return new PaginationResponse<>(dtos, total, page, size);
+    }
+
 }

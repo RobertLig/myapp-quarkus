@@ -1,6 +1,7 @@
 package org.example.myapp.controller;
 
 import org.example.myapp.dto.AnnouncementDTO;
+import org.example.myapp.dto.PaginationResponse;
 import org.example.myapp.model.Announcement;
 import org.example.myapp.service.AnnouncementService;
 
@@ -22,12 +23,13 @@ public class AnnouncementController {
     AnnouncementService announcementService;
 
     @GET
-    public List<AnnouncementDTO> getAll() {
-        return announcementService.findAll()
-                .stream()
-                .map(announcementService::toDTO)
-                .toList();
+    public PaginationResponse<AnnouncementDTO> list(
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("10") int size) {
+
+        return announcementService.getPaginated(page, size);
     }
+
 
     @GET
     @Path("/{id}")
