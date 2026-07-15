@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 @Path("/photos")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,7 +40,7 @@ public class PhotoController {
     }
 
     @POST
-    public PhotoDTO create(PhotoDTO dto) {
+    public PhotoDTO create(@Valid PhotoDTO dto) {
         Photo entity = photoService.toEntity(dto);
         Photo saved = photoService.create(entity);
         return photoService.toDTO(saved);

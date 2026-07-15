@@ -9,6 +9,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import jakarta.validation.Valid;
+
 @Path("/announcement-dimensions")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -18,10 +20,9 @@ public class AnnouncementDimensionsController {
     AnnouncementService announcementService;
 
     @POST
-    public AnnouncementDimensionsDTO create(AnnouncementDimensionsDTO dto) {
+    public AnnouncementDimensionsDTO create(@Valid AnnouncementDimensionsDTO dto) {
         AnnouncementDimensions entity = announcementService.toEntity(dto);
-        AnnouncementDimensions saved = entity; // embeddables are not persisted alone
-        return announcementService.toDTO(saved);
+        return announcementService.toDTO(entity);
     }
 
     @POST

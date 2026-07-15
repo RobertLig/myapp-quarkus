@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 @Path("/senders")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,11 +40,12 @@ public class SenderController {
     }
 
     @POST
-    public SenderDTO create(SenderDTO dto) {
+    public SenderDTO create(@Valid SenderDTO dto) {
         Sender entity = senderService.toEntity(dto);
         Sender saved = senderService.create(entity);
         return senderService.toDTO(saved);
     }
+
 
     @DELETE
     @Path("/{id}")

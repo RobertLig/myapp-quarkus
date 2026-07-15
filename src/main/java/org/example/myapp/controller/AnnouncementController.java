@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 @Path("/announcements")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,7 +40,7 @@ public class AnnouncementController {
     }
 
     @POST
-    public AnnouncementDTO create(AnnouncementDTO dto) {
+    public AnnouncementDTO create(@Valid AnnouncementDTO dto) {
         Announcement entity = announcementService.toEntity(dto);
         Announcement saved = announcementService.create(entity);
         return announcementService.toDTO(saved);

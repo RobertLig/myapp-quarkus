@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 @Path("/couriers")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,7 +40,7 @@ public class CourierController {
     }
 
     @POST
-    public CourierDTO create(CourierDTO dto) {
+    public CourierDTO create(@Valid CourierDTO dto) {
         Courier entity = courierService.toEntity(dto);
         Courier saved = courierService.create(entity);
         return courierService.toDTO(saved);

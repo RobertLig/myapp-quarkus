@@ -8,6 +8,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
+import jakarta.validation.Valid;
+
 @Path("/announcement-weight")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -17,7 +19,7 @@ public class AnnouncementWeightController {
     AnnouncementService announcementService;
 
     @POST
-    public AnnouncementWeightDTO create(AnnouncementWeightDTO dto) {
+    public AnnouncementWeightDTO create(@Valid AnnouncementWeightDTO dto) {
         AnnouncementWeight entity = announcementService.toEntity(dto);
         return announcementService.toDTO(entity);
     }

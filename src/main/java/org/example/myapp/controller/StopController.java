@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 @Path("/stops")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,7 +40,7 @@ public class StopController {
     }
 
     @POST
-    public StopDTO create(StopDTO dto) {
+    public StopDTO create(@Valid StopDTO dto) {
         Stop entity = stopService.toEntity(dto);
         Stop saved = stopService.create(entity);
         return stopService.toDTO(saved);
