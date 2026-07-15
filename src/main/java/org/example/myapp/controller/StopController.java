@@ -1,11 +1,15 @@
 package org.example.myapp.controller;
 
+import org.example.myapp.dto.StopDTO;
 import org.example.myapp.model.Stop;
 import org.example.myapp.service.StopService;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.List;
 
 @Path("/stops")
 @Produces(MediaType.APPLICATION_JSON)
@@ -16,22 +20,28 @@ public class StopController {
     StopService stopService;
 
     @GET
-    public Response getAll() {
-        return Response.ok(stopService.findAll()).build();
+    public List<StopDTO> getAll() {
+        return stopService.findAll()
+                .stream()
+                .map(stopService::toDTO)
+                .toList();
     }
 
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         return stopService.findById(id)
+                .map(stopService::toDTO)
                 .map(Response::ok)
                 .orElse(Response.status(Response.Status.NOT_FOUND))
                 .build();
     }
 
     @POST
-    public Response create(Stop stop) {
-        return Response.ok(stopService.create(stop)).build();
+    public StopDTO create(StopDTO dto) {
+        Stop entity = stopService.toEntity(dto);
+        Stop saved = stopService.create(entity);
+        return stopService.toDTO(saved);
     }
 
     @DELETE

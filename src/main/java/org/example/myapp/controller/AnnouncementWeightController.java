@@ -1,11 +1,12 @@
 package org.example.myapp.controller;
 
+import org.example.myapp.dto.AnnouncementWeightDTO;
 import org.example.myapp.model.AnnouncementWeight;
-import org.example.myapp.service.AnnouncementWeightService;
+import org.example.myapp.service.AnnouncementService;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 @Path("/announcement-weight")
 @Produces(MediaType.APPLICATION_JSON)
@@ -13,33 +14,18 @@ import jakarta.ws.rs.core.Response;
 public class AnnouncementWeightController {
 
     @Inject
-    AnnouncementWeightService weightService;
+    AnnouncementService announcementService;
 
-    @GET
-    public Response getAll() {
-        return Response.ok(weightService.findAll()).build();
-    }
-
-    @GET
-    @Path("/{id}")
-    public Response getById(@PathParam("id") Long id) {
-        return weightService.findById(id)
-                .map(Response::ok)
-                .orElse(Response.status(Response.Status.NOT_FOUND))
-                .build();
+    @POST
+    public AnnouncementWeightDTO create(AnnouncementWeightDTO dto) {
+        AnnouncementWeight entity = announcementService.toEntity(dto);
+        return announcementService.toDTO(entity);
     }
 
     @POST
-    public Response create(AnnouncementWeight weight) {
-        return Response.ok(weightService.create(weight)).build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    public Response delete(@PathParam("id") Long id) {
-        boolean deleted = weightService.delete(id);
-        return deleted
-                ? Response.noContent().build()
-                : Response.status(Response.Status.NOT_FOUND).build();
+    @Path("/convert")
+    public AnnouncementWeightDTO convert(AnnouncementWeightDTO dto) {
+        AnnouncementWeight entity = announcementService.toEntity(dto);
+        return announcementService.toDTO(entity);
     }
 }

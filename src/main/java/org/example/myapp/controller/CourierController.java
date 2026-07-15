@@ -1,11 +1,15 @@
 package org.example.myapp.controller;
 
+import org.example.myapp.dto.CourierDTO;
 import org.example.myapp.model.Courier;
 import org.example.myapp.service.CourierService;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.List;
 
 @Path("/couriers")
 @Produces(MediaType.APPLICATION_JSON)
@@ -16,22 +20,28 @@ public class CourierController {
     CourierService courierService;
 
     @GET
-    public Response getAll() {
-        return Response.ok(courierService.findAll()).build();
+    public List<CourierDTO> getAll() {
+        return courierService.findAll()
+                .stream()
+                .map(courierService::toDTO)
+                .toList();
     }
 
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         return courierService.findById(id)
+                .map(courierService::toDTO)
                 .map(Response::ok)
                 .orElse(Response.status(Response.Status.NOT_FOUND))
                 .build();
     }
 
     @POST
-    public Response create(Courier courier) {
-        return Response.ok(courierService.create(courier)).build();
+    public CourierDTO create(CourierDTO dto) {
+        Courier entity = courierService.toEntity(dto);
+        Courier saved = courierService.create(entity);
+        return courierService.toDTO(saved);
     }
 
     @DELETE

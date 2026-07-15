@@ -1,7 +1,9 @@
 package org.example.myapp.controller;
 
+import org.example.myapp.dto.AnnouncementDimensionsDTO;
 import org.example.myapp.model.AnnouncementDimensions;
-import org.example.myapp.service.AnnouncementDimensionsService;
+import org.example.myapp.service.AnnouncementService;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -13,33 +15,19 @@ import jakarta.ws.rs.core.Response;
 public class AnnouncementDimensionsController {
 
     @Inject
-    AnnouncementDimensionsService dimensionsService;
+    AnnouncementService announcementService;
 
-    @GET
-    public Response getAll() {
-        return Response.ok(dimensionsService.findAll()).build();
-    }
-
-    @GET
-    @Path("/{id}")
-    public Response getById(@PathParam("id") Long id) {
-        return dimensionsService.findById(id)
-                .map(Response::ok)
-                .orElse(Response.status(Response.Status.NOT_FOUND))
-                .build();
+    @POST
+    public AnnouncementDimensionsDTO create(AnnouncementDimensionsDTO dto) {
+        AnnouncementDimensions entity = announcementService.toEntity(dto);
+        AnnouncementDimensions saved = entity; // embeddables are not persisted alone
+        return announcementService.toDTO(saved);
     }
 
     @POST
-    public Response create(AnnouncementDimensions dimensions) {
-        return Response.ok(dimensionsService.create(dimensions)).build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    public Response delete(@PathParam("id") Long id) {
-        boolean deleted = dimensionsService.delete(id);
-        return deleted
-                ? Response.noContent().build()
-                : Response.status(Response.Status.NOT_FOUND).build();
+    @Path("/convert")
+    public AnnouncementDimensionsDTO convert(AnnouncementDimensionsDTO dto) {
+        AnnouncementDimensions entity = announcementService.toEntity(dto);
+        return announcementService.toDTO(entity);
     }
 }
