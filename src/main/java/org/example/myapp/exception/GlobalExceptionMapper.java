@@ -1,11 +1,15 @@
 package org.example.myapp.exception;
 
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ext.Provider;
+
+import org.example.myapp.i18n.MessageService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,38 +18,44 @@ import java.util.Set;
 @Provider
 public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
 
+    @Inject
+    MessageService messageService;
+
+    @Inject
+    HttpHeaders headers;
+
     @Override
     public Response toResponse(Exception exception) {
 
-        // Handle validation errors
+        // Validation errors
         if (exception instanceof ConstraintViolationException cve) {
             return handleValidationException(cve);
         }
 
-        // Handle "not found" errors
+        // Not found
         if (exception instanceof NotFoundException nfe) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of(
-                            "error", "Not Found",
+                            "error", messageService.get("error.notfound", headers),
                             "message", nfe.getMessage()
                     ))
                     .build();
         }
 
-        // Handle illegal arguments
+        // Illegal arguments
         if (exception instanceof IllegalArgumentException iae) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of(
-                            "error", "Bad Request",
+                            "error", messageService.get("error.badrequest", headers),
                             "message", iae.getMessage()
                     ))
                     .build();
         }
 
-        // Fallback: unexpected server errors
+        // Internal server error
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(Map.of(
-                        "error", "Internal Server Error",
+                        "error", messageService.get("error.internal", headers),
                         "message", exception.getMessage()
                 ))
                 .build();
@@ -63,7 +73,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
 
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(Map.of(
-                        "error", "Validation Failed",
+                        "error", messageService.get("validation.error", headers),
                         "details", errors
                 ))
                 .build();
