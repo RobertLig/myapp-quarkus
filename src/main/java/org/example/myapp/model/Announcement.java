@@ -37,6 +37,10 @@ public class Announcement {
     private LocalDateTime receptionDateTime;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
     private Sender sender;
 
     @ManyToOne
