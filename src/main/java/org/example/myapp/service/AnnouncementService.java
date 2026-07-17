@@ -3,6 +3,7 @@ package org.example.myapp.service;
 import org.example.myapp.model.*;
 import org.example.myapp.dto.*;
 import org.example.myapp.repository.AnnouncementRepository;
+import org.example.myapp.model.translation.AnnouncementTranslation;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -18,7 +19,7 @@ public class AnnouncementService {
     AnnouncementRepository announcementRepository;
 
     @Inject
-    UserService userService; // to resolve user from userId in DTO
+    UserService userService;
 
     // -----------------------
     // CRUD
@@ -44,19 +45,57 @@ public class AnnouncementService {
     }
 
     // -----------------------
-    // DTO MAPPERS
+    // DTO → ENTITY
     // -----------------------
 
-    // Announcement
-    public AnnouncementDTO toDTO(Announcement a) {
+    public Announcement toAnnouncementEntity(AnnouncementDTO dto) {
+        Announcement a = new Announcement();
+
+        a.setId(dto.id);
+        a.setType(dto.type);
+
+        if (dto.userId != null) {
+            User user = userService.getUserById(dto.userId);
+            a.setUser(user);
+        }
+
+        a.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
+        a.setWeight(toAnnouncementWeightEntity(dto.weight));
+
+        a.setPostingPlace(dto.postingPlace);
+        a.setReceptionPlace(dto.receptionPlace);
+
+        a.setPostingDateTime(dto.postingDateTime);
+        a.setReceptionDateTime(dto.receptionDateTime);
+
+        a.setTranslations(dto.translations.stream()
+                .map(this::toAnnouncementTranslationEntity)
+                .toList());
+
+        a.setStops(dto.stops.stream()
+                .map(this::toStopEntity)
+                .toList());
+
+        a.setPhotos(dto.photos.stream()
+                .map(this::toPhotoEntity)
+                .toList());
+
+        return a;
+    }
+
+    // -----------------------
+    // ENTITY → DTO
+    // -----------------------
+
+    public AnnouncementDTO toAnnouncementDTO(Announcement a) {
         AnnouncementDTO dto = new AnnouncementDTO();
+
         dto.id = a.getId();
         dto.type = a.getType();
-
         dto.userId = (a.getUser() != null) ? a.getUser().getId() : null;
 
-        dto.dimensions = toDTO(a.getDimensions());
-        dto.weight = toDTO(a.getWeight());
+        dto.dimensions = toAnnouncementDimensionsDTO(a.getDimensions());
+        dto.weight = toAnnouncementWeightDTO(a.getWeight());
 
         dto.postingPlace = a.getPostingPlace();
         dto.receptionPlace = a.getReceptionPlace();
@@ -65,56 +104,25 @@ public class AnnouncementService {
         dto.receptionDateTime = a.getReceptionDateTime();
 
         dto.translations = a.getTranslations().stream()
-                .map(this::toDTO)
+                .map(this::toAnnouncementTranslationDTO)
                 .toList();
 
         dto.stops = a.getStops().stream()
-                .map(this::toDTO)
+                .map(this::toStopDTO)
                 .toList();
 
         dto.photos = a.getPhotos().stream()
-                .map(this::toDTO)
+                .map(this::toPhotoDTO)
                 .toList();
 
         return dto;
     }
 
-    public Announcement toEntity(AnnouncementDTO dto) {
-        Announcement a = new Announcement();
-        a.setId(dto.id);
-        a.setType(dto.type);
+    // -----------------------
+    // Dimensions
+    // -----------------------
 
-        a.setDimensions(toEntity(dto.dimensions));
-        a.setWeight(toEntity(dto.weight));
-
-        a.setPostingPlace(dto.postingPlace);
-        a.setReceptionPlace(dto.receptionPlace);
-
-        a.setPostingDateTime(dto.postingDateTime);
-        a.setReceptionDateTime(dto.receptionDateTime);
-
-        if (dto.userId != null) {
-            User user = userService.getUserById(dto.userId);
-            a.setUser(user);
-        }
-
-        a.setTranslations(dto.translations.stream()
-                .map(this::toEntity)
-                .toList());
-
-        a.setStops(dto.stops.stream()
-                .map(this::toEntity)
-                .toList());
-
-        a.setPhotos(dto.photos.stream()
-                .map(this::toEntity)
-                .toList());
-
-        return a;
-    }
-
-    // AnnouncementDimensions
-    public AnnouncementDimensionsDTO toDTO(AnnouncementDimensions d) {
+    public AnnouncementDimensionsDTO toAnnouncementDimensionsDTO(AnnouncementDimensions d) {
         AnnouncementDimensionsDTO dto = new AnnouncementDimensionsDTO();
         dto.width = d.getWidth();
         dto.height = d.getHeight();
@@ -122,7 +130,7 @@ public class AnnouncementService {
         return dto;
     }
 
-    public AnnouncementDimensions toEntity(AnnouncementDimensionsDTO dto) {
+    public AnnouncementDimensions toAnnouncementDimensionsEntity(AnnouncementDimensionsDTO dto) {
         AnnouncementDimensions d = new AnnouncementDimensions();
         d.setWidth(dto.width);
         d.setHeight(dto.height);
@@ -130,21 +138,27 @@ public class AnnouncementService {
         return d;
     }
 
-    // AnnouncementWeight
-    public AnnouncementWeightDTO toDTO(AnnouncementWeight w) {
+    // -----------------------
+    // Weight
+    // -----------------------
+
+    public AnnouncementWeightDTO toAnnouncementWeightDTO(AnnouncementWeight w) {
         AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
         dto.value = w.getValue();
         return dto;
     }
 
-    public AnnouncementWeight toEntity(AnnouncementWeightDTO dto) {
+    public AnnouncementWeight toAnnouncementWeightEntity(AnnouncementWeightDTO dto) {
         AnnouncementWeight w = new AnnouncementWeight();
         w.setValue(dto.value);
         return w;
     }
 
-    // AnnouncementTranslation
-    public AnnouncementTranslationDTO toDTO(AnnouncementTranslation t) {
+    // -----------------------
+    // Translation
+    // -----------------------
+
+    public AnnouncementTranslationDTO toAnnouncementTranslationDTO(AnnouncementTranslation t) {
         AnnouncementTranslationDTO dto = new AnnouncementTranslationDTO();
         dto.language = t.getLanguage();
         dto.title = t.getTitle();
@@ -152,7 +166,7 @@ public class AnnouncementService {
         return dto;
     }
 
-    public AnnouncementTranslation toEntity(AnnouncementTranslationDTO dto) {
+    public AnnouncementTranslation toAnnouncementTranslationEntity(AnnouncementTranslationDTO dto) {
         AnnouncementTranslation t = new AnnouncementTranslation();
         t.setLanguage(dto.language);
         t.setTitle(dto.title);
@@ -160,8 +174,11 @@ public class AnnouncementService {
         return t;
     }
 
+    // -----------------------
     // Stop
-    public StopDTO toDTO(Stop stop) {
+    // -----------------------
+
+    public StopDTO toStopDTO(Stop stop) {
         StopDTO dto = new StopDTO();
         dto.id = stop.getId();
         dto.address = stop.getAddress();
@@ -170,7 +187,7 @@ public class AnnouncementService {
         return dto;
     }
 
-    public Stop toEntity(StopDTO dto) {
+    public Stop toStopEntity(StopDTO dto) {
         Stop stop = new Stop();
         stop.setId(dto.id);
         stop.setAddress(dto.address);
@@ -179,30 +196,36 @@ public class AnnouncementService {
         return stop;
     }
 
+    // -----------------------
     // Photo
-    public PhotoDTO toDTO(Photo photo) {
+    // -----------------------
+
+    public PhotoDTO toPhotoDTO(Photo photo) {
         PhotoDTO dto = new PhotoDTO();
         dto.id = photo.getId();
         dto.url = photo.getUrl();
         return dto;
     }
 
-    public Photo toEntity(PhotoDTO dto) {
+    public Photo toPhotoEntity(PhotoDTO dto) {
         Photo photo = new Photo();
         photo.setId(dto.id);
         photo.setUrl(dto.url);
         return photo;
     }
 
+    // -----------------------
+    // Pagination
+    // -----------------------
+
     public PaginationResponse<AnnouncementDTO> getPaginated(int page, int size) {
         List<Announcement> entities = announcementRepository.findPaginated(page, size);
         long total = announcementRepository.countAll();
 
         List<AnnouncementDTO> dtos = entities.stream()
-                .map(this::toDTO)
+                .map(this::toAnnouncementDTO)
                 .toList();
 
         return new PaginationResponse<>(dtos, total, page, size);
     }
-
 }
