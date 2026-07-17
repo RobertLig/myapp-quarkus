@@ -84,6 +84,11 @@ public class UserService {
         return user;
     }
 
+    public User getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+
+
     // PBKDF2 hashing
     private String hashPassword(String password) {
         try {
