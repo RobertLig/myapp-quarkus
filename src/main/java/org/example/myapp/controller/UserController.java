@@ -58,6 +58,20 @@ public class UserController {
         }
     }
 
+    @DELETE
+    @Path("/{id}")
+    public Response deleteUser(@PathParam("id") Long id) {
+        boolean deleted = userService.deleteUser(id);
+
+        if (!deleted) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("User not found")
+                    .build();
+        }
+
+        return Response.ok("User deleted").build();
+    }
+
     // ===== GET USER BY ID =====
     @GET
     @Path("/{id}")
