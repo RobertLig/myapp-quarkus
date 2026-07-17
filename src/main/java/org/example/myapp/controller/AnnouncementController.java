@@ -4,14 +4,13 @@ import org.example.myapp.dto.AnnouncementDTO;
 import org.example.myapp.dto.PaginationResponse;
 import org.example.myapp.model.Announcement;
 import org.example.myapp.service.AnnouncementService;
+import org.example.myapp.i18n.MessageService;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import java.util.List;
-
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.validation.Valid;
 
 @Path("/announcements")
@@ -22,6 +21,9 @@ public class AnnouncementController {
     @Inject
     AnnouncementService announcementService;
 
+    @Inject
+    MessageService messageService;
+
     @GET
     public PaginationResponse<AnnouncementDTO> list(
             @QueryParam("page") @DefaultValue("0") int page,
@@ -30,30 +32,54 @@ public class AnnouncementController {
         return announcementService.getPaginated(page, size);
     }
 
-
     @GET
     @Path("/{id}")
-    public Response getById(@PathParam("id") Long id) {
+    public Response getById(@PathParam("id") Long id, HttpHeaders headers) {
         return announcementService.findById(id)
                 .map(announcementService::toDTO)
-                .map(Response::ok)
-                .orElse(Response.status(Response.Status.NOT_FOUND))
-                .build();
+                .map(dto -> Response.ok(dto).build())
+                .orElse(Response.status(Response.Status.NOT_FOUND)
+                        .entity(
+                                java.util.Map.of(
+                                        "error", messageService.get("error.notfound", headers)
+                                )
+                        )
+                        .build()
+                );
     }
 
     @POST
-    public AnnouncementDTO create(@Valid AnnouncementDTO dto) {
+    public Response create(@Valid AnnouncementDTO dto, HttpHeaders headers) {
         Announcement entity = announcementService.toEntity(dto);
         Announcement saved = announcementService.create(entity);
-        return announcementService.toDTO(saved);
+
+        return Response.ok(
+                java.util.Map.of(
+                        "message", messageService.get("announcement.created", headers),
+                        "announcement", announcementService.toDTO(saved)
+                )
+        ).build();
     }
 
     @DELETE
     @Path("/{id}")
-    public Response delete(@PathParam("id") Long id) {
+    public Response delete(@PathParam("id") Long id, HttpHeaders headers) {
         boolean deleted = announcementService.delete(id);
-        return deleted
-                ? Response.noContent().build()
-                : Response.status(Response.Status.NOT_FOUND).build();
+
+        if (!deleted) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(
+                            java.util.Map.of(
+                                    "error", messageService.get("error.notfound", headers)
+                            )
+                    )
+                    .build();
+        }
+
+        return Response.ok(
+                java.util.Map.of(
+                        "message", messageService.get("announcement.deleted", headers)
+                )
+        ).build();
     }
 }
