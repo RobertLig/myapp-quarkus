@@ -3,6 +3,7 @@ package org.example.myapp.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.example.myapp.model.translation.AnnouncementTranslation;
 
 @Entity
 public class Announcement {
@@ -11,22 +12,21 @@ public class Announcement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
-    private String description;
+    // NEW: replaces Sender and Courier entities
+    @Column(nullable = false)
+    private String type; // "sender" or "courier"
 
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "width", column = @Column(name = "dimensions_width")),
             @AttributeOverride(name = "height", column = @Column(name = "dimensions_height")),
-            @AttributeOverride(name = "length", column = @Column(name = "dimensions_length")),
-            @AttributeOverride(name = "unit", column = @Column(name = "dimensions_unit"))
+            @AttributeOverride(name = "length", column = @Column(name = "dimensions_length"))
     })
     private AnnouncementDimensions dimensions;
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "value", column = @Column(name = "weight_value")),
-            @AttributeOverride(name = "unit", column = @Column(name = "weight_unit"))
+            @AttributeOverride(name = "value", column = @Column(name = "weight_value"))
     })
     private AnnouncementWeight weight;
 
@@ -40,11 +40,9 @@ public class Announcement {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne
-    private Sender sender;
-
-    @ManyToOne
-    private Courier courier;
+    // NEW: translations instead of title/description
+    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL)
+    private List<AnnouncementTranslation> translations;
 
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL)
     private List<Stop> stops;
@@ -52,7 +50,8 @@ public class Announcement {
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL)
     private List<Photo> photos;
 
-    // getters and setters
+    // ===== GETTERS & SETTERS =====
+
     public Long getId() {
         return id;
     }
@@ -61,20 +60,28 @@ public class Announcement {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getType() {
+        return type;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public String getDescription() {
-        return description;
+    public AnnouncementDimensions getDimensions() {
+        return dimensions;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setDimensions(AnnouncementDimensions dimensions) {
+        this.dimensions = dimensions;
+    }
+
+    public AnnouncementWeight getWeight() {
+        return weight;
+    }
+
+    public void setWeight(AnnouncementWeight weight) {
+        this.weight = weight;
     }
 
     public String getPostingPlace() {
@@ -109,36 +116,20 @@ public class Announcement {
         this.receptionDateTime = receptionDateTime;
     }
 
-    public Sender getSender() {
-        return sender;
+    public User getUser() {
+        return user;
     }
 
-    public void setSender(Sender sender) {
-        this.sender = sender;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public Courier getCourier() {
-        return courier;
+    public List<AnnouncementTranslation> getTranslations() {
+        return translations;
     }
 
-    public void setCourier(Courier courier) {
-        this.courier = courier;
-    }
-
-    public AnnouncementDimensions getDimensions() {
-        return dimensions;
-    }
-
-    public void setDimensions(AnnouncementDimensions dimensions) {
-        this.dimensions = dimensions;
-    }
-
-    public AnnouncementWeight getWeight() {
-        return weight;
-    }
-
-    public void setWeight(AnnouncementWeight weight) {
-        this.weight = weight;
+    public void setTranslations(List<AnnouncementTranslation> translations) {
+        this.translations = translations;
     }
 
     public List<Stop> getStops() {
@@ -156,5 +147,4 @@ public class Announcement {
     public void setPhotos(List<Photo> photos) {
         this.photos = photos;
     }
-
 }

@@ -4,18 +4,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-
 
 public class AnnouncementDTO {
 
     public Long id;
 
-    @NotBlank(message = "Title is required")
-    public String title;
+    @NotBlank(message = "Type is required")
+    public String type; // "sender" or "courier"
 
-    @NotBlank(message = "Description is required")
-    public String description;
+    @NotNull(message = "User ID is required")
+    public Long userId;
 
     @Valid
     @NotNull(message = "Dimensions are required")
@@ -38,18 +36,17 @@ public class AnnouncementDTO {
     public LocalDateTime receptionDateTime;
 
     @Valid
-    @NotNull(message = "Sender is required")
-    public SenderDTO sender;
+    @Size(min = 1, message = "At least one translation is required")
+    public List<AnnouncementTranslationDTO> translations;
 
     @Valid
-    @NotNull(message = "Courier is required")
-    public CourierDTO courier;
-
     @Size(min = 0, message = "Stops list cannot be null")
-    public List<@Valid StopDTO> stops;
+    public List<StopDTO> stops;
 
+    @Valid
     @Size(min = 0, message = "Photos list cannot be null")
-    public List<@Valid PhotoDTO> photos;
+    public List<PhotoDTO> photos;
 }
+
 
 

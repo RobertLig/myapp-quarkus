@@ -23,7 +23,7 @@ public class User {
     private String phone;
     private String photoUrl;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Announcement> announcements;
 
     // ===== GETTERS =====

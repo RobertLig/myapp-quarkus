@@ -17,6 +17,9 @@ public class AnnouncementService {
     @Inject
     AnnouncementRepository announcementRepository;
 
+    @Inject
+    UserService userService; // to resolve user from userId in DTO
+
     // -----------------------
     // CRUD
     // -----------------------
@@ -48,8 +51,9 @@ public class AnnouncementService {
     public AnnouncementDTO toDTO(Announcement a) {
         AnnouncementDTO dto = new AnnouncementDTO();
         dto.id = a.getId();
-        dto.title = a.getTitle();
-        dto.description = a.getDescription();
+        dto.type = a.getType();
+
+        dto.userId = (a.getUser() != null) ? a.getUser().getId() : null;
 
         dto.dimensions = toDTO(a.getDimensions());
         dto.weight = toDTO(a.getWeight());
@@ -60,8 +64,9 @@ public class AnnouncementService {
         dto.postingDateTime = a.getPostingDateTime();
         dto.receptionDateTime = a.getReceptionDateTime();
 
-        dto.sender = toDTO(a.getSender());
-        dto.courier = toDTO(a.getCourier());
+        dto.translations = a.getTranslations().stream()
+                .map(this::toDTO)
+                .toList();
 
         dto.stops = a.getStops().stream()
                 .map(this::toDTO)
@@ -77,8 +82,7 @@ public class AnnouncementService {
     public Announcement toEntity(AnnouncementDTO dto) {
         Announcement a = new Announcement();
         a.setId(dto.id);
-        a.setTitle(dto.title);
-        a.setDescription(dto.description);
+        a.setType(dto.type);
 
         a.setDimensions(toEntity(dto.dimensions));
         a.setWeight(toEntity(dto.weight));
@@ -89,8 +93,14 @@ public class AnnouncementService {
         a.setPostingDateTime(dto.postingDateTime);
         a.setReceptionDateTime(dto.receptionDateTime);
 
-        a.setSender(toEntity(dto.sender));
-        a.setCourier(toEntity(dto.courier));
+        if (dto.userId != null) {
+            User user = userService.getUserById(dto.userId);
+            a.setUser(user);
+        }
+
+        a.setTranslations(dto.translations.stream()
+                .map(this::toEntity)
+                .toList());
 
         a.setStops(dto.stops.stream()
                 .map(this::toEntity)
@@ -109,7 +119,6 @@ public class AnnouncementService {
         dto.width = d.getWidth();
         dto.height = d.getHeight();
         dto.length = d.getLength();
-        dto.unit = d.getUnit();
         return dto;
     }
 
@@ -118,7 +127,6 @@ public class AnnouncementService {
         d.setWidth(dto.width);
         d.setHeight(dto.height);
         d.setLength(dto.length);
-        d.setUnit(dto.unit);
         return d;
     }
 
@@ -126,51 +134,30 @@ public class AnnouncementService {
     public AnnouncementWeightDTO toDTO(AnnouncementWeight w) {
         AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
         dto.value = w.getValue();
-        dto.unit = w.getUnit();
         return dto;
     }
 
     public AnnouncementWeight toEntity(AnnouncementWeightDTO dto) {
         AnnouncementWeight w = new AnnouncementWeight();
         w.setValue(dto.value);
-        w.setUnit(dto.unit);
         return w;
     }
 
-    // Sender
-    public SenderDTO toDTO(Sender s) {
-        SenderDTO dto = new SenderDTO();
-        dto.id = s.getId();
-        dto.name = s.getName();
-        dto.phone = s.getPhone();
-        dto.email = s.getEmail();
+    // AnnouncementTranslation
+    public AnnouncementTranslationDTO toDTO(AnnouncementTranslation t) {
+        AnnouncementTranslationDTO dto = new AnnouncementTranslationDTO();
+        dto.language = t.getLanguage();
+        dto.title = t.getTitle();
+        dto.description = t.getDescription();
         return dto;
     }
 
-    public Sender toEntity(SenderDTO dto) {
-        Sender s = new Sender();
-        s.setId(dto.id);
-        s.setName(dto.name);
-        s.setPhone(dto.phone);
-        s.setEmail(dto.email);
-        return s;
-    }
-
-    // Courier
-    public CourierDTO toDTO(Courier c) {
-        CourierDTO dto = new CourierDTO();
-        dto.id = c.getId();
-        dto.name = c.getName();
-        dto.phone = c.getPhone();
-        return dto;
-    }
-
-    public Courier toEntity(CourierDTO dto) {
-        Courier c = new Courier();
-        c.setId(dto.id);
-        c.setName(dto.name);
-        c.setPhone(dto.phone);
-        return c;
+    public AnnouncementTranslation toEntity(AnnouncementTranslationDTO dto) {
+        AnnouncementTranslation t = new AnnouncementTranslation();
+        t.setLanguage(dto.language);
+        t.setTitle(dto.title);
+        t.setDescription(dto.description);
+        return t;
     }
 
     // Stop

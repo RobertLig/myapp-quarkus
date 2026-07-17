@@ -8,7 +8,7 @@ public class AnnouncementDimensions {
     private double width;
     private double height;
     private double length;
-    private String unit;
+
 
     public double getWidth() {
         return width;
@@ -32,13 +32,5 @@ public class AnnouncementDimensions {
 
     public void setLength(double length) {
         this.length = length;
-    }
-
-    public String getUnit() {
-        return unit;
-    }
-
-    public void setUnit(String unit) {
-        this.unit = unit;
     }
 }
