@@ -36,7 +36,7 @@ public class AnnouncementController {
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id, HttpHeaders headers) {
         return announcementService.findById(id)
-                .map(announcementService::toDTO)
+                .map(announcementService::toAnnouncementDTO)
                 .map(dto -> Response.ok(dto).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(
@@ -50,13 +50,14 @@ public class AnnouncementController {
 
     @POST
     public Response create(@Valid AnnouncementDTO dto, HttpHeaders headers) {
-        Announcement entity = announcementService.toEntity(dto);
+        Announcement entity = announcementService.toAnnouncementEntity(dto);
         Announcement saved = announcementService.create(entity);
 
         return Response.ok(
                 java.util.Map.of(
                         "message", messageService.get("announcement.created", headers),
-                        "announcement", announcementService.toDTO(saved)
+                        "announcement", announcementService.toAnnouncementDTO(saved)
+
                 )
         ).build();
     }

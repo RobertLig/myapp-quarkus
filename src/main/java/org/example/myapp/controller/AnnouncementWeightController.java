@@ -20,14 +20,14 @@ public class AnnouncementWeightController {
 
     @POST
     public AnnouncementWeightDTO create(@Valid AnnouncementWeightDTO dto) {
-        AnnouncementWeight entity = announcementService.toEntity(dto);
-        return announcementService.toDTO(entity);
+        AnnouncementWeight entity = announcementService.toAnnouncementWeightEntity(dto);
+        return announcementService.toAnnouncementWeightDTO(entity);
     }
 
     @POST
     @Path("/convert")
     public AnnouncementWeightDTO convert(AnnouncementWeightDTO dto) {
-        AnnouncementWeight entity = announcementService.toEntity(dto);
-        return announcementService.toDTO(entity);
+        AnnouncementWeight entity = announcementService.toAnnouncementWeightEntity(dto);
+        return announcementService.toAnnouncementWeightDTO(entity);
     }
 }

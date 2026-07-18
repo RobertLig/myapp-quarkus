@@ -40,7 +40,6 @@ public class AnnouncementDimensionsService {
         dto.width = d.getWidth();
         dto.height = d.getHeight();
         dto.length = d.getLength();
-        dto.unit = d.getUnit();
         return dto;
     }
 
@@ -49,7 +48,6 @@ public class AnnouncementDimensionsService {
         d.setWidth(dto.width);
         d.setHeight(dto.height);
         d.setLength(dto.length);
-        d.setUnit(dto.unit);
         return d;
     }
 

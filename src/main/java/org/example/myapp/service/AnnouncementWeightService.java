@@ -38,14 +38,12 @@ public class AnnouncementWeightService {
     public AnnouncementWeightDTO toDTO(AnnouncementWeight w) {
         AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
         dto.value = w.getValue();
-        dto.unit = w.getUnit();
         return dto;
     }
 
     public AnnouncementWeight toEntity(AnnouncementWeightDTO dto) {
         AnnouncementWeight w = new AnnouncementWeight();
         w.setValue(dto.value);
-        w.setUnit(dto.unit);
         return w;
     }
 }

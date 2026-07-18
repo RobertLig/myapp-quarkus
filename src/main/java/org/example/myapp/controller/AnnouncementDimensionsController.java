@@ -7,8 +7,6 @@ import org.example.myapp.service.AnnouncementService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
 import jakarta.validation.Valid;
 
 @Path("/announcement-dimensions")
@@ -21,14 +19,18 @@ public class AnnouncementDimensionsController {
 
     @POST
     public AnnouncementDimensionsDTO create(@Valid AnnouncementDimensionsDTO dto) {
-        AnnouncementDimensions entity = announcementService.toEntity(dto);
-        return announcementService.toDTO(entity);
+        AnnouncementDimensions entity =
+                announcementService.toAnnouncementDimensionsEntity(dto);
+
+        return announcementService.toAnnouncementDimensionsDTO(entity);
     }
 
     @POST
     @Path("/convert")
-    public AnnouncementDimensionsDTO convert(AnnouncementDimensionsDTO dto) {
-        AnnouncementDimensions entity = announcementService.toEntity(dto);
-        return announcementService.toDTO(entity);
+    public AnnouncementDimensionsDTO convert(@Valid AnnouncementDimensionsDTO dto) {
+        AnnouncementDimensions entity =
+                announcementService.toAnnouncementDimensionsEntity(dto);
+
+        return announcementService.toAnnouncementDimensionsDTO(entity);
     }
 }
