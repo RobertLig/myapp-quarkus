@@ -35,17 +35,14 @@ public class AnnouncementDTO {
     @NotNull(message = "Reception date/time is required")
     public LocalDateTime receptionDateTime;
 
-    @Valid
     @Size(min = 1, message = "At least one translation is required")
-    public List<AnnouncementTranslationDTO> translations;
+    public List<@Valid AnnouncementTranslationDTO> translations;
 
-    @Valid
     @Size(min = 0, message = "Stops list cannot be null")
-    public List<StopDTO> stops;
+    public List<@Valid StopDTO> stops;
 
-    @Valid
     @Size(min = 0, message = "Photos list cannot be null")
-    public List<PhotoDTO> photos;
+    public List<@Valid PhotoDTO> photos;
 }
 
 
