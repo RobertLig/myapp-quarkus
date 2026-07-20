@@ -30,4 +30,12 @@ public class Photo {
     public void setUrl(String url) {
         this.url = url;
     }
+
+    public Announcement getAnnouncement() {
+        return announcement;
+    }
+
+    public void setAnnouncement(Announcement announcement) {
+        this.announcement = announcement;
+    }
 }
