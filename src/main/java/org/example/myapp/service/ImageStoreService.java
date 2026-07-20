@@ -33,11 +33,11 @@ public class ImageStoreService {
     public void validateImage(byte[] file) {
 
         if (file == null || file.length == 0) {
-            throw new IllegalArgumentException("image.empty");
+            throw new IllegalArgumentException("photo.empty");
         }
 
         if (file.length > MAX_SIZE_BYTES) {
-            throw new IllegalArgumentException("image.toobig");
+            throw new IllegalArgumentException("photo.toobig");
         }
 
         String mime;
@@ -54,7 +54,7 @@ public class ImageStoreService {
                         !mime.equals("image/jpg") &&
                         !mime.equals("image/png"))) {
 
-            throw new IllegalArgumentException("image.invalidtype");
+            throw new IllegalArgumentException("photo.invalidtype");
         }
     }
 
