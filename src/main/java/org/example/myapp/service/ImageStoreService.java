@@ -14,7 +14,7 @@ import java.net.URLConnection;
 import java.util.UUID;
 
 @ApplicationScoped
-public class ImageService {
+public class ImageStoreService {
 
     private static final long MAX_SIZE_BYTES = 500L * 1024L; // 500 KB
 

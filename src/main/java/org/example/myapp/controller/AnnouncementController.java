@@ -2,8 +2,13 @@ package org.example.myapp.controller;
 
 import org.example.myapp.dto.AnnouncementDTO;
 import org.example.myapp.dto.PaginationResponse;
+import org.example.myapp.dto.PhotoDTO;
 import org.example.myapp.model.Announcement;
+import org.example.myapp.model.Photo;
 import org.example.myapp.service.AnnouncementService;
+import org.example.myapp.service.PhotoService;
+import org.example.myapp.service.ImageStoreService;
+import org.example.myapp.service.ImageLimitService;
 import org.example.myapp.i18n.MessageService;
 
 import jakarta.inject.Inject;
@@ -22,7 +27,20 @@ public class AnnouncementController {
     AnnouncementService announcementService;
 
     @Inject
+    PhotoService photoService;
+
+    @Inject
+    ImageStoreService imageStoreService;
+
+    @Inject
+    ImageLimitService imageLimitService;
+
+    @Inject
     MessageService messageService;
+
+    // ------------------------------------------------------------
+    // CRUD
+    // ------------------------------------------------------------
 
     @GET
     public PaginationResponse<AnnouncementDTO> list(
@@ -39,13 +57,10 @@ public class AnnouncementController {
                 .map(announcementService::toAnnouncementDTO)
                 .map(dto -> Response.ok(dto).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND)
-                        .entity(
-                                java.util.Map.of(
-                                        "error", messageService.get("error.notfound", headers)
-                                )
-                        )
-                        .build()
-                );
+                        .entity(java.util.Map.of(
+                                "error", messageService.get("error.notfound", headers)
+                        ))
+                        .build());
     }
 
     @POST
@@ -53,13 +68,10 @@ public class AnnouncementController {
         Announcement entity = announcementService.toAnnouncementEntity(dto);
         Announcement saved = announcementService.create(entity);
 
-        return Response.ok(
-                java.util.Map.of(
-                        "message", messageService.get("announcement.created", headers),
-                        "announcement", announcementService.toAnnouncementDTO(saved)
-
-                )
-        ).build();
+        return Response.ok(java.util.Map.of(
+                "message", messageService.get("announcement.created", headers),
+                "announcement", announcementService.toAnnouncementDTO(saved)
+        )).build();
     }
 
     @DELETE
@@ -69,18 +81,121 @@ public class AnnouncementController {
 
         if (!deleted) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(
-                            java.util.Map.of(
-                                    "error", messageService.get("error.notfound", headers)
-                            )
-                    )
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
                     .build();
         }
 
-        return Response.ok(
-                java.util.Map.of(
-                        "message", messageService.get("announcement.deleted", headers)
-                )
-        ).build();
+        return Response.ok(java.util.Map.of(
+                "message", messageService.get("announcement.deleted", headers)
+        )).build();
+    }
+
+    // ------------------------------------------------------------
+    // PHOTO UPLOAD
+    // ------------------------------------------------------------
+
+    @POST
+    @Path("/{id}/photos")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response uploadPhoto(@PathParam("id") Long id,
+                                @FormParam("file") byte[] file,
+                                HttpHeaders headers) {
+
+        var announcementOpt = announcementService.findById(id);
+
+        if (announcementOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        Announcement announcement = announcementOpt.get();
+
+        // Check limit
+        if (!imageLimitService.canAddAnnouncementPhoto(announcement)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("photo.limit", headers)
+                    ))
+                    .build();
+        }
+
+        // Upload to S3
+        String url;
+        try {
+            url = imageStoreService.upload(file);
+        } catch (IllegalArgumentException ex) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get(ex.getMessage(), headers)
+                    ))
+                    .build();
+        }
+
+        // Save photo in DB
+        Photo photo = new Photo();
+        photo.setUrl(url);
+        photo.setAnnouncement(announcement);
+
+        Photo saved = photoService.create(photo);
+
+        return Response.ok(java.util.Map.of(
+                "message", messageService.get("photo.uploaded", headers),
+                "photo", photoService.toDTO(saved)
+        )).build();
+    }
+
+    // ------------------------------------------------------------
+    // PHOTO DELETE
+    // ------------------------------------------------------------
+
+    @DELETE
+    @Path("/{announcementId}/photos/{photoId}")
+    public Response deletePhoto(@PathParam("announcementId") Long announcementId,
+                                @PathParam("photoId") Long photoId,
+                                HttpHeaders headers) {
+
+        var announcementOpt = announcementService.findById(announcementId);
+        if (announcementOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        var photoOpt = photoService.findById(photoId);
+        if (photoOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        Photo photo = photoOpt.get();
+
+        // Ensure photo belongs to this announcement
+        if (!photo.getAnnouncement().getId().equals(announcementId)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("photo.mismatch", headers)
+                    ))
+                    .build();
+        }
+
+        // Delete from S3
+        imageStoreService.delete(photo.getUrl());
+
+        // Delete from DB
+        photoService.delete(photoId);
+
+        return Response.ok(java.util.Map.of(
+                "message", messageService.get("photo.deleted", headers)
+        )).build();
     }
 }
