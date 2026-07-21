@@ -40,6 +40,58 @@ public class AnnouncementService {
     }
 
     @Transactional
+    public Announcement update(Announcement existing, AnnouncementDTO dto) {
+
+        // --- BASIC FIELDS ---
+        existing.setType(dto.type);
+        existing.setPostingPlace(dto.postingPlace);
+        existing.setReceptionPlace(dto.receptionPlace);
+        existing.setPostingDateTime(dto.postingDateTime);
+        existing.setReceptionDateTime(dto.receptionDateTime);
+
+        // --- USER ---
+        if (dto.userId != null) {
+            User user = userService.getUserById(dto.userId);
+            if (user == null) {
+                throw new IllegalArgumentException("User not found");
+            }
+            existing.setUser(user);
+        }
+
+        // --- DIMENSIONS ---
+        existing.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
+
+        // --- WEIGHT ---
+        existing.setWeight(toAnnouncementWeightEntity(dto.weight));
+
+        // --- TRANSLATIONS ---
+        // Replace entire list
+        List<AnnouncementTranslation> newTranslations = dto.translations.stream()
+                .map(this::toAnnouncementTranslationEntity)
+                .toList();
+
+        // Set back-reference
+        newTranslations.forEach(t -> t.setAnnouncement(existing));
+
+        existing.setTranslations(newTranslations);
+
+        // --- STOPS ---
+        List<Stop> newStops = dto.stops.stream()
+                .map(this::toStopEntity)
+                .toList();
+
+        newStops.forEach(s -> s.setAnnouncement(existing));
+
+        existing.setStops(newStops);
+
+        // --- PHOTOS ---
+        // IMPORTANT: do NOT update photos here
+        // Photos are managed ONLY via /announcements/{id}/photos endpoints
+
+        return existing;
+    }
+
+    @Transactional
     public boolean delete(Long id) {
         return announcementRepository.deleteById(id);
     }

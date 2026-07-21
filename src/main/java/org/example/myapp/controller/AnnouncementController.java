@@ -74,6 +74,42 @@ public class AnnouncementController {
         )).build();
     }
 
+    @PUT
+    @Path("/{id}")
+    public Response update(@PathParam("id") Long id,
+                           @Valid AnnouncementDTO dto,
+                           HttpHeaders headers) {
+
+        var announcementOpt = announcementService.findById(id);
+
+        if (announcementOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        Announcement existing = announcementOpt.get();
+
+        try {
+            Announcement updated = announcementService.update(existing, dto);
+
+            return Response.ok(java.util.Map.of(
+                    "message", messageService.get("announcement.updated", headers),
+                    "announcement", announcementService.toAnnouncementDTO(updated)
+            )).build();
+
+        } catch (IllegalArgumentException ex) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(java.util.Map.of(
+                            "error", ex.getMessage()
+                    ))
+                    .build();
+        }
+    }
+
+
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id, HttpHeaders headers) {

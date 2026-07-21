@@ -48,4 +48,12 @@ public class Stop {
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
+
+    public Announcement getAnnouncement() {
+        return announcement;
+    }
+
+    public void setAnnouncement(Announcement announcement) {
+        this.announcement = announcement;
+    }
 }

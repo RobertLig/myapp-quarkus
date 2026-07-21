@@ -50,4 +50,11 @@ public class AnnouncementTranslation {
         this.description = description;
     }
 
+    public Announcement getAnnouncement() {
+        return announcement;
+    }
+
+    public void setAnnouncement(Announcement announcement) {
+        this.announcement = announcement;
+    }
 }
