@@ -18,6 +18,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.validation.Valid;
 
+import java.util.List;
+
 @Path("/announcements")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -286,6 +288,64 @@ public class AnnouncementController {
 
         return Response.ok(java.util.Map.of(
                 "message", messageService.get("photo.sorted", headers)
+        )).build();
+    }
+
+    @PUT
+    @Path("/{announcementId}/photos/{photoId}/main")
+    public Response setMainPhoto(@PathParam("announcementId") Long announcementId,
+                                 @PathParam("photoId") Long photoId,
+                                 HttpHeaders headers) {
+
+        var announcementOpt = announcementService.findById(announcementId);
+        if (announcementOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        Announcement announcement = announcementOpt.get();
+
+        var photoOpt = photoService.findById(photoId);
+        if (photoOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        Photo selected = photoOpt.get();
+
+        // Ensure photo belongs to this announcement
+        if (!selected.getAnnouncement().getId().equals(announcementId)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("photo.mismatch", headers)
+                    ))
+                    .build();
+        }
+
+        // Reorder photos: selected becomes position 0
+        List<Photo> photos = announcement.getPhotos();
+
+        // Step 1: set selected photo to position 0
+        selected.setPosition(0);
+        photoService.update(selected);
+
+        // Step 2: shift all other photos
+        int pos = 1;
+        for (Photo p : photos) {
+            if (!p.getId().equals(photoId)) {
+                p.setPosition(pos++);
+                photoService.update(p);
+            }
+        }
+
+        return Response.ok(java.util.Map.of(
+                "message", messageService.get("photo.main.set", headers)
         )).build();
     }
 }
