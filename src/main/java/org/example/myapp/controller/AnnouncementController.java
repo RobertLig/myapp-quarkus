@@ -123,7 +123,31 @@ public class AnnouncementController {
 
     @DELETE
     @Path("/{id}")
-    public Response delete(@PathParam("id") Long id, HttpHeaders headers) {
+    public Response delete(@PathParam("id") Long id,
+                           @QueryParam("userId") Long userId,
+                           HttpHeaders headers) {
+
+        var announcementOpt = announcementService.findById(id);
+
+        if (announcementOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        Announcement announcement = announcementOpt.get();
+
+        // Ownership check
+        if (!announcementService.isOwner(userId, announcement)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.forbidden", headers)
+                    ))
+                    .build();
+        }
+
         boolean deleted = announcementService.delete(id);
 
         if (!deleted) {
@@ -147,6 +171,7 @@ public class AnnouncementController {
     @Path("/{id}/photos")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadPhoto(@PathParam("id") Long id,
+                                @QueryParam("userId") Long userId,
                                 @FormParam("file") byte[] file,
                                 HttpHeaders headers) {
 
@@ -161,6 +186,15 @@ public class AnnouncementController {
         }
 
         Announcement announcement = announcementOpt.get();
+
+        // Ownership check
+        if (!announcementService.isOwner(userId, announcement)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.forbidden", headers)
+                    ))
+                    .build();
+        }
 
         // Check limit
         if (!imageLimitService.canAddAnnouncementPhoto(announcement)) {
@@ -204,8 +238,10 @@ public class AnnouncementController {
     @Path("/{announcementId}/photos/{photoId}")
     public Response deletePhoto(@PathParam("announcementId") Long announcementId,
                                 @PathParam("photoId") Long photoId,
+                                @QueryParam("userId") Long userId,
                                 HttpHeaders headers) {
 
+        // 1. Check announcement exists
         var announcementOpt = announcementService.findById(announcementId);
         if (announcementOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -215,6 +251,18 @@ public class AnnouncementController {
                     .build();
         }
 
+        Announcement announcement = announcementOpt.get();
+
+        // 2. Ownership check
+        if (!announcementService.isOwner(userId, announcement)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.forbidden", headers)
+                    ))
+                    .build();
+        }
+
+        // 3. Check photo exists
         var photoOpt = photoService.findById(photoId);
         if (photoOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -226,7 +274,7 @@ public class AnnouncementController {
 
         Photo photo = photoOpt.get();
 
-        // Ensure photo belongs to this announcement
+        // 4. Ensure photo belongs to this announcement
         if (!photo.getAnnouncement().getId().equals(announcementId)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(java.util.Map.of(
@@ -235,10 +283,10 @@ public class AnnouncementController {
                     .build();
         }
 
-        // Delete from S3
+        // 5. Delete from S3
         imageStoreService.delete(photo.getUrl());
 
-        // Delete from DB
+        // 6. Delete from DB
         photoService.delete(photoId);
 
         return Response.ok(java.util.Map.of(
@@ -249,11 +297,12 @@ public class AnnouncementController {
     @PUT
     @Path("/{id}/photos/sort")
     public Response sortPhotos(@PathParam("id") Long id,
-                               java.util.List<PhotoDTO> sortedPhotos,
+                               @QueryParam("userId") Long userId,
+                               List<PhotoDTO> sortedPhotos,
                                HttpHeaders headers) {
 
+        // 1. Check announcement exists
         var announcementOpt = announcementService.findById(id);
-
         if (announcementOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(java.util.Map.of(
@@ -264,7 +313,16 @@ public class AnnouncementController {
 
         Announcement announcement = announcementOpt.get();
 
-        // Validate all photos belong to this announcement
+        // 2. Ownership check
+        if (!announcementService.isOwner(userId, announcement)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.forbidden", headers)
+                    ))
+                    .build();
+        }
+
+        // 3. Validate all photos belong to this announcement
         for (PhotoDTO dto : sortedPhotos) {
             var photoOpt = photoService.findById(dto.id);
 
@@ -287,7 +345,7 @@ public class AnnouncementController {
             }
         }
 
-        // Apply new positions
+        // 4. Apply new positions
         for (int i = 0; i < sortedPhotos.size(); i++) {
             PhotoDTO dto = sortedPhotos.get(i);
             Photo photo = photoService.findById(dto.id).get();
@@ -304,8 +362,10 @@ public class AnnouncementController {
     @Path("/{announcementId}/photos/{photoId}/main")
     public Response setMainPhoto(@PathParam("announcementId") Long announcementId,
                                  @PathParam("photoId") Long photoId,
+                                 @QueryParam("userId") Long userId,
                                  HttpHeaders headers) {
 
+        // 1. Check announcement exists
         var announcementOpt = announcementService.findById(announcementId);
         if (announcementOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -317,6 +377,16 @@ public class AnnouncementController {
 
         Announcement announcement = announcementOpt.get();
 
+        // 2. Ownership check
+        if (!announcementService.isOwner(userId, announcement)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.forbidden", headers)
+                    ))
+                    .build();
+        }
+
+        // 3. Check photo exists
         var photoOpt = photoService.findById(photoId);
         if (photoOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -328,7 +398,7 @@ public class AnnouncementController {
 
         Photo selected = photoOpt.get();
 
-        // Ensure photo belongs to this announcement
+        // 4. Ensure photo belongs to this announcement
         if (!selected.getAnnouncement().getId().equals(announcementId)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(java.util.Map.of(
@@ -337,7 +407,7 @@ public class AnnouncementController {
                     .build();
         }
 
-        // Reorder photos: selected becomes position 0
+        // 5. Reorder photos: selected becomes position 0
         List<Photo> photos = announcement.getPhotos();
 
         // Step 1: set selected photo to position 0
