@@ -282,4 +282,10 @@ public class AnnouncementService {
 
         return new PaginationResponse<>(dtos, total, page, size);
     }
+
+    //ownership
+    public boolean isOwner(Long userId, Announcement announcement) {
+        return announcement.getUser() != null &&
+                announcement.getUser().getId().equals(userId);
+    }
 }

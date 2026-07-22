@@ -94,6 +94,15 @@ public class AnnouncementController {
 
         Announcement existing = announcementOpt.get();
 
+        // Ownership check
+        if (!announcementService.isOwner(dto.userId, existing)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.forbidden", headers)
+                    ))
+                    .build();
+        }
+
         try {
             Announcement updated = announcementService.update(existing, dto);
 
