@@ -256,6 +256,7 @@ public class AnnouncementService {
         PhotoDTO dto = new PhotoDTO();
         dto.id = photo.getId();
         dto.url = photo.getUrl();
+        dto.position = photo.getPosition();
         return dto;
     }
 
@@ -263,6 +264,7 @@ public class AnnouncementService {
         Photo photo = new Photo();
         photo.setId(dto.id);
         photo.setUrl(dto.url);
+        photo.setPosition(dto.position);
         return photo;
     }
 

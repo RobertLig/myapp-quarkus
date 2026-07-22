@@ -8,6 +8,8 @@ public class PhotoDTO {
 
     @NotBlank(message = "Photo URL is required")
     public String url;
+
+    public Integer position;
 }
 
 

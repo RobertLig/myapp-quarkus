@@ -14,6 +14,8 @@ public class Photo {
     @ManyToOne
     private Announcement announcement;
 
+    private Integer position;
+
     // getters and setters
     public Long getId() {
         return id;
@@ -37,5 +39,13 @@ public class Photo {
 
     public void setAnnouncement(Announcement announcement) {
         this.announcement = announcement;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
     }
 }

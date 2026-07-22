@@ -234,4 +234,58 @@ public class AnnouncementController {
                 "message", messageService.get("photo.deleted", headers)
         )).build();
     }
+
+    @PUT
+    @Path("/{id}/photos/sort")
+    public Response sortPhotos(@PathParam("id") Long id,
+                               java.util.List<PhotoDTO> sortedPhotos,
+                               HttpHeaders headers) {
+
+        var announcementOpt = announcementService.findById(id);
+
+        if (announcementOpt.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.notfound", headers)
+                    ))
+                    .build();
+        }
+
+        Announcement announcement = announcementOpt.get();
+
+        // Validate all photos belong to this announcement
+        for (PhotoDTO dto : sortedPhotos) {
+            var photoOpt = photoService.findById(dto.id);
+
+            if (photoOpt.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(java.util.Map.of(
+                                "error", messageService.get("error.notfound", headers)
+                        ))
+                        .build();
+            }
+
+            Photo photo = photoOpt.get();
+
+            if (!photo.getAnnouncement().getId().equals(id)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(java.util.Map.of(
+                                "error", messageService.get("photo.mismatch", headers)
+                        ))
+                        .build();
+            }
+        }
+
+        // Apply new positions
+        for (int i = 0; i < sortedPhotos.size(); i++) {
+            PhotoDTO dto = sortedPhotos.get(i);
+            Photo photo = photoService.findById(dto.id).get();
+            photo.setPosition(i);
+            photoService.update(photo);
+        }
+
+        return Response.ok(java.util.Map.of(
+                "message", messageService.get("photo.sorted", headers)
+        )).build();
+    }
 }

@@ -49,4 +49,10 @@ public class PhotoService {
         return photo;
     }
 
+    @Transactional
+    public Photo update(Photo photo) {
+        // Panache automatically updates managed entities
+        photoRepository.persist(photo);
+        return photo;
+    }
 }
