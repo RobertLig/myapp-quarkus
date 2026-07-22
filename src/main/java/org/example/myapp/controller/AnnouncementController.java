@@ -95,13 +95,8 @@ public class AnnouncementController {
         Announcement existing = announcementOpt.get();
 
         // Ownership check
-        if (!announcementService.isOwner(dto.userId, existing)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.forbidden", headers)
-                    ))
-                    .build();
-        }
+        Response ownership = checkOwnership(dto.userId, existing, headers);
+        if (ownership != null) return ownership;
 
         try {
             Announcement updated = announcementService.update(existing, dto);
@@ -140,13 +135,8 @@ public class AnnouncementController {
         Announcement announcement = announcementOpt.get();
 
         // Ownership check
-        if (!announcementService.isOwner(userId, announcement)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.forbidden", headers)
-                    ))
-                    .build();
-        }
+        Response ownership = checkOwnership(userId, announcement, headers);
+        if (ownership != null) return ownership;
 
         boolean deleted = announcementService.delete(id);
 
@@ -188,13 +178,8 @@ public class AnnouncementController {
         Announcement announcement = announcementOpt.get();
 
         // Ownership check
-        if (!announcementService.isOwner(userId, announcement)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.forbidden", headers)
-                    ))
-                    .build();
-        }
+        Response ownership = checkOwnership(userId, announcement, headers);
+        if (ownership != null) return ownership;
 
         // Check limit
         if (!imageLimitService.canAddAnnouncementPhoto(announcement)) {
@@ -254,13 +239,8 @@ public class AnnouncementController {
         Announcement announcement = announcementOpt.get();
 
         // 2. Ownership check
-        if (!announcementService.isOwner(userId, announcement)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.forbidden", headers)
-                    ))
-                    .build();
-        }
+        Response ownership = checkOwnership(userId, announcement, headers);
+        if (ownership != null) return ownership;
 
         // 3. Check photo exists
         var photoOpt = photoService.findById(photoId);
@@ -314,13 +294,8 @@ public class AnnouncementController {
         Announcement announcement = announcementOpt.get();
 
         // 2. Ownership check
-        if (!announcementService.isOwner(userId, announcement)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.forbidden", headers)
-                    ))
-                    .build();
-        }
+        Response ownership = checkOwnership(userId, announcement, headers);
+        if (ownership != null) return ownership;
 
         // 3. Validate all photos belong to this announcement
         for (PhotoDTO dto : sortedPhotos) {
@@ -378,13 +353,8 @@ public class AnnouncementController {
         Announcement announcement = announcementOpt.get();
 
         // 2. Ownership check
-        if (!announcementService.isOwner(userId, announcement)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.forbidden", headers)
-                    ))
-                    .build();
-        }
+        Response ownership = checkOwnership(userId, announcement, headers);
+        if (ownership != null) return ownership;
 
         // 3. Check photo exists
         var photoOpt = photoService.findById(photoId);
@@ -426,5 +396,16 @@ public class AnnouncementController {
         return Response.ok(java.util.Map.of(
                 "message", messageService.get("photo.main.set", headers)
         )).build();
+    }
+
+    private Response checkOwnership(Long userId, Announcement announcement, HttpHeaders headers) {
+        if (!announcementService.isOwner(userId, announcement)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(java.util.Map.of(
+                            "error", messageService.get("error.forbidden", headers)
+                    ))
+                    .build();
+        }
+        return null; // means OK
     }
 }
