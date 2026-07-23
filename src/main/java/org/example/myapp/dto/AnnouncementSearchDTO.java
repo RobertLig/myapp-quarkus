@@ -28,4 +28,7 @@ public class AnnouncementSearchDTO {
     public Double maxWeight;
 
     public Long userId; // optional
+
+    public String text;      // search phrase
+    public String language;  // optional: "en", "pl"
 }

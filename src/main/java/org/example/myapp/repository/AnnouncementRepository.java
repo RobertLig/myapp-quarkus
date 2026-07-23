@@ -113,6 +113,23 @@ public class AnnouncementRepository implements PanacheRepository<Announcement> {
             params.put("userId", f.userId);
         }
 
+        if (f.text != null && !f.text.isBlank()) {
+
+            jpql.append(" AND EXISTS (");
+            jpql.append("   SELECT 1 FROM AnnouncementTranslation t");
+            jpql.append("   WHERE t.announcement = a");
+
+            if (f.language != null) {
+                jpql.append("     AND t.language = :lang");
+                params.put("lang", f.language);
+            }
+
+            jpql.append("     AND (t.title LIKE :text OR t.description LIKE :text)");
+            jpql.append(")");
+
+            params.put("text", "%" + f.text + "%");
+        }
+
         var query = getEntityManager()
                 .createQuery(jpql.toString(), Announcement.class);
 
@@ -211,6 +228,24 @@ public class AnnouncementRepository implements PanacheRepository<Announcement> {
             jpql.append(" AND a.user.id = :userId");
             params.put("userId", f.userId);
         }
+
+        if (f.text != null && !f.text.isBlank()) {
+
+            jpql.append(" AND EXISTS (");
+            jpql.append("   SELECT 1 FROM AnnouncementTranslation t");
+            jpql.append("   WHERE t.announcement = a");
+
+            if (f.language != null) {
+                jpql.append("     AND t.language = :lang");
+                params.put("lang", f.language);
+            }
+
+            jpql.append("     AND (t.title LIKE :text OR t.description LIKE :text)");
+            jpql.append(")");
+
+            params.put("text", "%" + f.text + "%");
+        }
+
 
         var query = getEntityManager()
                 .createQuery(jpql.toString(), Long.class);
