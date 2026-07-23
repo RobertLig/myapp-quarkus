@@ -31,4 +31,7 @@ public class AnnouncementSearchDTO {
 
     public String text;      // search phrase
     public String language;  // optional: "en", "pl"
+
+    public String sortBy;   // "postingDate", "weight", "width", etc.
+    public String sortDir;  // "asc" or "desc"
 }

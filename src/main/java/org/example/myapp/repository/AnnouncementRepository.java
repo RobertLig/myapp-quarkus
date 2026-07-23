@@ -130,6 +130,36 @@ public class AnnouncementRepository implements PanacheRepository<Announcement> {
             params.put("text", "%" + f.text + "%");
         }
 
+        // Sorting
+        if (f.sortBy != null) {
+
+            jpql.append(" ORDER BY ");
+
+            switch (f.sortBy) {
+
+                case "postingDate" -> jpql.append("a.postingDateTime");
+                case "receptionDate" -> jpql.append("a.receptionDateTime");
+
+                case "weight" -> jpql.append("a.weight.value");
+
+                case "width" -> jpql.append("a.dimensions.width");
+                case "height" -> jpql.append("a.dimensions.height");
+                case "length" -> jpql.append("a.dimensions.length");
+
+                case "type" -> jpql.append("a.type");
+
+                case "user" -> jpql.append("a.user.id");
+
+                default -> jpql.append("a.id"); // fallback
+            }
+
+            if ("desc".equalsIgnoreCase(f.sortDir)) {
+                jpql.append(" DESC");
+            } else {
+                jpql.append(" ASC");
+            }
+        }
+
         var query = getEntityManager()
                 .createQuery(jpql.toString(), Announcement.class);
 
