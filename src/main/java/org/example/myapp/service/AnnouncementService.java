@@ -288,4 +288,16 @@ public class AnnouncementService {
         return announcement.getUser() != null &&
                 announcement.getUser().getId().equals(userId);
     }
+
+    public PaginationResponse<AnnouncementDTO> search(AnnouncementSearchDTO filters, int page, int size) {
+
+        List<Announcement> results = announcementRepository.search(filters, page, size);
+        long total = announcementRepository.countSearch(filters);
+
+        List<AnnouncementDTO> dtos = results.stream()
+                .map(this::toAnnouncementDTO)
+                .toList();
+
+        return new PaginationResponse<>(dtos, total, page, size);
+    }
 }
