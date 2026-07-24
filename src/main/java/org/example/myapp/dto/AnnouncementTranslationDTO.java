@@ -10,6 +10,5 @@ public class AnnouncementTranslationDTO {
     @NotBlank(message = "Title is required")
     public String title;
 
-    @NotBlank(message = "Description is required")
     public String description;
 }
