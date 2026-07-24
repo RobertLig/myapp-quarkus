@@ -3,6 +3,7 @@ package org.example.myapp.service;
 import org.example.myapp.model.AnnouncementWeight;
 import org.example.myapp.repository.AnnouncementWeightRepository;
 import org.example.myapp.dto.AnnouncementWeightDTO;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -15,6 +16,10 @@ public class AnnouncementWeightService {
 
     @Inject
     AnnouncementWeightRepository weightRepository;
+
+    // -----------------------
+    // CRUD
+    // -----------------------
 
     public List<AnnouncementWeight> findAll() {
         return weightRepository.listAll();
@@ -35,15 +40,30 @@ public class AnnouncementWeightService {
         return weightRepository.deleteById(id);
     }
 
+    // -----------------------
+    // DTO → ENTITY
+    // -----------------------
+
+    public AnnouncementWeight toEntity(AnnouncementWeightDTO dto) {
+
+        double value = dto.value;
+
+        // Convert imperial → metric (lb → kg)
+        if ("imperial".equalsIgnoreCase(dto.unit)) {
+            value = value * 0.45359237;
+        }
+
+        return new AnnouncementWeight(value);
+    }
+
+    // -----------------------
+    // ENTITY → DTO
+    // -----------------------
+
     public AnnouncementWeightDTO toDTO(AnnouncementWeight w) {
         AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
         dto.value = w.getValue();
+        dto.unit = "metric"; // always metric in DB
         return dto;
-    }
-
-    public AnnouncementWeight toEntity(AnnouncementWeightDTO dto) {
-        AnnouncementWeight w = new AnnouncementWeight();
-        w.setValue(dto.value);
-        return w;
     }
 }

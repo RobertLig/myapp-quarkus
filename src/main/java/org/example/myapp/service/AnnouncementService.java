@@ -59,12 +59,21 @@ public class AnnouncementService {
             throw new WebApplicationException("User not found", 400);
         }
 
-        // 3. Create entity (without translations yet)
+        // 3. Create entity
         Announcement announcement = new Announcement();
         announcement.setType(dto.type);
         announcement.setUser(user.get());
+
+        // --- POSTING PLACE ---
         announcement.setPostingPlace(dto.postingPlace);
+        announcement.setPostingLatitude(dto.postingLatitude);
+        announcement.setPostingLongitude(dto.postingLongitude);
+
+        // --- RECEPTION PLACE ---
         announcement.setReceptionPlace(dto.receptionPlace);
+        announcement.setReceptionLatitude(dto.receptionLatitude);
+        announcement.setReceptionLongitude(dto.receptionLongitude);
+
         announcement.setPostingDateTime(dto.postingDateTime);
         announcement.setReceptionDateTime(dto.receptionDateTime);
 
@@ -87,10 +96,18 @@ public class AnnouncementService {
 
         // --- WEIGHT ---
         if (dto.weight != null) {
-            announcement.setWeight(new AnnouncementWeight(dto.weight.value));
+
+            double weightValue = dto.weight.value;
+
+            if ("imperial".equalsIgnoreCase(dto.weight.unit)) {
+                // convert pounds → kilograms
+                weightValue = weightValue * 0.45359237;
+            }
+
+            announcement.setWeight(new AnnouncementWeight(weightValue));
         }
 
-        // 4. Handle translations
+        // --- TRANSLATIONS ---
         AnnouncementTranslationDTO original = dto.translations.get(0);
 
         var translatedEn = translationService.translate(original, "en");
@@ -121,8 +138,17 @@ public class AnnouncementService {
 
         // --- BASIC FIELDS ---
         existing.setType(dto.type);
+
+        // --- POSTING PLACE ---
         existing.setPostingPlace(dto.postingPlace);
+        existing.setPostingLatitude(dto.postingLatitude);
+        existing.setPostingLongitude(dto.postingLongitude);
+
+        // --- RECEPTION PLACE ---
         existing.setReceptionPlace(dto.receptionPlace);
+        existing.setReceptionLatitude(dto.receptionLatitude);
+        existing.setReceptionLongitude(dto.receptionLongitude);
+
         existing.setPostingDateTime(dto.postingDateTime);
         existing.setReceptionDateTime(dto.receptionDateTime);
 
@@ -186,8 +212,15 @@ public class AnnouncementService {
         a.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
         a.setWeight(toAnnouncementWeightEntity(dto.weight));
 
+        // --- POSTING PLACE ---
         a.setPostingPlace(dto.postingPlace);
+        a.setPostingLatitude(dto.postingLatitude);
+        a.setPostingLongitude(dto.postingLongitude);
+
+        // --- RECEPTION PLACE ---
         a.setReceptionPlace(dto.receptionPlace);
+        a.setReceptionLatitude(dto.receptionLatitude);
+        a.setReceptionLongitude(dto.receptionLongitude);
 
         a.setPostingDateTime(dto.postingDateTime);
         a.setReceptionDateTime(dto.receptionDateTime);
@@ -221,8 +254,15 @@ public class AnnouncementService {
         dto.dimensions = toAnnouncementDimensionsDTO(a.getDimensions());
         dto.weight = toAnnouncementWeightDTO(a.getWeight());
 
+        // --- POSTING PLACE ---
         dto.postingPlace = a.getPostingPlace();
+        dto.postingLatitude = a.getPostingLatitude();
+        dto.postingLongitude = a.getPostingLongitude();
+
+        // --- RECEPTION PLACE ---
         dto.receptionPlace = a.getReceptionPlace();
+        dto.receptionLatitude = a.getReceptionLatitude();
+        dto.receptionLongitude = a.getReceptionLongitude();
 
         dto.postingDateTime = a.getPostingDateTime();
         dto.receptionDateTime = a.getReceptionDateTime();
@@ -282,12 +322,20 @@ public class AnnouncementService {
     public AnnouncementWeightDTO toAnnouncementWeightDTO(AnnouncementWeight w) {
         AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
         dto.value = w.getValue();
+        dto.unit = "metric"; // always metric in DB
         return dto;
     }
 
     public AnnouncementWeight toAnnouncementWeightEntity(AnnouncementWeightDTO dto) {
         if (dto == null) return null;
-        return new AnnouncementWeight(dto.value);
+
+        double value = dto.value;
+
+        if ("imperial".equalsIgnoreCase(dto.unit)) {
+            value = value * 0.45359237;
+        }
+
+        return new AnnouncementWeight(value);
     }
 
     // -----------------------

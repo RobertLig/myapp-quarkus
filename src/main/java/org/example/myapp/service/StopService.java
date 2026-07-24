@@ -3,6 +3,7 @@ package org.example.myapp.service;
 import org.example.myapp.model.Stop;
 import org.example.myapp.repository.StopRepository;
 import org.example.myapp.dto.StopDTO;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -15,6 +16,10 @@ public class StopService {
 
     @Inject
     StopRepository stopRepository;
+
+    // -----------------------
+    // CRUD
+    // -----------------------
 
     public List<Stop> findAll() {
         return stopRepository.listAll();
@@ -35,6 +40,23 @@ public class StopService {
         return stopRepository.deleteById(id);
     }
 
+    // -----------------------
+    // DTO → ENTITY
+    // -----------------------
+
+    public Stop toEntity(StopDTO dto) {
+        return new Stop(
+                dto.id,
+                dto.address,
+                dto.latitude,
+                dto.longitude
+        );
+    }
+
+    // -----------------------
+    // ENTITY → DTO
+    // -----------------------
+
     public StopDTO toDTO(Stop stop) {
         StopDTO dto = new StopDTO();
         dto.id = stop.getId();
@@ -43,14 +65,4 @@ public class StopService {
         dto.longitude = stop.getLongitude();
         return dto;
     }
-
-    public Stop toEntity(StopDTO dto) {
-        Stop stop = new Stop();
-        stop.setId(dto.id);
-        stop.setAddress(dto.address);
-        stop.setLatitude(dto.latitude);
-        stop.setLongitude(dto.longitude);
-        return stop;
-    }
-
 }

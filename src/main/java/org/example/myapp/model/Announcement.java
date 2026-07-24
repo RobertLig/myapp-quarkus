@@ -19,6 +19,7 @@ public class Announcement {
     @Column(nullable = false)
     private String type; // "sender" or "courier"
 
+    // Dimensions (metric-only)
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "width", column = @Column(name = "dimensions_width")),
@@ -27,14 +28,22 @@ public class Announcement {
     })
     private AnnouncementDimensions dimensions;
 
+    // Weight (metric-only)
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "value", column = @Column(name = "weight_value"))
     })
     private AnnouncementWeight weight;
 
+    // Posting place
     private String postingPlace;
+    private double postingLatitude;
+    private double postingLongitude;
+
+    // Reception place
     private String receptionPlace;
+    private double receptionLatitude;
+    private double receptionLongitude;
 
     private LocalDateTime postingDateTime;
     private LocalDateTime receptionDateTime;
@@ -43,13 +52,13 @@ public class Announcement {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnnouncementTranslation> translations;
 
-    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Stop> stops;
 
-    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Photo> photos;
 
     // ===== GETTERS & SETTERS =====
@@ -94,12 +103,44 @@ public class Announcement {
         this.postingPlace = postingPlace;
     }
 
+    public double getPostingLatitude() {
+        return postingLatitude;
+    }
+
+    public void setPostingLatitude(double postingLatitude) {
+        this.postingLatitude = postingLatitude;
+    }
+
+    public double getPostingLongitude() {
+        return postingLongitude;
+    }
+
+    public void setPostingLongitude(double postingLongitude) {
+        this.postingLongitude = postingLongitude;
+    }
+
     public String getReceptionPlace() {
         return receptionPlace;
     }
 
     public void setReceptionPlace(String receptionPlace) {
         this.receptionPlace = receptionPlace;
+    }
+
+    public double getReceptionLatitude() {
+        return receptionLatitude;
+    }
+
+    public void setReceptionLatitude(double receptionLatitude) {
+        this.receptionLatitude = receptionLatitude;
+    }
+
+    public double getReceptionLongitude() {
+        return receptionLongitude;
+    }
+
+    public void setReceptionLongitude(double receptionLongitude) {
+        this.receptionLongitude = receptionLongitude;
     }
 
     public LocalDateTime getPostingDateTime() {

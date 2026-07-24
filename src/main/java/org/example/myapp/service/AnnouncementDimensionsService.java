@@ -3,6 +3,7 @@ package org.example.myapp.service;
 import org.example.myapp.model.AnnouncementDimensions;
 import org.example.myapp.repository.AnnouncementDimensionsRepository;
 import org.example.myapp.dto.AnnouncementDimensionsDTO;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -15,6 +16,13 @@ public class AnnouncementDimensionsService {
 
     @Inject
     AnnouncementDimensionsRepository dimensionsRepository;
+
+    @Inject
+    DimensionConversionService dimensionConversionService;
+
+    // -----------------------
+    // CRUD
+    // -----------------------
 
     public List<AnnouncementDimensions> findAll() {
         return dimensionsRepository.listAll();
@@ -35,20 +43,37 @@ public class AnnouncementDimensionsService {
         return dimensionsRepository.deleteById(id);
     }
 
+    // -----------------------
+    // DTO → ENTITY
+    // -----------------------
+
+    public AnnouncementDimensions toEntity(AnnouncementDimensionsDTO dto) {
+
+        double width = dto.width;
+        double height = dto.height;
+        double length = dto.length;
+
+        // Convert imperial → metric
+        if ("imperial".equalsIgnoreCase(dto.unit)) {
+            var metric = dimensionConversionService.toMetric(width, height, length);
+            width = metric.width;
+            height = metric.height;
+            length = metric.length;
+        }
+
+        return new AnnouncementDimensions(width, height, length);
+    }
+
+    // -----------------------
+    // ENTITY → DTO
+    // -----------------------
+
     public AnnouncementDimensionsDTO toDTO(AnnouncementDimensions d) {
         AnnouncementDimensionsDTO dto = new AnnouncementDimensionsDTO();
         dto.width = d.getWidth();
         dto.height = d.getHeight();
         dto.length = d.getLength();
+        dto.unit = "metric"; // always metric in DB
         return dto;
-    }
-
-    public AnnouncementDimensions toEntity(AnnouncementDimensionsDTO dto) {
-        return new AnnouncementDimensions(
-                dto.width,
-                dto.height,
-                dto.length,
-                dto.unit
-        );
     }
 }

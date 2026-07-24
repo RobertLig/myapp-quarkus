@@ -22,7 +22,8 @@ public class Stop {
     }
 
     // Optional convenience constructor
-    public Stop(String address, double latitude, double longitude) {
+    public Stop(Long id, String address, double latitude, double longitude) {
+        this.id = id;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;

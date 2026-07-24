@@ -2,44 +2,36 @@ package org.example.myapp.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import jakarta.validation.Valid;
 
 public class AnnouncementDTO {
 
     public Long id;
 
-    // Required
     public String type; // "sender" or "courier"
-
-    // Required
     public Long userId;
 
-    // Optional
-    @Valid
+    // Dimensions (DTO includes unit for input/output)
     public AnnouncementDimensionsDTO dimensions;
 
-    // Optional
-    @Valid
     public AnnouncementWeightDTO weight;
 
-    // Required
+    // Posting place
     public String postingPlace;
+    public double postingLatitude;
+    public double postingLongitude;
 
-    // Required
+    // Reception place
     public String receptionPlace;
+    public double receptionLatitude;
+    public double receptionLongitude;
 
-    // Required
     public LocalDateTime postingDateTime;
-
-    // Required
     public LocalDateTime receptionDateTime;
 
-    // Required: must contain exactly "en" and "pl"
-    public List<@Valid AnnouncementTranslationDTO> translations;
+    public List<AnnouncementTranslationDTO> translations;
+    public List<StopDTO> stops;
+    public List<PhotoDTO> photos;
 
-    // Optional
-    public List<@Valid StopDTO> stops;
-
-    // Optional
-    public List<@Valid PhotoDTO> photos;
+    public AnnouncementDTO() {
+    }
 }

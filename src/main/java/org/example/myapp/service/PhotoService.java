@@ -3,6 +3,7 @@ package org.example.myapp.service;
 import org.example.myapp.model.Photo;
 import org.example.myapp.repository.PhotoRepository;
 import org.example.myapp.dto.PhotoDTO;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -15,6 +16,10 @@ public class PhotoService {
 
     @Inject
     PhotoRepository photoRepository;
+
+    // -----------------------
+    // CRUD
+    // -----------------------
 
     public List<Photo> findAll() {
         return photoRepository.listAll();
@@ -35,24 +40,37 @@ public class PhotoService {
         return photoRepository.deleteById(id);
     }
 
+    // -----------------------
+    // DTO → ENTITY
+    // -----------------------
+
+    public Photo toEntity(PhotoDTO dto) {
+        return new Photo(
+                dto.id,
+                dto.url,
+                dto.position
+        );
+    }
+
+    // -----------------------
+    // ENTITY → DTO
+    // -----------------------
+
     public PhotoDTO toDTO(Photo photo) {
         PhotoDTO dto = new PhotoDTO();
         dto.id = photo.getId();
         dto.url = photo.getUrl();
+        dto.position = photo.getPosition();
         return dto;
     }
 
-    public Photo toEntity(PhotoDTO dto) {
-        Photo photo = new Photo();
-        photo.setId(dto.id);
-        photo.setUrl(dto.url);
-        return photo;
-    }
+    // -----------------------
+    // UPDATE
+    // -----------------------
 
     @Transactional
     public Photo update(Photo photo) {
         // Panache automatically updates managed entities
-        photoRepository.persist(photo);
         return photo;
     }
 }

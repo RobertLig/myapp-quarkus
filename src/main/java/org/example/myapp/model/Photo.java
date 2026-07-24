@@ -22,7 +22,8 @@ public class Photo {
     }
 
     // Optional convenience constructor
-    public Photo(String url, Integer position) {
+    public Photo(Long id, String url, int position) {
+        this.id = id;
         this.url = url;
         this.position = position;
     }

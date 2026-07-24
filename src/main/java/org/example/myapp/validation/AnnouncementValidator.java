@@ -16,6 +16,7 @@ public class AnnouncementValidator {
         validateRequiredFields(dto, errors);
         validateType(dto, errors);
         validatePlaces(dto, errors);
+        validateCoordinates(dto, errors);
         validateDates(dto, errors);
         validateDimensions(dto, errors);
         validateWeight(dto, errors);
@@ -79,6 +80,34 @@ public class AnnouncementValidator {
     }
 
     // ------------------------------------------------------------
+    // Coordinates validation
+    // ------------------------------------------------------------
+    private void validateCoordinates(AnnouncementDTO dto, List<String> errors) {
+
+        // Posting coordinates
+        if (dto.postingLatitude < -90 || dto.postingLatitude > 90) {
+            errors.add("Posting latitude must be between -90 and 90");
+        }
+        if (dto.postingLongitude < -180 || dto.postingLongitude > 180) {
+            errors.add("Posting longitude must be between -180 and 180");
+        }
+
+        // Reception coordinates
+        if (dto.receptionLatitude < -90 || dto.receptionLatitude > 90) {
+            errors.add("Reception latitude must be between -90 and 90");
+        }
+        if (dto.receptionLongitude < -180 || dto.receptionLongitude > 180) {
+            errors.add("Reception longitude must be between -180 and 180");
+        }
+
+        // Optional: prevent identical coordinates
+        if (dto.postingLatitude == dto.receptionLatitude &&
+                dto.postingLongitude == dto.receptionLongitude) {
+            errors.add("Posting and reception coordinates cannot be identical");
+        }
+    }
+
+    // ------------------------------------------------------------
     // Dates validation
     // ------------------------------------------------------------
     private void validateDates(AnnouncementDTO dto, List<String> errors) {
@@ -108,6 +137,12 @@ public class AnnouncementValidator {
         if (d.length <= 0) {
             errors.add("Length must be positive");
         }
+
+        if (d.unit == null || d.unit.isBlank()) {
+            errors.add("Dimensions unit is required");
+        } else if (!d.unit.equals("metric") && !d.unit.equals("imperial")) {
+            errors.add("Dimensions unit must be 'metric' or 'imperial'");
+        }
     }
 
     // ------------------------------------------------------------
@@ -122,7 +157,14 @@ public class AnnouncementValidator {
         if (w.value <= 0) {
             errors.add("Weight must be positive");
         }
+
+        if (w.unit == null || w.unit.isBlank()) {
+            errors.add("Weight unit is required");
+        } else if (!w.unit.equals("metric") && !w.unit.equals("imperial")) {
+            errors.add("Weight unit must be 'metric' or 'imperial'");
+        }
     }
+
 
     // ------------------------------------------------------------
     // Translations validation (required)
@@ -152,7 +194,5 @@ public class AnnouncementValidator {
         if (t.title == null || t.title.isBlank()) {
             errors.add("Translation title is required");
         }
-
-        // description optional → no validation needed
     }
 }
