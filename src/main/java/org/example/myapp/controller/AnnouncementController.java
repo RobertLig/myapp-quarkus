@@ -68,8 +68,8 @@ public class AnnouncementController {
 
     @POST
     public Response create(@Valid AnnouncementDTO dto, HttpHeaders headers) {
-        Announcement entity = announcementService.toAnnouncementEntity(dto);
-        Announcement saved = announcementService.create(entity);
+
+        Announcement saved = announcementService.createAnnouncement(dto);
 
         return Response.ok(java.util.Map.of(
                 "message", messageService.get("announcement.created", headers),

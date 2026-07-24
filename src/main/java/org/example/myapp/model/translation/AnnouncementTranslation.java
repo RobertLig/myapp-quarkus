@@ -10,20 +10,28 @@ public class AnnouncementTranslation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String language; // "en", "pl"
+    private String language;     // "en", "pl"
     private String title;
     private String description;
 
     @ManyToOne
+    @JoinColumn(name = "announcement_id")
     private Announcement announcement;
 
-    // getters and setters
-    public Long getId() {
-        return id;
+    // Required by JPA
+    protected AnnouncementTranslation() {
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    // Optional convenience constructor
+    public AnnouncementTranslation(String language, String title, String description) {
+        this.language = language;
+        this.title = title;
+        this.description = description;
+    }
+
+    // Getters & setters
+    public Long getId() {
+        return id;
     }
 
     public String getLanguage() {

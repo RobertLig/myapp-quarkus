@@ -1,20 +1,21 @@
 package org.example.myapp.dto;
 
-import jakarta.validation.constraints.*;
-
 public class AnnouncementDimensionsDTO {
 
-    @Positive(message = "Width must be positive")
     public double width;
-
-    @Positive(message = "Height must be positive")
     public double height;
-
-    @Positive(message = "Length must be positive")
     public double length;
 
-    @NotBlank(message = "Unit is required")
+    // "metric" or "imperial"
     public String unit;
+
+    public AnnouncementDimensionsDTO() {
+    }
+
+    public AnnouncementDimensionsDTO(double width, double height, double length, String unit) {
+        this.width = width;
+        this.height = height;
+        this.length = length;
+        this.unit = unit;
+    }
 }
-
-

@@ -11,18 +11,25 @@ public class Photo {
 
     private String url;
 
-    @ManyToOne
-    private Announcement announcement;
-
     private Integer position;
 
-    // getters and setters
-    public Long getId() {
-        return id;
+    @ManyToOne
+    @JoinColumn(name = "announcement_id")
+    private Announcement announcement;
+
+    // Required by JPA
+    protected Photo() {
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    // Optional convenience constructor
+    public Photo(String url, Integer position) {
+        this.url = url;
+        this.position = position;
+    }
+
+    // Getters & setters
+    public Long getId() {
+        return id;
     }
 
     public String getUrl() {
@@ -33,19 +40,19 @@ public class Photo {
         this.url = url;
     }
 
-    public Announcement getAnnouncement() {
-        return announcement;
-    }
-
-    public void setAnnouncement(Announcement announcement) {
-        this.announcement = announcement;
-    }
-
     public Integer getPosition() {
         return position;
     }
 
     public void setPosition(Integer position) {
         this.position = position;
+    }
+
+    public Announcement getAnnouncement() {
+        return announcement;
+    }
+
+    public void setAnnouncement(Announcement announcement) {
+        this.announcement = announcement;
     }
 }

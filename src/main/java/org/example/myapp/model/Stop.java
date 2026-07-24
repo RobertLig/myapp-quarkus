@@ -14,15 +14,23 @@ public class Stop {
     private double longitude;
 
     @ManyToOne
+    @JoinColumn(name = "announcement_id")
     private Announcement announcement;
 
-    // getters and setters
-    public Long getId() {
-        return id;
+    // Required by JPA
+    protected Stop() {
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    // Optional convenience constructor
+    public Stop(String address, double latitude, double longitude) {
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    // Getters & setters
+    public Long getId() {
+        return id;
     }
 
     public String getAddress() {
@@ -33,19 +41,19 @@ public class Stop {
         this.address = address;
     }
 
-    public Double getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(Double latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
-    public Double getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(Double longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 

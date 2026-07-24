@@ -7,6 +7,14 @@ public class AnnouncementWeight {
 
     private double value;
 
+    // Required by JPA
+    protected AnnouncementWeight() {
+    }
+
+    // Custom constructor
+    public AnnouncementWeight(double value) {
+        this.value = value;
+    }
 
     public double getValue() {
         return value;

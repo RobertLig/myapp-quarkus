@@ -1,5 +1,6 @@
 package org.example.myapp.service;
 
+import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.model.*;
 import org.example.myapp.dto.*;
 import org.example.myapp.repository.AnnouncementRepository;
@@ -23,7 +24,13 @@ public class AnnouncementService {
     AnnouncementRepository announcementRepository;
 
     @Inject
+    TranslationService translationService;
+
+    @Inject
     UserService userService;
+
+    @Inject
+    DimensionConversionService dimensionConversionService;
 
     // -----------------------
     // CRUD
@@ -38,8 +45,74 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public Announcement create(Announcement announcement) {
+    public Announcement createAnnouncement(AnnouncementDTO dto) {
+
+        // 1. Validate DTO
+        var errors = announcementValidator.validate(dto);
+        if (!errors.isEmpty()) {
+            throw new WebApplicationException(String.join(", ", errors), 400);
+        }
+
+        // 2. Ensure user exists
+        var user = userService.findById(dto.userId);
+        if (user.isEmpty()) {
+            throw new WebApplicationException("User not found", 400);
+        }
+
+        // 3. Create entity (without translations yet)
+        Announcement announcement = new Announcement();
+        announcement.setType(dto.type);
+        announcement.setUser(user.get());
+        announcement.setPostingPlace(dto.postingPlace);
+        announcement.setReceptionPlace(dto.receptionPlace);
+        announcement.setPostingDateTime(dto.postingDateTime);
+        announcement.setReceptionDateTime(dto.receptionDateTime);
+
+        // --- DIMENSIONS (metric-only storage) ---
+        if (dto.dimensions != null) {
+
+            double width = dto.dimensions.width;
+            double height = dto.dimensions.height;
+            double length = dto.dimensions.length;
+
+            if ("imperial".equalsIgnoreCase(dto.dimensions.unit)) {
+                var metric = dimensionConversionService.toMetric(width, height, length);
+                width = metric.width;
+                height = metric.height;
+                length = metric.length;
+            }
+
+            announcement.setDimensions(new AnnouncementDimensions(width, height, length));
+        }
+
+        // --- WEIGHT ---
+        if (dto.weight != null) {
+            announcement.setWeight(new AnnouncementWeight(dto.weight.value));
+        }
+
+        // 4. Handle translations
+        AnnouncementTranslationDTO original = dto.translations.get(0);
+
+        var translatedEn = translationService.translate(original, "en");
+        var translatedPl = translationService.translate(original, "pl");
+
+        AnnouncementTranslation en = new AnnouncementTranslation();
+        en.setLanguage("en");
+        en.setTitle(translatedEn.title);
+        en.setDescription(translatedEn.description);
+        en.setAnnouncement(announcement);
+
+        AnnouncementTranslation pl = new AnnouncementTranslation();
+        pl.setLanguage("pl");
+        pl.setTitle(translatedPl.title);
+        pl.setDescription(translatedPl.description);
+        pl.setAnnouncement(announcement);
+
+        announcement.setTranslations(List.of(en, pl));
+
+        // 5. Persist
         announcementRepository.persist(announcement);
+
         return announcement;
     }
 
@@ -69,14 +142,11 @@ public class AnnouncementService {
         existing.setWeight(toAnnouncementWeightEntity(dto.weight));
 
         // --- TRANSLATIONS ---
-        // Replace entire list
         List<AnnouncementTranslation> newTranslations = dto.translations.stream()
                 .map(this::toAnnouncementTranslationEntity)
                 .toList();
 
-        // Set back-reference
         newTranslations.forEach(t -> t.setAnnouncement(existing));
-
         existing.setTranslations(newTranslations);
 
         // --- STOPS ---
@@ -85,11 +155,9 @@ public class AnnouncementService {
                 .toList();
 
         newStops.forEach(s -> s.setAnnouncement(existing));
-
         existing.setStops(newStops);
 
         // --- PHOTOS ---
-        // IMPORTANT: do NOT update photos here
         // Photos are managed ONLY via /announcements/{id}/photos endpoints
 
         return existing;
@@ -183,15 +251,28 @@ public class AnnouncementService {
         dto.width = d.getWidth();
         dto.height = d.getHeight();
         dto.length = d.getLength();
+        dto.unit = "metric"; // always stored as metric
         return dto;
     }
 
     public AnnouncementDimensions toAnnouncementDimensionsEntity(AnnouncementDimensionsDTO dto) {
-        AnnouncementDimensions d = new AnnouncementDimensions();
-        d.setWidth(dto.width);
-        d.setHeight(dto.height);
-        d.setLength(dto.length);
-        return d;
+
+        if (dto == null) {
+            return null;
+        }
+
+        double width = dto.width;
+        double height = dto.height;
+        double length = dto.length;
+
+        if ("imperial".equalsIgnoreCase(dto.unit)) {
+            var metric = dimensionConversionService.toMetric(width, height, length);
+            width = metric.width;
+            height = metric.height;
+            length = metric.length;
+        }
+
+        return new AnnouncementDimensions(width, height, length);
     }
 
     // -----------------------
@@ -205,9 +286,8 @@ public class AnnouncementService {
     }
 
     public AnnouncementWeight toAnnouncementWeightEntity(AnnouncementWeightDTO dto) {
-        AnnouncementWeight w = new AnnouncementWeight();
-        w.setValue(dto.value);
-        return w;
+        if (dto == null) return null;
+        return new AnnouncementWeight(dto.value);
     }
 
     // -----------------------

@@ -8,11 +8,14 @@ import org.example.myapp.model.translation.AnnouncementTranslation;
 @Entity
 public class Announcement {
 
+    // Required by JPA
+    protected Announcement() {
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // NEW: replaces Sender and Courier entities
     @Column(nullable = false)
     private String type; // "sender" or "courier"
 
@@ -40,7 +43,6 @@ public class Announcement {
     @JoinColumn(name = "user_id")
     private User user;
 
-    // NEW: translations instead of title/description
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL)
     private List<AnnouncementTranslation> translations;
 

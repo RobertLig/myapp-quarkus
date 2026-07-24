@@ -44,11 +44,11 @@ public class AnnouncementDimensionsService {
     }
 
     public AnnouncementDimensions toEntity(AnnouncementDimensionsDTO dto) {
-        AnnouncementDimensions d = new AnnouncementDimensions();
-        d.setWidth(dto.width);
-        d.setHeight(dto.height);
-        d.setLength(dto.length);
-        return d;
+        return new AnnouncementDimensions(
+                dto.width,
+                dto.height,
+                dto.length,
+                dto.unit
+        );
     }
-
 }

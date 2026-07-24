@@ -9,6 +9,16 @@ public class AnnouncementDimensions {
     private double height;
     private double length;
 
+    // Required by JPA
+    protected AnnouncementDimensions() {
+    }
+
+    // Custom constructor for convenience
+    public AnnouncementDimensions(double width, double height, double length) {
+        this.width = width;
+        this.height = height;
+        this.length = length;
+    }
 
     public double getWidth() {
         return width;
