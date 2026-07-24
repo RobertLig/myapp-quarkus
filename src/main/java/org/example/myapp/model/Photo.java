@@ -21,6 +21,11 @@ public class Photo {
     protected Photo() {
     }
 
+    public Photo(String url, int position) {
+        this.url = url;
+        this.position = position;
+    }
+
     // Optional convenience constructor
     public Photo(Long id, String url, int position) {
         this.id = id;

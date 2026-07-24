@@ -204,7 +204,8 @@ public class AnnouncementController {
         }
 
         // Save photo in DB
-        Photo photo = new Photo();
+        Photo photo = new Photo(url, position);
+
         photo.setUrl(url);
         photo.setAnnouncement(announcement);
 
