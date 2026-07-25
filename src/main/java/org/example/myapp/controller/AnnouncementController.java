@@ -204,9 +204,9 @@ public class AnnouncementController {
         }
 
         // Save photo in DB
-        Photo photo = new Photo(url, position);
+        int nextPosition = announcement.getPhotos().size();
+        Photo photo = new Photo(url, nextPosition);
 
-        photo.setUrl(url);
         photo.setAnnouncement(announcement);
 
         Photo saved = photoService.create(photo);

@@ -12,6 +12,7 @@ import org.example.myapp.service.UserService;
 import org.example.myapp.service.ImageStoreService;
 import org.example.myapp.service.ImageLimitService;
 import org.example.myapp.i18n.MessageService;
+import java.util.Optional;
 
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -76,13 +77,16 @@ public class UserController {
     @DELETE
     @Path("/{id}")
     public Response deleteUser(@PathParam("id") Long id) {
-        User user = userService.getUserById(id);
+        Optional<User> userOpt = userService.getUserById(id);
 
-        if (user == null) {
+        if (userOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("User not found")
                     .build();
         }
+
+        User user = userOpt.get();
+
 
         // Delete avatar from S3 if exists
         if (user.getPhotoUrl() != null) {
@@ -100,14 +104,15 @@ public class UserController {
     @GET
     @Path("/{id}")
     public Response getUser(@PathParam("id") Long id) {
-        User user = userService.getUserById(id);
+        Optional<User> userOpt = userService.getUserById(id);
 
-        if (user == null) {
+        if (userOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("User not found")
                     .build();
         }
 
+        User user = userOpt.get();
         return Response.ok(user).build();
     }
 
@@ -122,15 +127,17 @@ public class UserController {
                                  @FormParam("file") byte[] file,
                                  HttpHeaders headers) {
 
-        User user = userService.getUserById(id);
+        Optional<User> userOpt = userService.getUserById(id);
 
-        if (user == null) {
+        if (userOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(java.util.Map.of(
                             "error", messageService.get("error.notfound", headers)
                     ))
                     .build();
         }
+
+        User user = userOpt.get();
 
         // Limit: user can have only 1 avatar
         if (!imageLimitService.canAddUserAvatar(user)) {
@@ -171,15 +178,17 @@ public class UserController {
     public Response deleteAvatar(@PathParam("id") Long id,
                                  HttpHeaders headers) {
 
-        User user = userService.getUserById(id);
+        Optional<User> userOpt = userService.getUserById(id);
 
-        if (user == null) {
+        if (userOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(java.util.Map.of(
                             "error", messageService.get("error.notfound", headers)
                     ))
                     .build();
         }
+
+        User user = userOpt.get();
 
         if (user.getPhotoUrl() == null) {
             return Response.status(Response.Status.BAD_REQUEST)

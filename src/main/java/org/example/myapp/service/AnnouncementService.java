@@ -54,7 +54,7 @@ public class AnnouncementService {
         }
 
         // 2. Ensure user exists
-        var user = userService.findById(dto.userId);
+        var user = userService.getUserById(dto.userId);
         if (user.isEmpty()) {
             throw new WebApplicationException("User not found", 400);
         }

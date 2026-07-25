@@ -8,6 +8,7 @@ import org.example.myapp.repository.UserRepository;
 import java.util.Base64;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import java.util.Optional;
 
 @ApplicationScoped
 public class UserService {
@@ -95,10 +96,9 @@ public class UserService {
         return true;
     }
 
-    public User getUserById(Long id) {
-        return userRepository.findById(id);
+    public Optional<User> getUserById(Long id) {
+        return userRepository.findByIdOptional(id);
     }
-
 
     // PBKDF2 hashing
     private String hashPassword(String password) {
