@@ -60,9 +60,7 @@ public class AnnouncementService {
         }
 
         // 3. Create entity
-        Announcement announcement = new Announcement();
-        announcement.setType(dto.type);
-        announcement.setUser(user.get());
+        Announcement announcement = new Announcement(dto.type, user.get());
 
         // --- POSTING PLACE ---
         announcement.setPostingPlace(dto.postingPlace);
@@ -113,16 +111,18 @@ public class AnnouncementService {
         var translatedEn = translationService.translate(original, "en");
         var translatedPl = translationService.translate(original, "pl");
 
-        AnnouncementTranslation en = new AnnouncementTranslation();
-        en.setLanguage("en");
-        en.setTitle(translatedEn.title);
-        en.setDescription(translatedEn.description);
+        AnnouncementTranslation en = new AnnouncementTranslation(
+                "en",
+                translatedEn.title,
+                translatedEn.description
+        );
         en.setAnnouncement(announcement);
 
-        AnnouncementTranslation pl = new AnnouncementTranslation();
-        pl.setLanguage("pl");
-        pl.setTitle(translatedPl.title);
-        pl.setDescription(translatedPl.description);
+        AnnouncementTranslation pl = new AnnouncementTranslation(
+                "pl",
+                translatedPl.title,
+                translatedPl.description
+        );
         pl.setAnnouncement(announcement);
 
         announcement.setTranslations(List.of(en, pl));
@@ -154,11 +154,13 @@ public class AnnouncementService {
 
         // --- USER ---
         if (dto.userId != null) {
-            User user = userService.getUserById(dto.userId);
-            if (user == null) {
+            Optional<User> userOpt = userService.getUserById(dto.userId);
+
+            if (userOpt.isEmpty()) {
                 throw new IllegalArgumentException("User not found");
             }
-            existing.setUser(user);
+
+            existing.setUser(userOpt.get());
         }
 
         // --- DIMENSIONS ---
@@ -199,18 +201,20 @@ public class AnnouncementService {
     // -----------------------
 
     public Announcement toAnnouncementEntity(AnnouncementDTO dto) {
-        Announcement a = new Announcement();
 
-        a.setId(dto.id);
-        a.setType(dto.type);
-
-        if (dto.userId != null) {
-            User user = userService.getUserById(dto.userId);
-            a.setUser(user);
+        // User must already be loaded before calling this method
+        Optional<User> userOpt = userService.getUserById(dto.userId);
+        if (userOpt.isEmpty()) {
+            throw new WebApplicationException("User not found", 400);
         }
 
-        a.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
-        a.setWeight(toAnnouncementWeightEntity(dto.weight));
+        User user = userOpt.get();
+
+        // Use the public constructor
+        Announcement a = new Announcement(dto.type, user);
+
+        // Set remaining fields
+        a.setId(dto.id);
 
         // --- POSTING PLACE ---
         a.setPostingPlace(dto.postingPlace);
@@ -229,13 +233,25 @@ public class AnnouncementService {
                 .map(this::toAnnouncementTranslationEntity)
                 .toList());
 
-        a.setStops(dto.stops.stream()
-                .map(this::toStopEntity)
-                .toList());
+        if (dto.dimensions != null) {
+            a.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
+        }
 
-        a.setPhotos(dto.photos.stream()
-                .map(this::toPhotoEntity)
-                .toList());
+        if (dto.weight != null) {
+            a.setWeight(toAnnouncementWeightEntity(dto.weight));
+        }
+
+        if (dto.stops != null) {
+            a.setStops(dto.stops.stream()
+                    .map(this::toStopEntity)
+                    .toList());
+        }
+
+        if (dto.photos != null) {
+            a.setPhotos(dto.photos.stream()
+                    .map(this::toPhotoEntity)
+                    .toList());
+        }
 
         return a;
     }
@@ -351,10 +367,11 @@ public class AnnouncementService {
     }
 
     public AnnouncementTranslation toAnnouncementTranslationEntity(AnnouncementTranslationDTO dto) {
-        AnnouncementTranslation t = new AnnouncementTranslation();
-        t.setLanguage(dto.language);
-        t.setTitle(dto.title);
-        t.setDescription(dto.description);
+        AnnouncementTranslation t = new AnnouncementTranslation(
+                dto.language,
+                dto.title,
+                dto.description
+        );
         return t;
     }
 
@@ -372,12 +389,12 @@ public class AnnouncementService {
     }
 
     public Stop toStopEntity(StopDTO dto) {
-        Stop stop = new Stop();
-        stop.setId(dto.id);
-        stop.setAddress(dto.address);
-        stop.setLatitude(dto.latitude);
-        stop.setLongitude(dto.longitude);
-        return stop;
+        return new Stop(
+                dto.id,
+                dto.address,
+                dto.latitude,
+                dto.longitude
+        );
     }
 
     // -----------------------
@@ -393,11 +410,11 @@ public class AnnouncementService {
     }
 
     public Photo toPhotoEntity(PhotoDTO dto) {
-        Photo photo = new Photo();
-        photo.setId(dto.id);
-        photo.setUrl(dto.url);
-        photo.setPosition(dto.position);
-        return photo;
+        return new Photo(
+                dto.id,
+                dto.url,
+                dto.position
+        );
     }
 
     // -----------------------

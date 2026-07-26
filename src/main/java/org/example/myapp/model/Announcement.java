@@ -12,6 +12,11 @@ public class Announcement {
     protected Announcement() {
     }
 
+    public Announcement(String type, User user) {
+        this.type = type;
+        this.user = user;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
