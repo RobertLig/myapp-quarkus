@@ -13,6 +13,9 @@ public class Stop {
     private double latitude;
     private double longitude;
 
+    @Column(nullable = false)
+    public int position;
+
     @ManyToOne
     @JoinColumn(name = "announcement_id")
     private Announcement announcement;
@@ -22,11 +25,12 @@ public class Stop {
     }
 
     // Optional convenience constructor
-    public Stop(Long id, String address, double latitude, double longitude) {
+    public Stop(Long id, String address, double latitude, double longitude, int position) {
         this.id = id;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.position = position;
     }
 
     // Getters & setters

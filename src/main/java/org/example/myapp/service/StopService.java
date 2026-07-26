@@ -49,9 +49,11 @@ public class StopService {
                 dto.id,
                 dto.address,
                 dto.latitude,
-                dto.longitude
+                dto.longitude,
+                dto.position != null ? dto.position : 0
         );
     }
+
 
     // -----------------------
     // ENTITY → DTO

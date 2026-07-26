@@ -393,7 +393,8 @@ public class AnnouncementService {
                 dto.id,
                 dto.address,
                 dto.latitude,
-                dto.longitude
+                dto.longitude,
+                dto.position
         );
     }
 

@@ -21,6 +21,7 @@ public class AnnouncementValidator {
         validateDimensions(dto, errors);
         validateWeight(dto, errors);
         validateTranslations(dto, errors);
+        validateStops(dto, errors);
 
         return errors;
     }
@@ -193,6 +194,31 @@ public class AnnouncementValidator {
 
         if (t.title == null || t.title.isBlank()) {
             errors.add("Translation title is required");
+        }
+    }
+
+    private void validateStops(AnnouncementDTO dto, List<String> errors) {
+
+        if (dto.stops == null) return; // stops are optional
+
+        for (int i = 0; i < dto.stops.size(); i++) {
+            StopDTO s = dto.stops.get(i);
+
+            if (s.address == null || s.address.isBlank()) {
+                errors.add("Stop " + (i + 1) + ": address is required");
+            }
+
+            if (s.latitude == null) {
+                errors.add("Stop " + (i + 1) + ": latitude is required");
+            } else if (s.latitude < -90 || s.latitude > 90) {
+                errors.add("Stop " + (i + 1) + ": latitude must be between -90 and 90");
+            }
+
+            if (s.longitude == null) {
+                errors.add("Stop " + (i + 1) + ": longitude is required");
+            } else if (s.longitude < -180 || s.longitude > 180) {
+                errors.add("Stop " + (i + 1) + ": longitude must be between -180 and 180");
+            }
         }
     }
 }
