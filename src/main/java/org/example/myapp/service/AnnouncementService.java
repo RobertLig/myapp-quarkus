@@ -11,6 +11,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +33,12 @@ public class AnnouncementService {
 
     @Inject
     DimensionConversionService dimensionConversionService;
+
+    @Inject
+    StopService stopService;
+
+    @Inject
+    PhotoService photoService;
 
     // -----------------------
     // CRUD
@@ -126,6 +134,54 @@ public class AnnouncementService {
         pl.setAnnouncement(announcement);
 
         announcement.setTranslations(List.of(en, pl));
+
+        // --- STOPS (optional, ordered) ---
+        if (dto.stops != null && !dto.stops.isEmpty()) {
+
+            List<Stop> stops = new ArrayList<>();
+
+            for (int i = 0; i < dto.stops.size(); i++) {
+                StopDTO stopDTO = dto.stops.get(i);
+
+                // Assign order from frontend or fallback to index
+                if (stopDTO.position == null) {
+                    stopDTO.position = Integer.valueOf(i);
+                }
+
+                Stop stop = stopService.toEntity(stopDTO);
+                stop.setAnnouncement(announcement); // if you have bidirectional mapping
+                stops.add(stop);
+            }
+
+            // Sort by position to ensure correct order
+            stops.sort(Comparator.comparingInt(s -> s.position));
+
+            announcement.setStops(stops);
+        }
+
+        // --- PHOTOS (optional, ordered) ---
+        if (dto.photos != null && !dto.photos.isEmpty()) {
+
+            List<Photo> photos = new ArrayList<>();
+
+            for (int i = 0; i < dto.photos.size(); i++) {
+                PhotoDTO photoDTO = dto.photos.get(i);
+
+                // Assign order if missing
+                if (photoDTO.position == null) {
+                    photoDTO.position = Integer.valueOf(i);
+                }
+
+                Photo photo = photoService.toEntity(photoDTO);
+                photo.setAnnouncement(announcement); // if bidirectional
+                photos.add(photo);
+            }
+
+            // Ensure correct order
+            photos.sort(Comparator.comparingInt(p -> p.position));
+
+            announcement.setPhotos(photos);
+        }
 
         // 5. Persist
         announcementRepository.persist(announcement);

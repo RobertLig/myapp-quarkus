@@ -11,7 +11,9 @@ public class Photo {
 
     private String url;
 
-    private Integer position;
+    @Column(nullable = false)
+    public int position;
+
 
     @ManyToOne
     @JoinColumn(name = "announcement_id")
@@ -46,7 +48,7 @@ public class Photo {
         this.url = url;
     }
 
-    public Integer getPosition() {
+    public int getPosition() {
         return position;
     }
 
