@@ -35,6 +35,15 @@ public class PhotoService {
         return photo;
     }
 
+    // -----------------------
+    // UPDATE
+    // -----------------------
+    @Transactional
+    public Photo update(Photo photo) {
+        // Panache automatically updates managed entities
+        return photo;
+    }
+
     @Transactional
     public boolean delete(Long id) {
         return photoRepository.deleteById(id);
@@ -62,15 +71,5 @@ public class PhotoService {
         dto.url = photo.getUrl();
         dto.position = photo.getPosition();
         return dto;
-    }
-
-    // -----------------------
-    // UPDATE
-    // -----------------------
-
-    @Transactional
-    public Photo update(Photo photo) {
-        // Panache automatically updates managed entities
-        return photo;
     }
 }

@@ -53,7 +53,7 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public Announcement createAnnouncement(AnnouncementDTO dto) {
+    public Announcement create(AnnouncementDTO dto) {
 
         // 1. Validate DTO
         var errors = announcementValidator.validate(dto);
@@ -116,20 +116,25 @@ public class AnnouncementService {
         // --- TRANSLATIONS ---
         AnnouncementTranslationDTO original = dto.translations.get(0);
 
-        var translatedEn = translationService.translate(original, "en");
-        var translatedPl = translationService.translate(original, "pl");
+        // English
+        var enTitle = translationService.translate(original.title, "en");
+        var enDesc  = translationService.translate(original.description, "en");
+
+        // Polish
+        var plTitle = translationService.translate(original.title, "pl");
+        var plDesc  = translationService.translate(original.description, "pl");
 
         AnnouncementTranslation en = new AnnouncementTranslation(
                 "en",
-                translatedEn.title,
-                translatedEn.description
+                enTitle.text,
+                enDesc.text
         );
         en.setAnnouncement(announcement);
 
         AnnouncementTranslation pl = new AnnouncementTranslation(
                 "pl",
-                translatedPl.title,
-                translatedPl.description
+                plTitle.text,
+                plDesc.text
         );
         pl.setAnnouncement(announcement);
 
@@ -157,30 +162,6 @@ public class AnnouncementService {
             stops.sort(Comparator.comparingInt(s -> s.position));
 
             announcement.setStops(stops);
-        }
-
-        // --- PHOTOS (optional, ordered) ---
-        if (dto.photos != null && !dto.photos.isEmpty()) {
-
-            List<Photo> photos = new ArrayList<>();
-
-            for (int i = 0; i < dto.photos.size(); i++) {
-                PhotoDTO photoDTO = dto.photos.get(i);
-
-                // Assign order if missing
-                if (photoDTO.position == null) {
-                    photoDTO.position = Integer.valueOf(i);
-                }
-
-                Photo photo = photoService.toEntity(photoDTO);
-                photo.setAnnouncement(announcement); // if bidirectional
-                photos.add(photo);
-            }
-
-            // Ensure correct order
-            photos.sort(Comparator.comparingInt(p -> p.position));
-
-            announcement.setPhotos(photos);
         }
 
         // 5. Persist
