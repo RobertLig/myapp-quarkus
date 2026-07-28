@@ -55,27 +55,42 @@ public class AnnouncementService {
     @Transactional
     public Announcement create(AnnouncementDTO dto) {
 
-        // 1. Validate DTO
-        var errors = announcementValidator.validate(dto);
-        if (!errors.isEmpty()) {
-            throw new WebApplicationException(String.join(", ", errors), 400);
-        }
-
-        // 2. Ensure user exists
         var user = userService.getUserById(dto.userId);
         if (user.isEmpty()) {
             throw new WebApplicationException("User not found", 400);
         }
 
-        // 3. Create entity
         Announcement announcement = new Announcement(dto.type, user.get());
 
-        // --- POSTING PLACE ---
+        applyAnnouncementData(announcement, dto);
+
+        announcementRepository.persist(announcement);
+        return announcement;
+    }
+
+    @Transactional
+    public Announcement update(Announcement existing, AnnouncementDTO dto) {
+
+        applyAnnouncementData(existing, dto);
+
+        return existing;
+    }
+
+    private void applyAnnouncementData(Announcement announcement, AnnouncementDTO dto) {
+
+        // --- VALIDATION ---
+        var errors = announcementValidator.validate(dto);
+        if (!errors.isEmpty()) {
+            throw new WebApplicationException(String.join(", ", errors), 400);
+        }
+
+        // --- BASIC FIELDS ---
+        announcement.setType(dto.type);
+
         announcement.setPostingPlace(dto.postingPlace);
         announcement.setPostingLatitude(dto.postingLatitude);
         announcement.setPostingLongitude(dto.postingLongitude);
 
-        // --- RECEPTION PLACE ---
         announcement.setReceptionPlace(dto.receptionPlace);
         announcement.setReceptionLatitude(dto.receptionLatitude);
         announcement.setReceptionLongitude(dto.receptionLongitude);
@@ -83,44 +98,27 @@ public class AnnouncementService {
         announcement.setPostingDateTime(dto.postingDateTime);
         announcement.setReceptionDateTime(dto.receptionDateTime);
 
-        // --- DIMENSIONS (metric-only storage) ---
-        if (dto.dimensions != null) {
-
-            double width = dto.dimensions.width;
-            double height = dto.dimensions.height;
-            double length = dto.dimensions.length;
-
-            if ("imperial".equalsIgnoreCase(dto.dimensions.unit)) {
-                var metric = dimensionConversionService.toMetric(width, height, length);
-                width = metric.width;
-                height = metric.height;
-                length = metric.length;
+        // --- USER ---
+        if (dto.userId != null) {
+            var userOpt = userService.getUserById(dto.userId);
+            if (userOpt.isEmpty()) {
+                throw new WebApplicationException("User not found", 400);
             }
-
-            announcement.setDimensions(new AnnouncementDimensions(width, height, length));
+            announcement.setUser(userOpt.get());
         }
+
+        // --- DIMENSIONS ---
+        announcement.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
 
         // --- WEIGHT ---
-        if (dto.weight != null) {
-
-            double weightValue = dto.weight.value;
-
-            if ("imperial".equalsIgnoreCase(dto.weight.unit)) {
-                // convert pounds → kilograms
-                weightValue = weightValue * 0.45359237;
-            }
-
-            announcement.setWeight(new AnnouncementWeight(weightValue));
-        }
+        announcement.setWeight(toAnnouncementWeightEntity(dto.weight));
 
         // --- TRANSLATIONS ---
         AnnouncementTranslationDTO original = dto.translations.get(0);
 
-        // English
         var enTitle = translationService.translate(original.title, "en");
         var enDesc  = translationService.translate(original.description, "en");
 
-        // Polish
         var plTitle = translationService.translate(original.title, "pl");
         var plDesc  = translationService.translate(original.description, "pl");
 
@@ -140,7 +138,7 @@ public class AnnouncementService {
 
         announcement.setTranslations(List.of(en, pl));
 
-        // --- STOPS (optional, ordered) ---
+        // --- STOPS ---
         if (dto.stops != null && !dto.stops.isEmpty()) {
 
             List<Stop> stops = new ArrayList<>();
@@ -148,84 +146,18 @@ public class AnnouncementService {
             for (int i = 0; i < dto.stops.size(); i++) {
                 StopDTO stopDTO = dto.stops.get(i);
 
-                // Assign order from frontend or fallback to index
                 if (stopDTO.position == null) {
-                    stopDTO.position = Integer.valueOf(i);
+                    stopDTO.position = i;
                 }
 
                 Stop stop = stopService.toEntity(stopDTO);
-                stop.setAnnouncement(announcement); // if you have bidirectional mapping
+                stop.setAnnouncement(announcement);
                 stops.add(stop);
             }
 
-            // Sort by position to ensure correct order
             stops.sort(Comparator.comparingInt(s -> s.position));
-
             announcement.setStops(stops);
         }
-
-        // 5. Persist
-        announcementRepository.persist(announcement);
-
-        return announcement;
-    }
-
-    @Transactional
-    public Announcement update(Announcement existing, AnnouncementDTO dto) {
-
-        // --- BASIC FIELDS ---
-        existing.setType(dto.type);
-
-        // --- POSTING PLACE ---
-        existing.setPostingPlace(dto.postingPlace);
-        existing.setPostingLatitude(dto.postingLatitude);
-        existing.setPostingLongitude(dto.postingLongitude);
-
-        // --- RECEPTION PLACE ---
-        existing.setReceptionPlace(dto.receptionPlace);
-        existing.setReceptionLatitude(dto.receptionLatitude);
-        existing.setReceptionLongitude(dto.receptionLongitude);
-
-        existing.setPostingDateTime(dto.postingDateTime);
-        existing.setReceptionDateTime(dto.receptionDateTime);
-
-        // --- USER ---
-        if (dto.userId != null) {
-            Optional<User> userOpt = userService.getUserById(dto.userId);
-
-            if (userOpt.isEmpty()) {
-                throw new IllegalArgumentException("User not found");
-            }
-
-            existing.setUser(userOpt.get());
-        }
-
-        // --- DIMENSIONS ---
-        existing.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
-
-        // --- WEIGHT ---
-        existing.setWeight(toAnnouncementWeightEntity(dto.weight));
-
-        // --- TRANSLATIONS ---
-        List<AnnouncementTranslation> newTranslations = dto.translations.stream()
-                .map(this::toAnnouncementTranslationEntity)
-                .toList();
-
-        newTranslations.forEach(t -> t.setAnnouncement(existing));
-        existing.setTranslations(newTranslations);
-
-        // --- STOPS ---
-        List<Stop> newStops = dto.stops.stream()
-                .map(this::toStopEntity)
-                .toList();
-
-        newStops.forEach(s -> s.setAnnouncement(existing));
-        existing.setStops(newStops);
-
-        // --- PHOTOS ---
-        // Photos are managed ONLY via /announcements/{id}/photos endpoints
-
-        return existing;
     }
 
     @Transactional
