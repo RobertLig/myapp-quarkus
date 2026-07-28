@@ -52,6 +52,33 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
                     .build();
         }
 
+        // Custom validator errors (WebApplicationException thrown manually)
+        if (exception instanceof jakarta.ws.rs.WebApplicationException wae) {
+
+            String raw = wae.getMessage();
+
+            String key = raw;
+            String param = null;
+
+            if (raw.contains(":")) {
+                String[] parts = raw.split(":", 2);
+                key = parts[0];
+                param = parts[1];
+            }
+
+            String translated = messageService.get(key, headers);
+
+            if (param != null) {
+                translated = translated.replace("{0}", param);
+            }
+
+            return Response.status(wae.getResponse().getStatus())
+                    .entity(Map.of(
+                            "error", translated
+                    ))
+                    .build();
+        }
+
         // Internal server error
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(Map.of(

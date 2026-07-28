@@ -37,9 +37,6 @@ public class AnnouncementService {
     @Inject
     StopService stopService;
 
-    @Inject
-    PhotoService photoService;
-
     // -----------------------
     // CRUD
     // -----------------------

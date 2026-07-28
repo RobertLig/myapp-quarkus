@@ -32,27 +32,27 @@ public class AnnouncementValidator {
     private void validateRequiredFields(AnnouncementDTO dto, List<String> errors) {
 
         if (dto.type == null || dto.type.isBlank()) {
-            errors.add("Type is required");
+            errors.add("error.type.required");
         }
 
         if (dto.userId == null) {
-            errors.add("User ID is required");
+            errors.add("error.user.required");
         }
 
         if (dto.postingPlace == null || dto.postingPlace.isBlank()) {
-            errors.add("Posting place is required");
+            errors.add("error.postingPlace.required");
         }
 
         if (dto.receptionPlace == null || dto.receptionPlace.isBlank()) {
-            errors.add("Reception place is required");
+            errors.add("error.receptionPlace.required");
         }
 
         if (dto.postingDateTime == null) {
-            errors.add("Posting date/time is required");
+            errors.add("error.postingDateTime.required");
         }
 
         if (dto.receptionDateTime == null) {
-            errors.add("Reception date/time is required");
+            errors.add("error.receptionDateTime.required");
         }
     }
 
@@ -64,7 +64,7 @@ public class AnnouncementValidator {
         if (dto.type == null) return;
 
         if (!dto.type.equals("sender") && !dto.type.equals("courier")) {
-            errors.add("Type must be either 'sender' or 'courier'");
+            errors.add("error.type.invalid");
         }
     }
 
@@ -76,7 +76,7 @@ public class AnnouncementValidator {
         if (dto.postingPlace == null || dto.receptionPlace == null) return;
 
         if (dto.postingPlace.equalsIgnoreCase(dto.receptionPlace)) {
-            errors.add("Posting place and reception place cannot be the same");
+            errors.add("error.place.same");
         }
     }
 
@@ -87,24 +87,24 @@ public class AnnouncementValidator {
 
         // Posting coordinates
         if (dto.postingLatitude < -90 || dto.postingLatitude > 90) {
-            errors.add("Posting latitude must be between -90 and 90");
+            errors.add("error.posting.latitude.range");
         }
         if (dto.postingLongitude < -180 || dto.postingLongitude > 180) {
-            errors.add("Posting longitude must be between -180 and 180");
+            errors.add("error.posting.longitude.range");
         }
 
         // Reception coordinates
         if (dto.receptionLatitude < -90 || dto.receptionLatitude > 90) {
-            errors.add("Reception latitude must be between -90 and 90");
+            errors.add("error.reception.latitude.range");
         }
         if (dto.receptionLongitude < -180 || dto.receptionLongitude > 180) {
-            errors.add("Reception longitude must be between -180 and 180");
+            errors.add("error.reception.longitude.range");
         }
 
         // Optional: prevent identical coordinates
         if (dto.postingLatitude == dto.receptionLatitude &&
                 dto.postingLongitude == dto.receptionLongitude) {
-            errors.add("Posting and reception coordinates cannot be identical");
+            errors.add("error.coordinates.same");
         }
     }
 
@@ -116,7 +116,7 @@ public class AnnouncementValidator {
         if (dto.postingDateTime == null || dto.receptionDateTime == null) return;
 
         if (dto.postingDateTime.isAfter(dto.receptionDateTime)) {
-            errors.add("Posting date/time must be before reception date/time");
+            errors.add("error.date.order");
         }
     }
 
@@ -130,19 +130,19 @@ public class AnnouncementValidator {
         var d = dto.dimensions;
 
         if (d.width <= 0) {
-            errors.add("Width must be positive");
+            errors.add("error.dimensions.width.positive");
         }
         if (d.height <= 0) {
-            errors.add("Height must be positive");
+            errors.add("error.dimensions.height.positive");
         }
         if (d.length <= 0) {
-            errors.add("Length must be positive");
+            errors.add("error.dimensions.length.positive");
         }
 
         if (d.unit == null || d.unit.isBlank()) {
-            errors.add("Dimensions unit is required");
+            errors.add("error.dimensions.unit.required");
         } else if (!d.unit.equals("metric") && !d.unit.equals("imperial")) {
-            errors.add("Dimensions unit must be 'metric' or 'imperial'");
+            errors.add("error.dimensions.unit.invalid");
         }
     }
 
@@ -156,13 +156,13 @@ public class AnnouncementValidator {
         var w = dto.weight;
 
         if (w.value <= 0) {
-            errors.add("Weight must be positive");
+            errors.add("error.weight.positive");
         }
 
         if (w.unit == null || w.unit.isBlank()) {
-            errors.add("Weight unit is required");
+            errors.add("error.weight.unit.required");
         } else if (!w.unit.equals("metric") && !w.unit.equals("imperial")) {
-            errors.add("Weight unit must be 'metric' or 'imperial'");
+            errors.add("error.weight.unit.invalid");
         }
     }
 
@@ -173,27 +173,27 @@ public class AnnouncementValidator {
     private void validateTranslations(AnnouncementDTO dto, List<String> errors) {
 
         if (dto.translations == null || dto.translations.isEmpty()) {
-            errors.add("At least one translation is required");
+            errors.add("error.translation.required");
             return;
         }
 
         if (dto.translations.size() != 1) {
-            errors.add("Only one translation should be submitted. Other languages will be generated automatically.");
+            errors.add("error.translation.single");
             return;
         }
 
         var t = dto.translations.get(0);
 
         if (t.language == null || t.language.isBlank()) {
-            errors.add("Translation language is required");
+            errors.add("error.translation.language.required");
         }
 
         if (!t.language.equals("en") && !t.language.equals("pl")) {
-            errors.add("Translation language must be 'en' or 'pl'");
+            errors.add("error.translation.language.invalid");
         }
 
         if (t.title == null || t.title.isBlank()) {
-            errors.add("Translation title is required");
+            errors.add("error.translation.title.required");
         }
     }
 
@@ -205,19 +205,19 @@ public class AnnouncementValidator {
             StopDTO s = dto.stops.get(i);
 
             if (s.address == null || s.address.isBlank()) {
-                errors.add("Stop " + (i + 1) + ": address is required");
+                errors.add("error.stop.address.required:" + (i + 1));
             }
 
             if (s.latitude == null) {
-                errors.add("Stop " + (i + 1) + ": latitude is required");
+                errors.add("error.stop.latitude.required:" + (i + 1));
             } else if (s.latitude < -90 || s.latitude > 90) {
-                errors.add("Stop " + (i + 1) + ": latitude must be between -90 and 90");
+                errors.add("error.stop.latitude.range:" + (i + 1));
             }
 
             if (s.longitude == null) {
-                errors.add("Stop " + (i + 1) + ": longitude is required");
+                errors.add("error.stop.longitude.required:" + (i + 1));
             } else if (s.longitude < -180 || s.longitude > 180) {
-                errors.add("Stop " + (i + 1) + ": longitude must be between -180 and 180");
+                errors.add("error.stop.longitude.range:" + (i + 1));
             }
         }
     }
