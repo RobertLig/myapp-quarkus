@@ -6,7 +6,6 @@ public class PhotoDTO {
 
     public Long id;
 
-    @NotBlank(message = "Photo URL is required")
     public String url;
 
     public Integer position;

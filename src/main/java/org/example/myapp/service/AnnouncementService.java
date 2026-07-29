@@ -54,7 +54,7 @@ public class AnnouncementService {
 
         var user = userService.getUserById(dto.userId);
         if (user.isEmpty()) {
-            throw new WebApplicationException("User not found", 400);
+            throw new WebApplicationException("error.user.required", 400);
         }
 
         Announcement announcement = new Announcement(dto.type, user.get());
@@ -171,7 +171,7 @@ public class AnnouncementService {
         // User must already be loaded before calling this method
         Optional<User> userOpt = userService.getUserById(dto.userId);
         if (userOpt.isEmpty()) {
-            throw new WebApplicationException("User not found", 400);
+            throw new WebApplicationException("error.user.required", 400);
         }
 
         User user = userOpt.get();
