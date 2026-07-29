@@ -32,6 +32,9 @@ public class AnnouncementService {
     UserService userService;
 
     @Inject
+    AnnouncementDimensionsService dimensionsService;
+
+    @Inject
     DimensionConversionService dimensionConversionService;
 
     @Inject
@@ -105,7 +108,7 @@ public class AnnouncementService {
         }
 
         // --- DIMENSIONS ---
-        announcement.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
+        announcement.setDimensions(dimensionsService.toEntity(dto.dimensions));
 
         // --- WEIGHT ---
         announcement.setWeight(toAnnouncementWeightEntity(dto.weight));
@@ -200,7 +203,7 @@ public class AnnouncementService {
                 .toList());
 
         if (dto.dimensions != null) {
-            a.setDimensions(toAnnouncementDimensionsEntity(dto.dimensions));
+            a.setDimensions(dimensionsService.toEntity(dto.dimensions));
         }
 
         if (dto.weight != null) {
@@ -276,27 +279,7 @@ public class AnnouncementService {
         dto.unit = "metric"; // always stored as metric
         return dto;
     }
-
-    public AnnouncementDimensions toAnnouncementDimensionsEntity(AnnouncementDimensionsDTO dto) {
-
-        if (dto == null) {
-            return null;
-        }
-
-        double width = dto.width;
-        double height = dto.height;
-        double length = dto.length;
-
-        if ("imperial".equalsIgnoreCase(dto.unit)) {
-            var metric = dimensionConversionService.toMetric(width, height, length);
-            width = metric.width;
-            height = metric.height;
-            length = metric.length;
-        }
-
-        return new AnnouncementDimensions(width, height, length);
-    }
-
+    
     // -----------------------
     // Weight
     // -----------------------
