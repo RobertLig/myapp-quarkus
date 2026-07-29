@@ -11,9 +11,7 @@ import jakarta.ws.rs.ext.Provider;
 
 import org.example.myapp.i18n.MessageService;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Provider
 public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
@@ -57,27 +55,36 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
 
             String raw = wae.getMessage();
 
-            String key = raw;
-            String param = null;
+            // Split multiple errors: "key1;key2;key3:param"
+            String[] parts = raw.split(";");
 
-            if (raw.contains(":")) {
-                String[] parts = raw.split(":", 2);
-                key = parts[0];
-                param = parts[1];
-            }
+            List<String> translatedErrors = new ArrayList<>();
 
-            String translated = messageService.get(key, headers);
+            for (String part : parts) {
 
-            if (param != null) {
-                translated = translated.replace("{0}", param);
+                String key = part;
+                String param = null;
+
+                if (part.contains(":")) {
+                    String[] sub = part.split(":", 2);
+                    key = sub[0];
+                    param = sub[1];
+                }
+
+                String translated = messageService.get(key, headers);
+
+                if (param != null) {
+                    translated = translated.replace("{0}", param);
+                }
+
+                translatedErrors.add(translated);
             }
 
             return Response.status(wae.getResponse().getStatus())
-                    .entity(Map.of(
-                            "error", translated
-                    ))
+                    .entity(Map.of("errors", translatedErrors))
                     .build();
         }
+
 
         // Internal server error
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)

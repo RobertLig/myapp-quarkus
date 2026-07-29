@@ -78,7 +78,7 @@ public class AnnouncementService {
         // --- VALIDATION ---
         var errors = announcementValidator.validate(dto);
         if (!errors.isEmpty()) {
-            throw new WebApplicationException(String.join(", ", errors), 400);
+            throw new WebApplicationException(String.join(";", errors), 400);
         }
 
         // --- BASIC FIELDS ---
@@ -99,7 +99,7 @@ public class AnnouncementService {
         if (dto.userId != null) {
             var userOpt = userService.getUserById(dto.userId);
             if (userOpt.isEmpty()) {
-                throw new WebApplicationException("User not found", 400);
+                throw new WebApplicationException("error.user.required", 400);
             }
             announcement.setUser(userOpt.get());
         }
