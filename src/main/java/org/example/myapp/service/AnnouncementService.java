@@ -35,7 +35,10 @@ public class AnnouncementService {
     AnnouncementDimensionsService dimensionsService;
 
     @Inject
-    DimensionConversionService dimensionConversionService;
+    AnnouncementWeightService weightService;
+
+    @Inject
+    AnnouncementTranslationService announcementTranslationService;
 
     @Inject
     StopService stopService;
@@ -111,7 +114,7 @@ public class AnnouncementService {
         announcement.setDimensions(dimensionsService.toEntity(dto.dimensions));
 
         // --- WEIGHT ---
-        announcement.setWeight(toAnnouncementWeightEntity(dto.weight));
+        announcement.setWeight(weightService.toEntity(dto.weight));
 
         // --- TRANSLATIONS ---
         AnnouncementTranslationDTO original = dto.translations.get(0);
@@ -198,16 +201,15 @@ public class AnnouncementService {
         a.setPostingDateTime(dto.postingDateTime);
         a.setReceptionDateTime(dto.receptionDateTime);
 
-        a.setTranslations(dto.translations.stream()
-                .map(this::toAnnouncementTranslationEntity)
-                .toList());
+        var translations = announcementTranslationService.toEntityList(dto.translations);
+        announcementTranslationService.attachToAnnouncement(a, translations);
 
         if (dto.dimensions != null) {
             a.setDimensions(dimensionsService.toEntity(dto.dimensions));
         }
 
         if (dto.weight != null) {
-            a.setWeight(toAnnouncementWeightEntity(dto.weight));
+            a.setWeight(weightService.toEntity(dto.weight));
         }
 
         if (dto.stops != null) {
@@ -236,8 +238,8 @@ public class AnnouncementService {
         dto.type = a.getType();
         dto.userId = (a.getUser() != null) ? a.getUser().getId() : null;
 
-        dto.dimensions = toAnnouncementDimensionsDTO(a.getDimensions());
-        dto.weight = toAnnouncementWeightDTO(a.getWeight());
+        dto.dimensions = dimensionsService.toDTO(a.getDimensions());
+        dto.weight = weightService.toDTO(a.getWeight());
 
         // --- POSTING PLACE ---
         dto.postingPlace = a.getPostingPlace();
@@ -252,9 +254,7 @@ public class AnnouncementService {
         dto.postingDateTime = a.getPostingDateTime();
         dto.receptionDateTime = a.getReceptionDateTime();
 
-        dto.translations = a.getTranslations().stream()
-                .map(this::toAnnouncementTranslationDTO)
-                .toList();
+        dto.translations = announcementTranslationService.toDTOList(a.getTranslations());
 
         dto.stops = a.getStops().stream()
                 .map(this::toStopDTO)
@@ -265,63 +265,6 @@ public class AnnouncementService {
                 .toList();
 
         return dto;
-    }
-
-    // -----------------------
-    // Dimensions
-    // -----------------------
-
-    public AnnouncementDimensionsDTO toAnnouncementDimensionsDTO(AnnouncementDimensions d) {
-        AnnouncementDimensionsDTO dto = new AnnouncementDimensionsDTO();
-        dto.width = d.getWidth();
-        dto.height = d.getHeight();
-        dto.length = d.getLength();
-        dto.unit = "metric"; // always stored as metric
-        return dto;
-    }
-    
-    // -----------------------
-    // Weight
-    // -----------------------
-
-    public AnnouncementWeightDTO toAnnouncementWeightDTO(AnnouncementWeight w) {
-        AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
-        dto.value = w.getValue();
-        dto.unit = "metric"; // always metric in DB
-        return dto;
-    }
-
-    public AnnouncementWeight toAnnouncementWeightEntity(AnnouncementWeightDTO dto) {
-        if (dto == null) return null;
-
-        double value = dto.value;
-
-        if ("imperial".equalsIgnoreCase(dto.unit)) {
-            value = value * 0.45359237;
-        }
-
-        return new AnnouncementWeight(value);
-    }
-
-    // -----------------------
-    // Translation
-    // -----------------------
-
-    public AnnouncementTranslationDTO toAnnouncementTranslationDTO(AnnouncementTranslation t) {
-        AnnouncementTranslationDTO dto = new AnnouncementTranslationDTO();
-        dto.language = t.getLanguage();
-        dto.title = t.getTitle();
-        dto.description = t.getDescription();
-        return dto;
-    }
-
-    public AnnouncementTranslation toAnnouncementTranslationEntity(AnnouncementTranslationDTO dto) {
-        AnnouncementTranslation t = new AnnouncementTranslation(
-                dto.language,
-                dto.title,
-                dto.description
-        );
-        return t;
     }
 
     // -----------------------
