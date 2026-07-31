@@ -10,8 +10,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +36,9 @@ public class AnnouncementService {
 
     @Inject
     StopService stopService;
+
+    @Inject
+    PhotoService photoService;
 
     // -----------------------
     // CRUD
@@ -174,11 +175,9 @@ public class AnnouncementService {
                 .map(stopService::toEntity)
                 .toList());
 
-        if (dto.photos != null) {
-            a.setPhotos(dto.photos.stream()
-                    .map(this::toPhotoEntity)
-                    .toList());
-        }
+        a.setPhotos(dto.photos.stream()
+                .map(photoService::toEntity)
+                .toList());
 
         return a;
     }
@@ -217,30 +216,10 @@ public class AnnouncementService {
                 .toList();
 
         dto.photos = a.getPhotos().stream()
-                .map(this::toPhotoDTO)
+                .map(photoService::toDTO)
                 .toList();
 
         return dto;
-    }
-
-    // -----------------------
-    // Photo
-    // -----------------------
-
-    public PhotoDTO toPhotoDTO(Photo photo) {
-        PhotoDTO dto = new PhotoDTO();
-        dto.id = photo.getId();
-        dto.url = photo.getUrl();
-        dto.position = photo.getPosition();
-        return dto;
-    }
-
-    public Photo toPhotoEntity(PhotoDTO dto) {
-        return new Photo(
-                dto.id,
-                dto.url,
-                dto.position
-        );
     }
 
     // -----------------------

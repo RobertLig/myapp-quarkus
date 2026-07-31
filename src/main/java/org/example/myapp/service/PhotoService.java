@@ -54,6 +54,8 @@ public class PhotoService {
     // -----------------------
 
     public Photo toEntity(PhotoDTO dto) {
+        if(dto == null) { return null; }
+
         return new Photo(
                 dto.id,
                 dto.url,
