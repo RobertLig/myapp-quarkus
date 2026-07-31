@@ -132,57 +132,6 @@ public class AnnouncementService {
     }
 
     // -----------------------
-    // DTO → ENTITY
-    // -----------------------
-
-    public Announcement toAnnouncementEntity(AnnouncementDTO dto) {
-
-        // User must already be loaded before calling this method
-        Optional<User> userOpt = userService.getUserById(dto.userId);
-        if (userOpt.isEmpty()) {
-            throw new WebApplicationException("error.user.required", 400);
-        }
-
-        User user = userOpt.get();
-
-        // Use the public constructor
-        Announcement a = new Announcement(dto.type, user);
-
-        // Set remaining fields
-        a.setId(dto.id);
-
-        // --- POSTING PLACE ---
-        a.setPostingPlace(dto.postingPlace);
-        a.setPostingLatitude(dto.postingLatitude);
-        a.setPostingLongitude(dto.postingLongitude);
-
-        // --- RECEPTION PLACE ---
-        a.setReceptionPlace(dto.receptionPlace);
-        a.setReceptionLatitude(dto.receptionLatitude);
-        a.setReceptionLongitude(dto.receptionLongitude);
-
-        a.setPostingDateTime(dto.postingDateTime);
-        a.setReceptionDateTime(dto.receptionDateTime);
-
-        var translations = announcementTranslationService.toEntityList(dto.translations);
-        announcementTranslationService.attachToAnnouncement(a, translations);
-
-        a.setDimensions(dimensionsService.toEntity(dto.dimensions));
-
-        a.setWeight(weightService.toEntity(dto.weight));
-
-        a.setStops(dto.stops.stream()
-                .map(stopService::toEntity)
-                .toList());
-
-        a.setPhotos(dto.photos.stream()
-                .map(photoService::toEntity)
-                .toList());
-
-        return a;
-    }
-
-    // -----------------------
     // ENTITY → DTO
     // -----------------------
 
