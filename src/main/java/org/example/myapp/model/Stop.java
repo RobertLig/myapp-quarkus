@@ -62,6 +62,10 @@ public class Stop {
         this.longitude = longitude;
     }
 
+    public int getPosition() { return position; }
+
+    public void SetPosition(int position) { this.position = position; }
+
     public Announcement getAnnouncement() {
         return announcement;
     }

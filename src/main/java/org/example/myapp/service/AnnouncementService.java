@@ -4,7 +4,6 @@ import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.model.*;
 import org.example.myapp.dto.*;
 import org.example.myapp.repository.AnnouncementRepository;
-import org.example.myapp.model.translation.AnnouncementTranslation;
 import org.example.myapp.validation.AnnouncementValidator;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,9 +23,6 @@ public class AnnouncementService {
 
     @Inject
     AnnouncementRepository announcementRepository;
-
-    @Inject
-    TranslationService translationService;
 
     @Inject
     UserService userService;
@@ -117,50 +113,16 @@ public class AnnouncementService {
         announcement.setWeight(weightService.toEntity(dto.weight));
 
         // --- TRANSLATIONS ---
-        AnnouncementTranslationDTO original = dto.translations.get(0);
-
-        var enTitle = translationService.translate(original.title, "en");
-        var enDesc  = translationService.translate(original.description, "en");
-
-        var plTitle = translationService.translate(original.title, "pl");
-        var plDesc  = translationService.translate(original.description, "pl");
-
-        AnnouncementTranslation en = new AnnouncementTranslation(
-                "en",
-                enTitle.text,
-                enDesc.text
+        var translations = announcementTranslationService.generateTranslations(
+                dto.translations.get(0),
+                announcement
         );
-        en.setAnnouncement(announcement);
 
-        AnnouncementTranslation pl = new AnnouncementTranslation(
-                "pl",
-                plTitle.text,
-                plDesc.text
-        );
-        pl.setAnnouncement(announcement);
-
-        announcement.setTranslations(List.of(en, pl));
+        announcement.setTranslations(translations);
 
         // --- STOPS ---
-        if (dto.stops != null && !dto.stops.isEmpty()) {
-
-            List<Stop> stops = new ArrayList<>();
-
-            for (int i = 0; i < dto.stops.size(); i++) {
-                StopDTO stopDTO = dto.stops.get(i);
-
-                if (stopDTO.position == null) {
-                    stopDTO.position = i;
-                }
-
-                Stop stop = stopService.toEntity(stopDTO);
-                stop.setAnnouncement(announcement);
-                stops.add(stop);
-            }
-
-            stops.sort(Comparator.comparingInt(s -> s.position));
-            announcement.setStops(stops);
-        }
+        var stops = stopService.generateStops(dto.stops, announcement);
+        announcement.setStops(stops);
     }
 
     @Transactional
@@ -204,19 +166,13 @@ public class AnnouncementService {
         var translations = announcementTranslationService.toEntityList(dto.translations);
         announcementTranslationService.attachToAnnouncement(a, translations);
 
-        if (dto.dimensions != null) {
-            a.setDimensions(dimensionsService.toEntity(dto.dimensions));
-        }
+        a.setDimensions(dimensionsService.toEntity(dto.dimensions));
 
-        if (dto.weight != null) {
-            a.setWeight(weightService.toEntity(dto.weight));
-        }
+        a.setWeight(weightService.toEntity(dto.weight));
 
-        if (dto.stops != null) {
-            a.setStops(dto.stops.stream()
-                    .map(this::toStopEntity)
-                    .toList());
-        }
+        a.setStops(dto.stops.stream()
+                .map(stopService::toEntity)
+                .toList());
 
         if (dto.photos != null) {
             a.setPhotos(dto.photos.stream()
@@ -257,7 +213,7 @@ public class AnnouncementService {
         dto.translations = announcementTranslationService.toDTOList(a.getTranslations());
 
         dto.stops = a.getStops().stream()
-                .map(this::toStopDTO)
+                .map(stopService::toDTO)
                 .toList();
 
         dto.photos = a.getPhotos().stream()
@@ -265,29 +221,6 @@ public class AnnouncementService {
                 .toList();
 
         return dto;
-    }
-
-    // -----------------------
-    // Stop
-    // -----------------------
-
-    public StopDTO toStopDTO(Stop stop) {
-        StopDTO dto = new StopDTO();
-        dto.id = stop.getId();
-        dto.address = stop.getAddress();
-        dto.latitude = stop.getLatitude();
-        dto.longitude = stop.getLongitude();
-        return dto;
-    }
-
-    public Stop toStopEntity(StopDTO dto) {
-        return new Stop(
-                dto.id,
-                dto.address,
-                dto.latitude,
-                dto.longitude,
-                dto.position
-        );
     }
 
     // -----------------------

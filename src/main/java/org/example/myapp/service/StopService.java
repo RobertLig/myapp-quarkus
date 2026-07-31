@@ -1,6 +1,7 @@
 package org.example.myapp.service;
 
 import org.example.myapp.model.Stop;
+import org.example.myapp.model.Announcement;
 import org.example.myapp.repository.StopRepository;
 import org.example.myapp.dto.StopDTO;
 
@@ -8,6 +9,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +48,8 @@ public class StopService {
     // -----------------------
 
     public Stop toEntity(StopDTO dto) {
+        if (dto == null) { return null; }
+
         return new Stop(
                 dto.id,
                 dto.address,
@@ -53,7 +58,6 @@ public class StopService {
                 dto.position != null ? dto.position : 0
         );
     }
-
 
     // -----------------------
     // ENTITY → DTO
@@ -66,5 +70,36 @@ public class StopService {
         dto.latitude = stop.getLatitude();
         dto.longitude = stop.getLongitude();
         return dto;
+    }
+
+    // -----------------------
+    // STOP GENERATION LOGIC
+    // -----------------------
+
+    public List<Stop> generateStops(List<StopDTO> stopDTOs, Announcement announcement) {
+
+        if (stopDTOs == null || stopDTOs.isEmpty()) {
+            return List.of();
+        }
+
+        List<Stop> stops = new ArrayList<>();
+
+        for (int i = 0; i < stopDTOs.size(); i++) {
+            StopDTO dto = stopDTOs.get(i);
+
+            // Assign default position if missing
+            if (dto.position == null) {
+                dto.position = i;
+            }
+
+            Stop stop = toEntity(dto);
+            stop.setAnnouncement(announcement);
+            stops.add(stop);
+        }
+
+        // Sort by position
+        stops.sort(Comparator.comparingInt(Stop::getPosition));
+
+        return stops;
     }
 }

@@ -6,9 +6,13 @@ import org.example.myapp.model.Announcement;
 import org.example.myapp.model.translation.AnnouncementTranslation;
 
 import java.util.List;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class AnnouncementTranslationService {
+
+    @Inject
+    TranslationService translationService; // LibreTranslate
 
     // -----------------------
     // DTO → ENTITY
@@ -78,5 +82,34 @@ public class AnnouncementTranslationService {
             t.setAnnouncement(announcement);
         }
         announcement.setTranslations(translations);
+    }
+
+    // -----------------------
+    // TRANSLATION GENERATION
+    // -----------------------
+
+    public List<AnnouncementTranslation> generateTranslations(AnnouncementTranslationDTO original, Announcement announcement) {
+
+        var enTitle = translationService.translate(original.title, "en");
+        var enDesc  = translationService.translate(original.description, "en");
+
+        var plTitle = translationService.translate(original.title, "pl");
+        var plDesc  = translationService.translate(original.description, "pl");
+
+        AnnouncementTranslation en = new AnnouncementTranslation(
+                "en",
+                enTitle.text,
+                enDesc.text
+        );
+        en.setAnnouncement(announcement);
+
+        AnnouncementTranslation pl = new AnnouncementTranslation(
+                "pl",
+                plTitle.text,
+                plDesc.text
+        );
+        pl.setAnnouncement(announcement);
+
+        return List.of(en, pl);
     }
 }
