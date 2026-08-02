@@ -9,6 +9,7 @@ import java.util.Base64;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.util.Optional;
+import jakarta.ws.rs.WebApplicationException;
 
 @ApplicationScoped
 public class UserService {
@@ -19,7 +20,7 @@ public class UserService {
     public User register(UserDTO dto) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
+            throw new WebApplicationException("error.email.inuse", 400);
         }
 
         User user = new User();
@@ -35,11 +36,11 @@ public class UserService {
         User user = userRepository.findByEmail(email);
 
         if (user == null) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new WebApplicationException("error.login.invalid", 401);
         }
 
         if (!verifyPassword(password, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new WebApplicationException("error.login.invalid", 401);
         }
 
         return user;
@@ -49,7 +50,7 @@ public class UserService {
         User user = userRepository.findById(userId);
 
         if (user == null) {
-            throw new IllegalArgumentException("User not found");
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Required fields (update only if provided)

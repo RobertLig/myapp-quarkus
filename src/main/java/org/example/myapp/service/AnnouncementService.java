@@ -142,9 +142,6 @@ public class AnnouncementService {
         dto.type = a.getType();
         dto.userId = (a.getUser() != null) ? a.getUser().getId() : null;
 
-        dto.dimensions = dimensionsService.toDTO(a.getDimensions());
-        dto.weight = weightService.toDTO(a.getWeight());
-
         // --- POSTING PLACE ---
         dto.postingPlace = a.getPostingPlace();
         dto.postingLatitude = a.getPostingLatitude();
@@ -157,6 +154,9 @@ public class AnnouncementService {
 
         dto.postingDateTime = a.getPostingDateTime();
         dto.receptionDateTime = a.getReceptionDateTime();
+
+        dto.dimensions = dimensionsService.toDTO(a.getDimensions());
+        dto.weight = weightService.toDTO(a.getWeight());
 
         dto.translations = announcementTranslationService.toDTOList(a.getTranslations());
 

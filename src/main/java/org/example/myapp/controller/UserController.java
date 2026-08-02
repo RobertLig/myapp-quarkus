@@ -12,6 +12,8 @@ import org.example.myapp.service.UserService;
 import org.example.myapp.service.ImageStoreService;
 import org.example.myapp.service.ImageLimitService;
 import org.example.myapp.i18n.MessageService;
+
+import java.util.Map;
 import java.util.Optional;
 
 @Path("/users")
@@ -77,16 +79,8 @@ public class UserController {
     @DELETE
     @Path("/{id}")
     public Response deleteUser(@PathParam("id") Long id) {
-        Optional<User> userOpt = userService.getUserById(id);
-
-        if (userOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("User not found")
-                    .build();
-        }
-
-        User user = userOpt.get();
-
+        User user = userService.getUserById(id)
+                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
 
         // Delete avatar from S3 if exists
         if (user.getPhotoUrl() != null) {
@@ -95,24 +89,22 @@ public class UserController {
 
         boolean deleted = userService.deleteUser(id);
 
-        return deleted
-                ? Response.ok("User deleted").build()
-                : Response.status(Response.Status.NOT_FOUND).build();
+        if (!deleted) {
+            throw new WebApplicationException("error.user.deletefailed", 400);
+        }
+
+        return Response.ok(
+                Map.of("message", "success.user.deleted")
+        ).build();
     }
 
     // ===== GET USER BY ID =====
     @GET
     @Path("/{id}")
     public Response getUser(@PathParam("id") Long id) {
-        Optional<User> userOpt = userService.getUserById(id);
+        User user = userService.getUserById(id)
+                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
 
-        if (userOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("User not found")
-                    .build();
-        }
-
-        User user = userOpt.get();
         return Response.ok(user).build();
     }
 
