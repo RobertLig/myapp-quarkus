@@ -2,7 +2,6 @@ package org.example.myapp.model;
 
 import jakarta.persistence.*;
 
-import javax.management.relation.Role;
 import java.time.LocalDateTime;
 import java.util.List;
 

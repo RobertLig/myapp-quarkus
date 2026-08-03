@@ -24,9 +24,17 @@ public class UserService {
         }
 
         User user = new User();
+
+        // Basic fields
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
-        user.setPassword(hashPassword(dto.getPassword()));
+
+        // Generate salt
+        String salt = generateSalt();
+        user.setSalt(salt);
+
+        // Hash password with salt
+        user.setPassword(hashPassword(dto.getPassword(), salt));
 
         userRepository.persist(user);
         return user;
@@ -39,7 +47,7 @@ public class UserService {
             throw new WebApplicationException("error.login.invalid", 401);
         }
 
-        if (!verifyPassword(password, user.getPassword())) {
+        if (!verifyPassword(password, user.getPassword(), user.getSalt())) {
             throw new WebApplicationException("error.login.invalid", 401);
         }
 
@@ -53,35 +61,33 @@ public class UserService {
             throw new WebApplicationException("error.user.notfound", 404);
         }
 
-        // Required fields (update only if provided)
+        // Name
         if (dto.getName() != null && !dto.getName().isBlank()) {
             user.setName(dto.getName());
         }
 
+        // Email (with uniqueness check)
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+
+            if (!dto.getEmail().equals(user.getEmail()) &&
+                    userRepository.existsByEmail(dto.getEmail())) {
+
+                throw new WebApplicationException("error.email.inuse", 400);
+            }
+
             user.setEmail(dto.getEmail());
         }
 
+        // Password (hash with existing salt)
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            user.setPassword(hashPassword(dto.getPassword()));
+            user.setPassword(hashPassword(dto.getPassword(), user.getSalt()));
         }
 
-        // Optional fields (update only if provided)
-        if (dto.getAgeRange() != null) {
-            user.setAgeRange(dto.getAgeRange());
-        }
-
-        if (dto.getGender() != null) {
-            user.setGender(dto.getGender());
-        }
-
-        if (dto.getPhone() != null) {
-            user.setPhone(dto.getPhone());
-        }
-
-        if (dto.getPhotoUrl() != null) {
-            user.setPhotoUrl(dto.getPhotoUrl());
-        }
+        // Optional fields
+        if (dto.getAgeRange() != null) user.setAgeRange(dto.getAgeRange());
+        if (dto.getGender() != null) user.setGender(dto.getGender());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getPhotoUrl() != null) user.setPhotoUrl(dto.getPhotoUrl());
 
         return user;
     }
@@ -102,22 +108,33 @@ public class UserService {
     }
 
     // PBKDF2 hashing
-    private String hashPassword(String password) {
+    private String hashPassword(String password, String salt) {
         try {
-            char[] chars = password.toCharArray();
-            byte[] salt = "staticSalt123".getBytes();
+            PBEKeySpec spec = new PBEKeySpec(
+                    password.toCharArray(),
+                    Base64.getDecoder().decode(salt),
+                    65536,
+                    256
+            );
 
-            PBEKeySpec spec = new PBEKeySpec(chars, salt, 65536, 256);
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             byte[] hash = skf.generateSecret(spec).getEncoded();
 
             return Base64.getEncoder().encodeToString(hash);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private boolean verifyPassword(String password, String storedHash) {
-        return storedHash.equals(hashPassword(password));
+    private String generateSalt() {
+        byte[] salt = new byte[16];
+        new java.security.SecureRandom().nextBytes(salt);
+        return Base64.getEncoder().encodeToString(salt);
+    }
+
+    private boolean verifyPassword(String password, String storedHash, String salt) {
+        String hash = hashPassword(password, salt);
+        return storedHash.equals(hash);
     }
 }
