@@ -1,5 +1,6 @@
 package org.example.myapp.controller;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -8,13 +9,15 @@ import jakarta.ws.rs.core.HttpHeaders;
 
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.model.User;
+import org.example.myapp.service.AuthService;
 import org.example.myapp.service.UserService;
 import org.example.myapp.service.ImageStoreService;
 import org.example.myapp.service.ImageLimitService;
 import org.example.myapp.i18n.MessageService;
 
 import java.util.Map;
-import java.util.Optional;
+
+import io.quarkus.security.identity.SecurityIdentity;
 
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -32,6 +35,12 @@ public class UserController {
 
     @Inject
     MessageService messageService;
+
+    @Inject
+    AuthService authService;
+
+    @Inject
+    SecurityIdentity identity;
 
     // ===== REGISTER =====
     @POST
@@ -51,61 +60,80 @@ public class UserController {
     @POST
     @Path("/login")
     public Response login(UserDTO dto) {
-        try {
-            User user = userService.login(dto.getEmail(), dto.getPassword());
-            return Response.ok(user).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(e.getMessage())
-                    .build();
-        }
-    }
-
-    // ===== UPDATE PROFILE =====
-    @PUT
-    @Path("/{id}")
-    public Response updateProfile(@PathParam("id") Long id, UserDTO dto) {
-        try {
-            User updated = userService.updateProfile(id, dto);
-            return Response.ok(updated).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(e.getMessage())
-                    .build();
-        }
-    }
-
-    // ===== DELETE USER =====
-    @DELETE
-    @Path("/{id}")
-    public Response deleteUser(@PathParam("id") Long id) {
-        User user = userService.getUserById(id)
-                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
-
-        // Delete avatar from S3 if exists
-        if (user.getPhotoUrl() != null) {
-            imageStoreService.delete(user.getPhotoUrl());
-        }
-
-        boolean deleted = userService.deleteUser(id);
-
-        if (!deleted) {
-            throw new WebApplicationException("error.user.deletefailed", 400);
-        }
+        User user = userService.login(dto.getEmail(), dto.getPassword());
+        String token = authService.generateToken(user);
 
         return Response.ok(
-                Map.of("message", "success.user.deleted")
+                Map.of(
+                        "token", token,
+                        "user", Map.of(
+                                "id", user.getId(),
+                                "name", user.getName(),
+                                "email", user.getEmail(),
+                                "photoUrl", user.getPhotoUrl()
+                        )
+                )
         ).build();
     }
 
     // ===== GET USER BY ID =====
     @GET
-    @Path("/{id}")
-    public Response getUser(@PathParam("id") Long id) {
-        User user = userService.getUserById(id)
+    @Path("/me")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response getMe() {
+        Long userId = getLoggedInUserId();
+
+        User user = userService.getUserById(userId)
                 .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
 
-        return Response.ok(user).build();
+        return Response.ok(
+                Map.of(
+                        "id", user.getId(),
+                        "name", user.getName(),
+                        "email", user.getEmail(),
+                        "photoUrl", user.getPhotoUrl()
+                )
+        ).build();
+    }
+
+    // ===== UPDATE PROFILE =====
+    @PUT
+    @Path("/me")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response updateMe(UserDTO dto) {
+        Long userId = getLoggedInUserId();
+
+        User updated = userService.updateProfile(userId, dto);
+
+        return Response.ok(
+                Map.of(
+                        "id", updated.getId(),
+                        "name", updated.getName(),
+                        "email", updated.getEmail(),
+                        "photoUrl", updated.getPhotoUrl()
+                )
+        ).build();
+    }
+
+    // ===== DELETE USER =====
+    @DELETE
+    @Path("/me")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response deleteMe() {
+        Long userId = getLoggedInUserId();
+
+        User user = userService.getUserById(userId)
+                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
+
+        if (user.getPhotoUrl() != null) {
+            imageStoreService.delete(user.getPhotoUrl());
+        }
+
+        userService.deleteUser(userId);
+
+        return Response.ok(
+                Map.of("message", "success.user.deleted")
+        ).build();
     }
 
     // ============================================================
@@ -113,52 +141,30 @@ public class UserController {
     // ============================================================
 
     @POST
-    @Path("/{id}/avatar")
+    @Path("/me/avatar")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadAvatar(@PathParam("id") Long id,
-                                 @FormParam("file") byte[] file,
-                                 HttpHeaders headers) {
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response uploadAvatar(@FormParam("file") byte[] file, HttpHeaders headers) {
 
-        Optional<User> userOpt = userService.getUserById(id);
+        Long userId = getLoggedInUserId();
+        User user = userService.getUserById(userId)
+                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
 
-        if (userOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        User user = userOpt.get();
-
-        // Limit: user can have only 1 avatar
         if (!imageLimitService.canAddUserAvatar(user)) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("avatar.limit", headers)
-                    ))
+                    .entity(Map.of("error", messageService.get("avatar.limit", headers)))
                     .build();
         }
 
-        String url;
-
-        try {
-            url = imageStoreService.upload(file);
-        } catch (IllegalArgumentException ex) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get(ex.getMessage(), headers)
-                    ))
-                    .build();
-        }
-
-        // Save avatar URL
+        String url = imageStoreService.upload(file);
         user.setPhotoUrl(url);
 
-        return Response.ok(java.util.Map.of(
-                "message", messageService.get("avatar.uploaded", headers),
-                "avatarUrl", url
-        )).build();
+        return Response.ok(
+                Map.of(
+                        "message", messageService.get("avatar.uploaded", headers),
+                        "avatarUrl", url
+                )
+        ).build();
     }
 
     // ============================================================
@@ -166,38 +172,29 @@ public class UserController {
     // ============================================================
 
     @DELETE
-    @Path("/{id}/avatar")
-    public Response deleteAvatar(@PathParam("id") Long id,
-                                 HttpHeaders headers) {
+    @Path("/me/avatar")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response deleteAvatar(HttpHeaders headers) {
 
-        Optional<User> userOpt = userService.getUserById(id);
-
-        if (userOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        User user = userOpt.get();
+        Long userId = getLoggedInUserId();
+        User user = userService.getUserById(userId)
+                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
 
         if (user.getPhotoUrl() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("avatar.none", headers)
-                    ))
+                    .entity(Map.of("error", messageService.get("avatar.none", headers)))
                     .build();
         }
 
-        // Delete from S3
         imageStoreService.delete(user.getPhotoUrl());
-
-        // Remove from DB
         user.setPhotoUrl(null);
 
-        return Response.ok(java.util.Map.of(
-                "message", messageService.get("avatar.deleted", headers)
-        )).build();
+        return Response.ok(
+                Map.of("message", messageService.get("avatar.deleted", headers))
+        ).build();
+    }
+
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
     }
 }
