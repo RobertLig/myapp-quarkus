@@ -1,6 +1,9 @@
 package org.example.myapp.model;
 
 import jakarta.persistence.*;
+
+import javax.management.relation.Role;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -11,9 +14,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ===== BASIC INFO =====
     private String name;
     private String email;
     private String password;
+    private String salt;
 
     private String ageRange;
 
@@ -23,10 +28,37 @@ public class User {
     private String phone;
     private String photoUrl;
 
+    // ===== AUTH & SECURITY =====
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
+    private boolean emailVerified = false;
+
+    private String verificationToken;
+    private String resetPasswordToken;
+
+    // ===== AUDIT =====
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    // ===== RELATIONS =====
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Announcement> announcements;
 
-    // ===== GETTERS =====
+    // ===== LIFECYCLE CALLBACKS =====
+    @PrePersist
+    public void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // ===== GETTERS & SETTERS =====
+    // (same as before, plus new fields)
 
     public Long getId() {
         return id;
@@ -43,6 +75,20 @@ public class User {
     public String getPassword() {
         return password;
     }
+
+    public String getSalt() { return salt; }
+
+    public Role getRole() { return role; }
+
+    public boolean getEmailVerified() { return emailVerified; }
+
+    public String getVerificationToken() { return verificationToken; }
+
+    public String getResetPasswordToken() { return resetPasswordToken; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     public String getAgeRange() {
         return ageRange;
@@ -81,6 +127,20 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public void setSalt(String salt) { this.salt = salt; }
+
+    public void setRole(Role role) { this.role = role; }
+
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+
+    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
+
+    public void setResetPasswordToken(String resetPasswordToken) { this.resetPasswordToken = resetPasswordToken; }
+
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     public void setAgeRange(String ageRange) {
         this.ageRange = ageRange;
