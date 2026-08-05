@@ -17,6 +17,9 @@ public class UserService {
     @Inject
     UserRepository userRepository;
 
+    @Inject
+    EmailService emailService;
+
     public User register(UserDTO dto) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
@@ -36,7 +39,16 @@ public class UserService {
         // Hash password with salt
         user.setPassword(hashPassword(dto.getPassword(), salt));
 
+        // Email verification
+        String token = generateVerificationToken();
+        user.setVerificationToken(token);
+        user.setEmailVerified(false);
+
         userRepository.persist(user);
+
+        // Send email (or return link in dev mode)
+        emailService.sendVerificationEmail(user.getEmail(), token);
+
         return user;
     }
 
@@ -49,6 +61,10 @@ public class UserService {
 
         if (!verifyPassword(password, user.getPassword(), user.getSalt())) {
             throw new WebApplicationException("error.login.invalid", 401);
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new WebApplicationException("error.email.notverified", 403);
         }
 
         return user;
@@ -136,5 +152,11 @@ public class UserService {
     private boolean verifyPassword(String password, String storedHash, String salt) {
         String hash = hashPassword(password, salt);
         return storedHash.equals(hash);
+    }
+
+    private String generateVerificationToken() {
+        byte[] bytes = new byte[32];
+        new java.security.SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

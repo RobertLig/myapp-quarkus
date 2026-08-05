@@ -79,7 +79,7 @@ public class User {
 
     public Role getRole() { return role; }
 
-    public boolean getEmailVerified() { return emailVerified; }
+    public boolean isEmailVerified() { return emailVerified; }
 
     public String getVerificationToken() { return verificationToken; }
 
