@@ -26,16 +26,14 @@ public class EmailService {
     @ConfigProperty(name = "resend.base.url")
     String baseUrl;
 
-    public void sendVerificationEmail(String email, String token, String localeCode) {
+    public void sendActionEmail(String email, String localeCode, String subjectKey, String introKey, String buttonKey, String fallbackKey, String link) {
 
         Locale locale = localeCode.equals("pl") ? Locale.of("pl", "PL") : Locale.ENGLISH;
 
-        String subject = messageService.get("email.verify.subject", locale);
-        String intro = messageService.get("email.verify.intro", locale);
-        String button = messageService.get("email.verify.button", locale);
-        String fallback = messageService.get("email.verify.fallback", locale);
-
-        String link = "https://yourdomain.com/auth/verify?token=" + token;
+        String subject = messageService.get(subjectKey, locale);
+        String intro = messageService.get(introKey, locale);
+        String button = messageService.get(buttonKey, locale);
+        String fallback = messageService.get(fallbackKey, locale);
 
         String html = """
     <div style="font-family: Arial, sans-serif; padding: 20px;">

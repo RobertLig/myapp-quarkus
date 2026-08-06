@@ -20,6 +20,9 @@ public class UserService {
     @Inject
     EmailService emailService;
 
+    @Inject
+    TokenService tokenService;
+
     public User register(UserDTO dto) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
@@ -40,7 +43,7 @@ public class UserService {
         user.setPassword(hashPassword(dto.getPassword(), salt));
 
         // Email verification
-        String token = generateVerificationToken();
+        String token = tokenService.generateToken();
         user.setVerificationToken(token);
         user.setEmailVerified(false);
 
@@ -50,7 +53,16 @@ public class UserService {
         userRepository.persist(user);
 
         // Send email (or return link in dev mode)
-        emailService.sendVerificationEmail(user.getEmail(), token, user.getLocale());
+        emailService.sendActionEmail(
+                user.getEmail(),
+                user.getLocale(),
+                "email.verify.subject",
+                "email.verify.intro",
+                "email.verify.button",
+                "email.verify.fallback",
+                "https://yourdomain.com/auth/verify?token=" + token
+        );
+
 
         return user;
     }
@@ -155,11 +167,5 @@ public class UserService {
     private boolean verifyPassword(String password, String storedHash, String salt) {
         String hash = hashPassword(password, salt);
         return storedHash.equals(hash);
-    }
-
-    private String generateVerificationToken() {
-        byte[] bytes = new byte[32];
-        new java.security.SecureRandom().nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }
