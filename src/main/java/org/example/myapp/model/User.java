@@ -40,6 +40,8 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private String locale; // "en", "pl"
+
     // ===== RELATIONS =====
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Announcement> announcements;
@@ -160,4 +162,7 @@ public class User {
     public void setAnnouncements(List<Announcement> announcements) {
         this.announcements = announcements;
     }
+
+    public String getLocale() { return locale; }
+    public void setLocale(String locale) { this.locale = locale; }
 }

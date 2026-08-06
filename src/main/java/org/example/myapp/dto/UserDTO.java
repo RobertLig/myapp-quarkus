@@ -20,6 +20,8 @@ public class UserDTO {
     private String phone;
     private String photoUrl;
 
+    private String locale;
+
     // ===== GETTERS =====
 
     public String getName() {
@@ -79,4 +81,7 @@ public class UserDTO {
     public void setPhotoUrl(String photoUrl) {
         this.photoUrl = photoUrl;
     }
+
+    public String getLocale() { return locale; }
+    public void setLocale(String locale) { this.locale = locale; }
 }

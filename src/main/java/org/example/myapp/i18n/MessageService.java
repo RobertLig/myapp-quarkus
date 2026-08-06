@@ -15,6 +15,11 @@ public class MessageService {
         return bundle.getString(key);
     }
 
+    public String get(String key, Locale locale) {
+        ResourceBundle bundle = ResourceBundle.getBundle("i18n/messages", locale);
+        return bundle.getString(key);
+    }
+
     private Locale resolveLocale(HttpHeaders headers) {
         String lang = headers.getHeaderString("Accept-Language");
         if (lang == null) return Locale.ENGLISH;

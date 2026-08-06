@@ -44,10 +44,13 @@ public class UserService {
         user.setVerificationToken(token);
         user.setEmailVerified(false);
 
+        String locale = dto.getLocale() != null ? dto.getLocale() : "en";
+        user.setLocale(locale);
+
         userRepository.persist(user);
 
         // Send email (or return link in dev mode)
-        emailService.sendVerificationEmail(user.getEmail(), token);
+        emailService.sendVerificationEmail(user.getEmail(), token, user.getLocale());
 
         return user;
     }
