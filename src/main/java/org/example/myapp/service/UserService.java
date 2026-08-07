@@ -168,4 +168,48 @@ public class UserService {
         String hash = hashPassword(password, salt);
         return storedHash.equals(hash);
     }
+
+    public void resetPassword(String token, String newPassword) {
+
+        User user = userRepository.find("resetPasswordToken", token).firstResult();
+
+        if (user == null) {
+            throw new WebApplicationException("error.reset.invalid", 400);
+        }
+
+        // Generate new salt
+        String salt = generateSalt();
+        user.setSalt(salt);
+
+        // Hash new password
+        String hashed = hashPassword(newPassword, salt);
+        user.setPassword(hashed);
+
+        // Invalidate token
+        user.setResetPasswordToken(null);
+    }
+
+    public void requestPasswordReset(String email) {
+
+        User user = userRepository.find("email", email).firstResult();
+
+        if (user == null) {
+            throw new WebApplicationException("error.email.notfound", 404);
+        }
+
+        String token = tokenService.generateToken();
+        user.setResetPasswordToken(token);
+
+        String link = "https://yourdomain.com/auth/reset?token=" + token;
+
+        emailService.sendActionEmail(
+                user.getEmail(),
+                user.getLocale(),
+                "email.reset.subject",
+                "email.reset.intro",
+                "email.reset.button",
+                "email.reset.fallback",
+                link
+        );
+    }
 }
