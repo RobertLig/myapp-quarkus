@@ -3,8 +3,6 @@ package org.example.myapp.controller;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.*;
-import org.example.myapp.repository.UserRepository;
-import org.example.myapp.model.User;
 import jakarta.ws.rs.core.Response;
 import java.util.Map;
 import org.example.myapp.service.UserService;
@@ -12,9 +10,6 @@ import org.example.myapp.service.UserService;
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 public class AuthController {
-
-    @Inject
-    UserRepository userRepository;
 
     @Inject
     UserService userService;

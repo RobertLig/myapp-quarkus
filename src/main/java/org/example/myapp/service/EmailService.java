@@ -36,19 +36,35 @@ public class EmailService {
         String fallback = messageService.get(fallbackKey, locale);
 
         String html = """
-    <div style="font-family: Arial, sans-serif; padding: 20px;">
-      <h2 style="color: #333;">%s</h2>
-      <p style="font-size: 16px;">%s</p>
-      <a href="%s"
-         style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; 
-                color: white; text-decoration: none; border-radius: 6px; margin-top: 10px;">
-        %s
-      </a>
-      <p style="font-size: 14px; color: #666; margin-top: 20px;">
-        %s<br>%s
-      </p>
-    </div>
-    """.formatted(subject, intro, link, button, fallback, link);
+<div style="font-family: Arial, sans-serif; padding: 20px;
+            background-color: oklch(98%% 0.016 73.684);
+            color: oklch(40%% 0.123 38.172);">
+
+  <h2 style="color: oklch(40%% 0.123 38.172);">%s</h2>
+
+  <p style="font-size: 16px;">
+    %s
+  </p>
+
+  <a href="%s"
+     style="display: inline-block;
+            padding: 10px 20px;
+            background-color: oklch(46.44%% 0.111 37.85);
+            color: oklch(90%% 0.076 70.697);
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 10px;">
+    %s
+  </a>
+
+  <p style="font-size: 14px;
+            color: oklch(40%% 0.123 38.172);
+            margin-top: 20px;">
+    %s<br>%s
+  </p>
+
+</div>
+""".formatted(subject, intro, link, button, fallback, link);
 
         String body = """
     {
