@@ -169,24 +169,16 @@ public class UserService {
         return storedHash.equals(hash);
     }
 
-    public void resetPassword(String token, String newPassword) {
+    public void verifyEmail(String token) {
 
-        User user = userRepository.find("resetPasswordToken", token).firstResult();
+        User user = userRepository.find("verificationToken", token).firstResult();
 
         if (user == null) {
-            throw new WebApplicationException("error.reset.invalid", 400);
+            throw new WebApplicationException("error.verification.invalid", 400);
         }
 
-        // Generate new salt
-        String salt = generateSalt();
-        user.setSalt(salt);
-
-        // Hash new password
-        String hashed = hashPassword(newPassword, salt);
-        user.setPassword(hashed);
-
-        // Invalidate token
-        user.setResetPasswordToken(null);
+        user.setEmailVerified(true);
+        user.setVerificationToken(null);
     }
 
     public void requestPasswordReset(String email) {
@@ -211,5 +203,25 @@ public class UserService {
                 "email.reset.fallback",
                 link
         );
+    }
+
+    public void resetPassword(String token, String newPassword) {
+
+        User user = userRepository.find("resetPasswordToken", token).firstResult();
+
+        if (user == null) {
+            throw new WebApplicationException("error.reset.invalid", 400);
+        }
+
+        // Generate new salt
+        String salt = generateSalt();
+        user.setSalt(salt);
+
+        // Hash new password
+        String hashed = hashPassword(newPassword, salt);
+        user.setPassword(hashed);
+
+        // Invalidate token
+        user.setResetPasswordToken(null);
     }
 }

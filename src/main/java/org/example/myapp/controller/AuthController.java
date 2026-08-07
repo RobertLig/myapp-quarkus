@@ -7,8 +7,6 @@ import org.example.myapp.repository.UserRepository;
 import org.example.myapp.model.User;
 import jakarta.ws.rs.core.Response;
 import java.util.Map;
-import org.example.myapp.service.EmailService;
-import org.example.myapp.service.TokenService;
 import org.example.myapp.service.UserService;
 
 @Path("/auth")
@@ -19,30 +17,13 @@ public class AuthController {
     UserRepository userRepository;
 
     @Inject
-    EmailService emailService;
-
-    @Inject
-    TokenService tokenService;
-
-    @Inject
     UserService userService;
 
     @GET
     @Path("/verify")
     public Response verifyEmail(@QueryParam("token") String token) {
-
-        User user = userRepository.find("verificationToken", token).firstResult();
-
-        if (user == null) {
-            throw new WebApplicationException("error.verification.invalid", 400);
-        }
-
-        user.setEmailVerified(true);
-        user.setVerificationToken(null);
-
-        return Response.ok(
-                Map.of("message", "success.email.verified")
-        ).build();
+        userService.verifyEmail(token);
+        return Response.ok(Map.of("message", "success.email.verified")).build();
     }
 
     @POST
