@@ -2,6 +2,8 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.example.myapp.auth.GooglePayload;
+import org.example.myapp.auth.GoogleService;
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.UserRepository;
@@ -22,6 +24,9 @@ public class UserService {
 
     @Inject
     TokenService tokenService;
+
+    @Inject
+    GoogleService googleService;
 
     public User register(UserDTO dto) {
 
@@ -223,5 +228,27 @@ public class UserService {
 
         // Invalidate token
         user.setResetPasswordToken(null);
+    }
+
+    public User loginWithGoogle(String idToken) {
+
+        GooglePayload payload = googleService.verify(idToken);
+
+        String email = payload.getEmail();
+        String name = payload.getName();
+        String googleId = payload.getSubject();
+
+        User user = userRepository.find("email", email).firstResult();
+
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+            user.setName(name);
+            user.setGoogleId(googleId);
+            user.setEmailVerified(true); // Google guarantees email ownership
+            userRepository.persist(user);
+        }
+
+        return user;
     }
 }

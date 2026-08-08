@@ -5,6 +5,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import java.util.Map;
+
+import org.example.myapp.mapper.UserMapper;
+import org.example.myapp.model.User;
 import org.example.myapp.service.UserService;
 
 @Path("/auth")
@@ -41,5 +44,14 @@ public class AuthController {
         userService.resetPassword(token, newPassword);
 
         return Response.ok(Map.of("message", "success.reset.completed")).build();
+    }
+
+    @POST
+    @Path("/google")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response googleLogin(Map<String, String> body) {
+        String idToken = body.get("idToken");
+        User user = userService.loginWithGoogle(idToken);
+        return Response.ok(UserMapper.toDTO(user)).build();
     }
 }
