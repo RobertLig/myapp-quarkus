@@ -80,4 +80,11 @@ public class AuthController {
                 )
         ).build();
     }
+
+    @POST
+    @Path("/register")
+    public Response register(UserDTO dto) {
+        User user = userService.register(dto);
+        return Response.ok(UserMapper.toDTO(user)).build();
+    }
 }

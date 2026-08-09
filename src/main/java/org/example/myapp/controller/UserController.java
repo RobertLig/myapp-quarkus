@@ -29,13 +29,6 @@ public class UserController {
         return Long.valueOf(identity.getPrincipal().getName());
     }
 
-    @POST
-    @Path("/register")
-    public Response register(UserDTO dto) {
-        User user = userService.register(dto);
-        return Response.ok(UserMapper.toDTO(user)).build();
-    }
-
     @GET
     @Path("/me")
     @RolesAllowed({"USER", "ADMIN"})
