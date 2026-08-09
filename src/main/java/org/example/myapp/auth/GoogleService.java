@@ -1,6 +1,7 @@
 package org.example.myapp.auth;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.WebApplicationException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -30,7 +31,7 @@ public class GoogleService {
                     httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                throw new RuntimeException("Invalid Google ID token");
+                throw new WebApplicationException("error.google.invalid", 400);
             }
 
             JsonNode json = mapper.readTree(response.body());
@@ -38,7 +39,7 @@ public class GoogleService {
             // Validate audience (client ID)
             String aud = json.get("aud").asText();
             if (!aud.equals(googleClientId)) {
-                throw new RuntimeException("Invalid Google client ID");
+                throw new WebApplicationException("error.google.invalid", 400);
             }
 
             GooglePayload payload = new GooglePayload();
@@ -49,7 +50,7 @@ public class GoogleService {
             return payload;
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to verify Google ID token", e);
+            throw new WebApplicationException("error.google.failed", 400);
         }
     }
 }

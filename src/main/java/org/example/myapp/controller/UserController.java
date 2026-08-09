@@ -21,7 +21,6 @@ import io.quarkus.security.identity.SecurityIdentity;
 public class UserController {
 
     @Inject UserService userService;
-    @Inject AuthService authService;
     @Inject
     UserAvatarService avatarService;
     @Inject SecurityIdentity identity;
@@ -35,20 +34,6 @@ public class UserController {
     public Response register(UserDTO dto) {
         User user = userService.register(dto);
         return Response.ok(UserMapper.toDTO(user)).build();
-    }
-
-    @POST
-    @Path("/login")
-    public Response login(UserDTO dto) {
-        User user = userService.login(dto.getEmail(), dto.getPassword());
-        String token = authService.generateToken(user);
-
-        return Response.ok(
-                Map.of(
-                        "token", token,
-                        "user", UserMapper.toDTO(user)
-                )
-        ).build();
     }
 
     @GET

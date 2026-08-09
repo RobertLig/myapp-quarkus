@@ -42,6 +42,8 @@ public class User {
 
     private String locale; // "en", "pl"
 
+    private String googleId;
+
     // ===== RELATIONS =====
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Announcement> announcements;
@@ -165,4 +167,12 @@ public class User {
 
     public String getLocale() { return locale; }
     public void setLocale(String locale) { this.locale = locale; }
+
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
+    }
 }
