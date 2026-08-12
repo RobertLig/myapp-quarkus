@@ -11,6 +11,7 @@ import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
 import org.example.myapp.service.UserService;
 import org.example.myapp.service.AuthService;
+import jakarta.ws.rs.core.NewCookie;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -55,30 +56,37 @@ public class AuthController {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response googleLogin(Map<String, String> body) {
         String idToken = body.get("idToken");
-
         User user = userService.loginWithGoogle(idToken);
-        String token = authService.generateToken(user);
-
-        return Response.ok(
-                Map.of(
-                        "token", token,
-                        "user", UserMapper.toDTO(user)
-                )
-        ).build();
+        return buildAuthResponse(user);
     }
 
     @POST
     @Path("/login")
     public Response login(UserDTO dto) {
         User user = userService.login(dto.getEmail(), dto.getPassword());
-        String token = authService.generateToken(user);
+        return buildAuthResponse(user);
+    }
+
+    private Response buildAuthResponse(User user) {
+
+        String accessToken = authService.generateToken(user);
+        String refreshToken = authService.generateRefreshToken(user);
+
+        NewCookie cookie = new NewCookie.Builder("refreshToken")
+                .value(refreshToken)
+                .path("/auth/refresh")
+                .maxAge(60 * 60 * 24 * 30)   // 30 days
+                .httpOnly(true)
+                .secure(true)
+                .sameSite(NewCookie.SameSite.LAX)
+                .build();
 
         return Response.ok(
                 Map.of(
-                        "token", token,
+                        "token", accessToken,
                         "user", UserMapper.toDTO(user)
                 )
-        ).build();
+        ).cookie(cookie).build();
     }
 
     @POST
@@ -86,5 +94,16 @@ public class AuthController {
     public Response register(UserDTO dto) {
         User user = userService.register(dto);
         return Response.ok(UserMapper.toDTO(user)).build();
+    }
+
+    @POST
+    @Path("/refresh")
+    public Response refresh(@CookieParam("refreshToken") String refreshToken) {
+
+        String newAccessToken = authService.refresh(refreshToken);
+
+        return Response.ok(
+                Map.of("token", newAccessToken)
+        ).build();
     }
 }
