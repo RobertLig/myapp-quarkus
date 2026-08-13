@@ -106,4 +106,22 @@ public class AuthController {
                 Map.of("token", newAccessToken)
         ).build();
     }
+
+    @POST
+    @Path("/logout")
+    public Response logout() {
+
+        NewCookie clearedCookie = new NewCookie.Builder("refreshToken")
+                .value("")
+                .path("/auth/refresh")
+                .maxAge(0)                     // expire immediately
+                .httpOnly(true)
+                .secure(true)
+                .sameSite(NewCookie.SameSite.LAX)
+                .build();
+
+        return Response.ok(
+                Map.of("message", "success.logout")
+        ).cookie(clearedCookie).build();
+    }
 }
