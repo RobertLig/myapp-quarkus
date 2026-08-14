@@ -11,6 +11,8 @@ public class Conversation {
     @GeneratedValue
     private Long id;
 
+    private Long announcementId;
+
     private Date createdAt;
 
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
