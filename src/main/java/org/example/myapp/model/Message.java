@@ -24,4 +24,20 @@ public class Message {
 
     private Date deletedForSenderAt;
     private Date deletedForRecipientAt;
+
+    public void setConversation(Conversation conversation) { this.conversation = conversation; }
+
+    public void setSender(User sender) { this.sender = sender; }
+
+    public void setContent(String content) { this.content = content; }
+
+    public void setCreatedAt(Date date) { this.createdAt = date; }
+
+    public Long getId() { return id;}
+
+    public User getSender() { return sender; }
+
+    public String getContent() { return content; }
+
+    public Date getCreatedAt() { return createdAt; }
 }
