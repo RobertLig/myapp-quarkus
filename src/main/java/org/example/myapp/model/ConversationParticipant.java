@@ -29,4 +29,12 @@ public class ConversationParticipant {
     public void setConversation(Conversation conversation) {
         this.conversation = conversation;
     }
+
+    public void setUser(User user) { this.user = user; }
+
+    public User getUser() { return user; }
+
+    public Date getJoinedAt() { return joinedAt; }
+
+    public void setJoinedAt(Date joinedAt) { this.joinedAt = joinedAt; }
 }

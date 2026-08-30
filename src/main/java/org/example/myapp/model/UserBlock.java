@@ -20,4 +20,24 @@ public class UserBlock {
     private User blocked;
 
     private Date createdAt;
+
+    public void setId(Long id) { this.id = id; }
+
+    public Long getId() { return id; }
+
+    public void setBlocker(User blocker) { this.blocker = blocker; }
+
+    public User getBlocker() { return blocker; }
+
+    public void setBlocked(User blocked) { this.blocked = blocked; }
+
+    public User getBlocked() { return blocked; }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 }

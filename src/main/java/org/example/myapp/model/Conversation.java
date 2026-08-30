@@ -20,4 +20,20 @@ public class Conversation {
 
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
     private List<Message> messages;
+
+    public void setId(Long id) { this.id = id; }
+
+    public Long getId() { return id; }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setParticipants(List<ConversationParticipant> participants) { this.participants = participants; }
+
+    public List<ConversationParticipant> getParticipants() { return participants; }
 }

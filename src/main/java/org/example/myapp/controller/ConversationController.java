@@ -8,6 +8,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.example.myapp.dto.ConversationDTO;
+import org.example.myapp.dto.CreateConversationRequest;
+import org.example.myapp.mapper.ConversationMapper;
 import org.example.myapp.model.Conversation;
 import org.example.myapp.service.ConversationService;
 
