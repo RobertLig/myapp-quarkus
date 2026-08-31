@@ -43,4 +43,6 @@ public class Message {
     public Conversation getConversation() { return conversation; }
 
     public void setDeletedForRecipientAt(Date date) { this.deletedForRecipientAt = date; }
+
+    public Date getDeletedForRecipientAt() { return deletedForRecipientAt; }
 }

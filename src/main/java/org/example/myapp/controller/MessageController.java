@@ -7,13 +7,12 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.example.myapp.dto.DeleteMessageRequest;
-import org.example.myapp.dto.DeleteMessageResponse;
-import org.example.myapp.dto.MessageDTO;
-import org.example.myapp.dto.SendMessageRequest;
+import org.example.myapp.dto.*;
 import org.example.myapp.mapper.MessageMapper;
 import org.example.myapp.model.Message;
 import org.example.myapp.service.MessageService;
+
+import java.util.List;
 
 @Path("/messages")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -48,5 +47,21 @@ public class MessageController {
         res.status = "deleted";
 
         return Response.ok(res).build();
+    }
+
+    @POST
+    @Path("/list")
+    public Response listMessages(ListMessagesRequest req) {
+
+        List<Message> messages = messageService.listMessages(
+                req.conversationId,
+                req.userId
+        );
+
+        List<MessageDTO> dtos = messages.stream()
+                .map(MessageMapper::toDTO)
+                .toList();
+
+        return Response.ok(dtos).build();
     }
 }
