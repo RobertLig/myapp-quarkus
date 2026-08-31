@@ -7,6 +7,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.example.myapp.dto.DeleteMessageRequest;
+import org.example.myapp.dto.DeleteMessageResponse;
 import org.example.myapp.dto.MessageDTO;
 import org.example.myapp.dto.SendMessageRequest;
 import org.example.myapp.mapper.MessageMapper;
@@ -33,5 +35,18 @@ public class MessageController {
         MessageDTO dto = MessageMapper.toDTO(message);
 
         return Response.ok(dto).build();
+    }
+
+    @POST
+    @Path("/delete")
+    public Response deleteMessage(DeleteMessageRequest req) {
+
+        messageService.deleteMessage(req.messageId, req.userId, req.mode);
+
+        DeleteMessageResponse res = new DeleteMessageResponse();
+        res.messageId = req.messageId;
+        res.status = "deleted";
+
+        return Response.ok(res).build();
     }
 }

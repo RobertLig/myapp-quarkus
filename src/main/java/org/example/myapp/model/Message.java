@@ -22,7 +22,6 @@ public class Message {
     private String content;
     private Date createdAt;
 
-    private Date deletedForSenderAt;
     private Date deletedForRecipientAt;
 
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
@@ -40,4 +39,8 @@ public class Message {
     public String getContent() { return content; }
 
     public Date getCreatedAt() { return createdAt; }
+
+    public Conversation getConversation() { return conversation; }
+
+    public void setDeletedForRecipientAt(Date date) { this.deletedForRecipientAt = date; }
 }

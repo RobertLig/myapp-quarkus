@@ -13,6 +13,7 @@ import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 
 import java.util.Date;
+import java.util.List;
 
 @ApplicationScoped
 public class MessageService {
@@ -72,5 +73,88 @@ public class MessageService {
         messageRepository.persist(message);
 
         return message;
+    }
+
+    public void deleteMessage(Long messageId, Long userId, String mode) {
+
+        Message message = messageRepository.findById(messageId);
+        if (message == null) {
+            throw new WebApplicationException("Message not found", 404);
+        }
+
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", 404);
+        }
+
+        switch (mode.toLowerCase()) {
+
+            case "recipient":
+                boolean isRecipient = message.getConversation().getParticipants().stream()
+                        .anyMatch(cp -> cp.getUser().getId().equals(userId));
+
+                if (!isRecipient) {
+                    throw new WebApplicationException("Not message recipient", 403);
+                }
+                message.setDeletedForRecipientAt(new Date());
+                break;
+
+            case "global":
+                // Sender deletes → full removal
+                if (!message.getSender().getId().equals(userId)) {
+                    throw new WebApplicationException("Not message sender", 403);
+                }
+
+                messageRepository.delete(message);
+                break;
+
+            default:
+                throw new WebApplicationException("Invalid delete mode", 400);
+        }
+
+        messageRepository.persist(message);
+    }
+
+    public List<Message> listMessages(Long conversationId, Long userId) {
+
+        // Validate conversation
+        Conversation conversation = conversationRepository.findById(conversationId);
+        if (conversation == null) {
+            throw new WebApplicationException("Conversation not found", 404);
+        }
+
+        // Validate user
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", 404);
+        }
+
+        // Check if user is participant
+        boolean isParticipant = conversation.getParticipants().stream()
+                .anyMatch(cp -> cp.getUser().getId().equals(userId));
+
+        if (!isParticipant) {
+            throw new WebApplicationException("Not a conversation participant", 403);
+        }
+
+        // Load all messages
+        List<Message> messages = messageRepository.findByConversation(conversationId);
+
+        // Filter out messages deleted for this user
+        return messages.stream()
+                .filter(m -> {
+
+                    // Sender deleted globally → message removed from DB
+                    // (so it never appears here)
+
+                    // Recipient deleted → hide only for that recipient
+                    if (m.getDeletedForRecipientAt() != null &&
+                            !m.getSender().getId().equals(userId)) {
+                        return false;
+                    }
+
+                    return true;
+                })
+                .toList();
     }
 }
