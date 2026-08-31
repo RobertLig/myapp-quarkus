@@ -6,6 +6,7 @@ import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.model.Conversation;
 import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.model.User;
+import org.example.myapp.repository.ConversationParticipantRepository;
 import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
@@ -19,6 +20,9 @@ public class ConversationService {
 
     @Inject
     ConversationRepository conversationRepository;
+
+    @Inject
+    ConversationParticipantRepository cpRepository;
 
     @Inject
     UserRepository userRepository;
@@ -65,5 +69,22 @@ public class ConversationService {
         }
 
         return conversation;
+    }
+
+    public List<ConversationParticipant> listConversations(Long userId) {
+
+        // Validate user
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", 404);
+        }
+
+        // Load all conversations for this user
+        List<ConversationParticipant> cps = cpRepository.findByUser(userId);
+
+        // Filter out conversations deleted by this user
+        return cps.stream()
+                .filter(cp -> cp.getDeletedAt() == null)
+                .toList();
     }
 }

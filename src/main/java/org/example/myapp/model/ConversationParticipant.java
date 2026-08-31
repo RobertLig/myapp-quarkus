@@ -37,4 +37,6 @@ public class ConversationParticipant {
     public Date getJoinedAt() { return joinedAt; }
 
     public void setJoinedAt(Date joinedAt) { this.joinedAt = joinedAt; }
+
+    public Date getDeletedAt() { return deletedAt; }
 }
