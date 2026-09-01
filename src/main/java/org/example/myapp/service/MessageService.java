@@ -3,6 +3,8 @@ package org.example.myapp.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
+import org.example.myapp.dto.MessageDTO;
+import org.example.myapp.mapper.MessageMapper;
 import org.example.myapp.model.Conversation;
 import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.model.Message;
@@ -11,6 +13,8 @@ import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.MessageRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
+import org.example.myapp.ws.ChatBroadcaster;
+import org.example.myapp.ws.MessagePayloadBuilder;
 
 import java.util.Date;
 import java.util.List;
@@ -29,6 +33,9 @@ public class MessageService {
 
     @Inject
     UserBlockRepository userBlockRepository;
+
+    @Inject
+    ChatBroadcaster broadcaster;
 
     public Message sendMessage(Long conversationId, Long senderId, String content) {
 
@@ -71,6 +78,15 @@ public class MessageService {
         message.setCreatedAt(new Date());
 
         messageRepository.persist(message);
+
+        // Convert to DTO
+        MessageDTO dto = MessageMapper.toDTO(message);
+
+        // Build JSON payload
+        String json = MessagePayloadBuilder.build(dto);
+
+        // Broadcast to all participants
+        broadcaster.broadcast(conversationId, json);
 
         return message;
     }
