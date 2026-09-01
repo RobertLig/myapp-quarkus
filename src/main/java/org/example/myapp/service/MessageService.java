@@ -5,15 +5,13 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.MessageDTO;
 import org.example.myapp.mapper.MessageMapper;
-import org.example.myapp.model.Conversation;
-import org.example.myapp.model.ConversationParticipant;
-import org.example.myapp.model.Message;
-import org.example.myapp.model.User;
+import org.example.myapp.model.*;
 import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.MessageRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.ws.ChatBroadcaster;
+import org.example.myapp.ws.DeliveredReceiptPayloadBuilder;
 import org.example.myapp.ws.MessagePayloadBuilder;
 
 import java.util.Date;
@@ -82,11 +80,22 @@ public class MessageService {
         // Convert to DTO
         MessageDTO dto = MessageMapper.toDTO(message);
 
-        // Build JSON payload
-        String json = MessagePayloadBuilder.build(dto);
+        // Broadcast the message itself
+        String messageJson = MessagePayloadBuilder.build(dto);
+        broadcaster.broadcast(conversationId, messageJson);
 
-        // Broadcast to all participants
-        broadcaster.broadcast(conversationId, json);
+        // Create DELIVERED event
+        MessageEvent delivered = new MessageEvent();
+        delivered.setType(EventType.DELIVERED);
+        delivered.setUser(sender); // sender sees "delivered"
+        delivered.setMessage(message);
+        delivered.setCreatedAt(new Date());
+
+        eventRepository.persist(delivered);
+
+        // Broadcast delivered receipt
+        String deliveredJson = DeliveredReceiptPayloadBuilder.build(delivered);
+        broadcaster.broadcast(conversationId, deliveredJson);
 
         return message;
     }
