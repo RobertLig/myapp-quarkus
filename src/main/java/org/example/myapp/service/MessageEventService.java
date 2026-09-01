@@ -92,7 +92,7 @@ public class MessageEventService {
                 event.getCreatedAt().getTime()
         );
 
-        broadcaster.broadcast(req.getConversationId(), json);
+        broadcaster.broadcast(req.conversationId, json);
 
         return event;
     }

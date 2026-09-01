@@ -4,7 +4,8 @@ public enum EventType {
     SENT,
     DELIVERED,
     READ,
-    TYPING,
+    TYPING_START,
+    TYPING_STOP,
     EDITED,
     DELETED
 }
