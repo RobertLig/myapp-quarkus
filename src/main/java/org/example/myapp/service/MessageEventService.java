@@ -10,6 +10,7 @@ import org.example.myapp.repository.MessageEventRepository;
 import org.example.myapp.repository.MessageRepository;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.ws.ChatBroadcaster;
+import org.example.myapp.ws.ReadReceiptPayloadBuilder;
 
 import java.util.Date;
 
@@ -78,21 +79,27 @@ public class MessageEventService {
 
         eventRepository.persist(event);
 
-        String json = """
+        String payload;
+
+        if (event.getType() == EventType.READ) {
+            payload = ReadReceiptPayloadBuilder.build(event);
+        } else {
+            payload = """
         {
-            "type": "%s",
+            "event": "%s",
             "userId": %d,
             "messageId": %s,
-            "createdAt": %d
+            "timestamp": %d
         }
         """.formatted(
-                event.getType(),
-                event.getUser().getId(),
-                event.getMessage() != null ? event.getMessage().getId() : "null",
-                event.getCreatedAt().getTime()
-        );
+                    event.getType(),
+                    event.getUser().getId(),
+                    event.getMessage() != null ? event.getMessage().getId() : "null",
+                    event.getCreatedAt().getTime()
+            );
+        }
 
-        broadcaster.broadcast(req.conversationId, json);
+        broadcaster.broadcast(req.conversationId, payload);
 
         return event;
     }
