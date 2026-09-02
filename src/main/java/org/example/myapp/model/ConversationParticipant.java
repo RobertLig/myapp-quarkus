@@ -22,6 +22,9 @@ public class ConversationParticipant {
 
     private Long lastReadMessageId;
 
+    private Integer unreadCount = 0;  // unread messages for this user
+
+
     public Conversation getConversation() {
         return conversation;
     }
@@ -39,4 +42,20 @@ public class ConversationParticipant {
     public void setJoinedAt(Date joinedAt) { this.joinedAt = joinedAt; }
 
     public Date getDeletedAt() { return deletedAt; }
+
+    public Integer getUnreadCount() {
+        return unreadCount;
+    }
+
+    public void setUnreadCount(Integer unreadCount) {
+        this.unreadCount = unreadCount;
+    }
+
+    public Long getLastReadMessageId() {
+        return lastReadMessageId;
+    }
+
+    public void setLastReadMessageId(Long lastReadMessageId) {
+        this.lastReadMessageId = lastReadMessageId;
+    }
 }

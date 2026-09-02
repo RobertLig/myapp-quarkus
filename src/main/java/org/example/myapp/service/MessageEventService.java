@@ -84,6 +84,15 @@ public class MessageEventService {
 
         if (event.getType() == EventType.READ) {
             payload = ReadReceiptPayloadBuilder.build(event);
+
+            ConversationParticipant cp = conversation.getParticipants().stream()
+                    .filter(p -> p.getUser().getId().equals(req.userId))
+                    .findFirst()
+                    .orElseThrow(() -> new WebApplicationException("Participant not found", 404));
+
+            cp.setLastReadMessageId(req.messageId);
+            cp.setUnreadCount(0);
+
         } else if (event.getType() == EventType.DELIVERED) {
             payload = DeliveredReceiptPayloadBuilder.build(event);
         } else {

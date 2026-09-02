@@ -29,6 +29,8 @@ public class ConversationMapper {
                 .map(p -> UserMapper.toDTO(p.getUser()))
                 .toList();
 
+        dto.unreadCount = cp.getUnreadCount();
+
         return dto;
     }
 }

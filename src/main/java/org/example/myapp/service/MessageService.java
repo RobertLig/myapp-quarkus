@@ -17,6 +17,8 @@ import org.example.myapp.ws.MessagePayloadBuilder;
 import java.util.Date;
 import java.util.List;
 
+import org.example.myapp.repository.MessageEventRepository;
+
 @ApplicationScoped
 public class MessageService {
 
@@ -34,6 +36,9 @@ public class MessageService {
 
     @Inject
     ChatBroadcaster broadcaster;
+
+    @Inject
+    MessageEventRepository eventRepository;
 
     public Message sendMessage(Long conversationId, Long senderId, String content) {
 
@@ -76,6 +81,14 @@ public class MessageService {
         message.setCreatedAt(new Date());
 
         messageRepository.persist(message);
+
+        for (ConversationParticipant cp : conversation.getParticipants()) {
+            Long participantId = cp.getUser().getId();
+
+            if (!participantId.equals(senderId)) {
+                cp.setUnreadCount(cp.getUnreadCount() + 1);
+            }
+        }
 
         // Convert to DTO
         MessageDTO dto = MessageMapper.toDTO(message);

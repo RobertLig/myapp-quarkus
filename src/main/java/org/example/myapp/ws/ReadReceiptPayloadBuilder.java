@@ -11,7 +11,8 @@ public class ReadReceiptPayloadBuilder {
             "conversationId": %d,
             "userId": %d,
             "messageId": %d,
-            "timestamp": %d
+            "timestamp": %d,
+            "unreadCount": 0
         }
         """.formatted(
                 event.getMessage().getConversation().getId(),

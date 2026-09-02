@@ -8,4 +8,5 @@ public class ConversationListItemDTO {
     public Date createdAt;
     public Date deletedAt; // per-user delete
     public List<UserResponseDTO> participants;
+    public Integer unreadCount;
 }
