@@ -58,4 +58,6 @@ public class ConversationParticipant {
     public void setLastReadMessageId(Long lastReadMessageId) {
         this.lastReadMessageId = lastReadMessageId;
     }
+
+    public void setDeletedAt(Date date) { this.deletedAt = date; }
 }

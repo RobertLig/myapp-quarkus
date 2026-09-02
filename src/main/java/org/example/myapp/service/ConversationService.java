@@ -71,6 +71,60 @@ public class ConversationService {
         return conversation;
     }
 
+    public void deleteConversationForUser(Long conversationId, Long userId) {
+
+        // Load conversation
+        Conversation conversation = conversationRepository.findById(conversationId);
+        if (conversation == null) {
+            throw new WebApplicationException("Conversation not found", 404);
+        }
+
+        // Load user
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", 404);
+        }
+
+        // Find participant
+        ConversationParticipant cp = conversation.getParticipants().stream()
+                .filter(p -> p.getUser().getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new WebApplicationException("User is not a participant", 403));
+
+        // Mark as deleted
+        cp.setDeletedAt(new Date());
+
+        // Reset unread counter
+        cp.setUnreadCount(0);
+    }
+
+    public void restoreConversationForUser(Long conversationId, Long userId) {
+
+        // Load conversation
+        Conversation conversation = conversationRepository.findById(conversationId);
+        if (conversation == null) {
+            throw new WebApplicationException("Conversation not found", 404);
+        }
+
+        // Load user
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", 404);
+        }
+
+        // Find participant
+        ConversationParticipant cp = conversation.getParticipants().stream()
+                .filter(p -> p.getUser().getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new WebApplicationException("User is not a participant", 403));
+
+        // Restore conversation
+        cp.setDeletedAt(null);
+
+        // Reset unread counter (recommended)
+        cp.setUnreadCount(0);
+    }
+
     public List<ConversationParticipant> listConversations(Long userId) {
 
         // Validate user

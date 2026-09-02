@@ -24,6 +24,8 @@ public class Message {
 
     private Date deletedForRecipientAt;
 
+    private Date deletedAt;
+
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
 
     public void setSender(User sender) { this.sender = sender; }
@@ -45,4 +47,12 @@ public class Message {
     public void setDeletedForRecipientAt(Date date) { this.deletedForRecipientAt = date; }
 
     public Date getDeletedForRecipientAt() { return deletedForRecipientAt; }
+
+    public Date getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Date deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 }
