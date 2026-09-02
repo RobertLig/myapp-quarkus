@@ -7,5 +7,6 @@ public enum EventType {
     TYPING_START,
     TYPING_STOP,
     EDITED,
-    DELETED
+    DELETED,
+    REACTION
 }
