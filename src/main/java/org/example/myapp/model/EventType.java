@@ -8,5 +8,6 @@ public enum EventType {
     TYPING_STOP,
     EDITED,
     DELETED,
-    REACTION
+    REACTION,
+    ATTACHMENT
 }

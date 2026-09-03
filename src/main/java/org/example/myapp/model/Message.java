@@ -29,6 +29,9 @@ public class Message {
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL)
     private List<MessageReaction> reactions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL)
+    private List<MessageAttachment> attachments = new ArrayList<>();
+
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
 
     public void setSender(User sender) { this.sender = sender; }
@@ -60,4 +63,8 @@ public class Message {
     }
 
     public List<MessageReaction> getReactions() { return reactions; }
+
+    public List<MessageAttachment> getAttachments() {
+        return attachments;
+    }
 }

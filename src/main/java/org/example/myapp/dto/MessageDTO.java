@@ -13,5 +13,6 @@ public class MessageDTO {
     public Date deletedForRecipientAt;
 
     public List<ReactionDTO> reactions;
+    public List<AttachmentDTO> attachments;
 }
 

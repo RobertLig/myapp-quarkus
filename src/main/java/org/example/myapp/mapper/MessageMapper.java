@@ -15,9 +15,12 @@ public class MessageMapper {
         dto.deletedAt = message.getDeletedAt();
         dto.deletedForRecipientAt = message.getDeletedForRecipientAt();
 
-        // Map reactions
         dto.reactions = message.getReactions().stream()
                 .map(ReactionMapper::toDTO)
+                .toList();
+
+        dto.attachments = message.getAttachments().stream()
+                .map(AttachmentMapper::toDTO)
                 .toList();
 
         return dto;
