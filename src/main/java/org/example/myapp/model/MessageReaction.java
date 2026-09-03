@@ -2,7 +2,7 @@ package org.example.myapp.model;
 
 import jakarta.persistence.*;
 
-import java.time.Instant;
+import java.util.Date;
 
 @Entity
 @Table(name = "message_reactions",
@@ -25,13 +25,21 @@ public class MessageReaction {
     private String reaction; // ❤️ 👍 😂 etc.
 
     @Column(nullable = false)
-    private Instant createdAt = Instant.now();
+    private Date createdAt = new Date();
 
     public void setReaction(String reaction) { this.reaction = reaction; }
 
     public void setMessage(Message message) { this.message = message; }
 
     public void setUser(User user) { this.user = user; }
+
+    public Long getId() { return id; }
+
+    public User getUser() { return user; }
+
+    public String getReaction() { return reaction; }
+
+    public Date getCreatedAt() { return createdAt; }
 
     // Getters and setters
 }

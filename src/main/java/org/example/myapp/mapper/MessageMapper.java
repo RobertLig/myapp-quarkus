@@ -5,12 +5,21 @@ import org.example.myapp.model.Message;
 
 public class MessageMapper {
 
-    public static MessageDTO toDTO(Message m) {
+    public static MessageDTO toDTO(Message message) {
         MessageDTO dto = new MessageDTO();
-        dto.id = m.getId();
-        dto.senderId = m.getSender().getId();
-        dto.content = m.getContent();
-        dto.createdAt = m.getCreatedAt();
+        dto.id = message.getId();
+        dto.conversationId = message.getConversation().getId();
+        dto.senderId = message.getSender().getId();
+        dto.content = message.getContent();
+        dto.createdAt = message.getCreatedAt();
+        dto.deletedAt = message.getDeletedAt();
+        dto.deletedForRecipientAt = message.getDeletedForRecipientAt();
+
+        // Map reactions
+        dto.reactions = message.getReactions().stream()
+                .map(ReactionMapper::toDTO)
+                .toList();
+
         return dto;
     }
 }

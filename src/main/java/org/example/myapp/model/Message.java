@@ -1,11 +1,11 @@
 package org.example.myapp.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 public class Message {
@@ -25,6 +25,9 @@ public class Message {
     private Date deletedForRecipientAt;
 
     private Date deletedAt;
+
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL)
+    private List<MessageReaction> reactions = new ArrayList<>();
 
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
 
@@ -55,4 +58,6 @@ public class Message {
     public void setDeletedAt(Date deletedAt) {
         this.deletedAt = deletedAt;
     }
+
+    public List<MessageReaction> getReactions() { return reactions; }
 }
