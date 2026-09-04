@@ -24,6 +24,9 @@ public class ConversationController {
     @Inject
     MessageService messageService;
 
+    @Inject
+    ConversationMapper conversationMapper;
+
     @POST
     public Response createConversation(CreateConversationRequest req) {
 
@@ -41,7 +44,7 @@ public class ConversationController {
         List<ConversationParticipant> cps = conversationService.listConversations(userId);
 
         List<ConversationListItemDTO> dtos = cps.stream()
-                .map(ConversationMapper::toListItemDTO)
+                .map(conversationMapper::toListItemDTO)
                 .toList();
 
         return Response.ok(dtos).build();
