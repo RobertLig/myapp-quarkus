@@ -4,6 +4,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.MessageDTO;
+import org.example.myapp.dto.MessagePageDTO;
+import org.example.myapp.dto.MessageSearchDTO;
 import org.example.myapp.mapper.MessageMapper;
 import org.example.myapp.model.*;
 import org.example.myapp.repository.ConversationRepository;
@@ -195,4 +197,66 @@ public class MessageService {
                 })
                 .toList();
     }
+
+    public MessagePageDTO getPaginated(Long conversationId, Long before, int limit) {
+
+        List<Message> entities = messageRepository.findPaginated(conversationId, before, limit);
+
+        List<MessageDTO> dtos = entities.stream()
+                .map(MessageMapper::toDTO)
+                .toList();
+
+        // Check if more messages exist
+        boolean hasMore;
+
+        if (entities.isEmpty()) {
+            hasMore = false;
+        } else {
+            Date oldestLoaded = entities.get(entities.size() - 1).getCreatedAt();
+
+            long countOlder = messageRepository.count(
+                    "conversation.id = ?1 AND createdAt < ?2",
+                    conversationId, oldestLoaded
+            );
+
+            hasMore = countOlder > 0;
+        }
+
+        MessagePageDTO page = new MessagePageDTO();
+        page.messages = dtos;
+        page.hasMore = hasMore;
+
+        return page;
+    }
+
+    public MessageSearchDTO search(Long conversationId, String query, Long before, int limit) {
+
+        List<Message> entities = messageRepository.search(conversationId, query, before, limit);
+
+        List<MessageDTO> dtos = entities.stream()
+                .map(MessageMapper::toDTO)
+                .toList();
+
+        boolean hasMore;
+
+        if (entities.isEmpty()) {
+            hasMore = false;
+        } else {
+            Date oldestLoaded = entities.get(entities.size() - 1).getCreatedAt();
+
+            long countOlder = messageRepository.count(
+                    "conversation.id = ?1 AND content ILIKE ?2 AND createdAt < ?3",
+                    conversationId, "%" + query + "%", oldestLoaded
+            );
+
+            hasMore = countOlder > 0;
+        }
+
+        MessageSearchDTO dto = new MessageSearchDTO();
+        dto.messages = dtos;
+        dto.hasMore = hasMore;
+
+        return dto;
+    }
+
 }
