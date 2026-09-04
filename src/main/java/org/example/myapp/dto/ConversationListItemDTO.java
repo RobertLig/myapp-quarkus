@@ -9,4 +9,5 @@ public class ConversationListItemDTO {
     public Date deletedAt; // per-user delete
     public List<UserResponseDTO> participants;
     public Integer unreadCount;
+    public boolean otherUserOnline;
 }

@@ -26,6 +26,18 @@ public class ChatSessionRegistry {
     }
 
     public Set<Session> getSessions(Long conversationId) {
+
         return sessions.getOrDefault(conversationId, Set.of());
     }
+
+    public Set<Session> getAllSessions() {
+        Set<Session> all = ConcurrentHashMap.newKeySet();
+
+        for (Set<Session> set : sessions.values()) {
+            all.addAll(set);
+        }
+
+        return all;
+    }
+
 }

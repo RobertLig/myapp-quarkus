@@ -24,4 +24,29 @@ public class ChatBroadcaster {
             }
         }
     }
+
+    public void broadcastPresence(Long userId, boolean online) {
+
+        String json = """
+    {
+        "event": "PRESENCE",
+        "userId": %d,
+        "online": %b
+    }
+    """.formatted(userId, online);
+
+        broadcastToAll(json);
+    }
+
+    public void broadcastToAll(String jsonPayload) {
+        for (Session session : registry.getAllSessions()) {
+            if (session.isOpen()) {
+                try {
+                    session.getBasicRemote().sendText(jsonPayload);
+                } catch (IOException ignored) {
+                    // optional logging
+                }
+            }
+        }
+    }
 }
