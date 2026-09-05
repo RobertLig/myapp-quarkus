@@ -62,4 +62,19 @@ public class AuthService {
             throw new jakarta.ws.rs.WebApplicationException("error.token.invalid", 401);
         }
     }
+
+    public Long validateAndExtractUserId(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return Long.valueOf(claims.getSubject());
+
+        } catch (Exception e) {
+            throw new jakarta.ws.rs.WebApplicationException("error.token.invalid", 401);
+        }
+    }
 }
