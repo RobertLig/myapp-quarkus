@@ -50,6 +50,16 @@ public class MessageService {
             throw new WebApplicationException("Conversation not found", 404);
         }
 
+        // Prevent sending messages to yourself
+        long distinctUsers = conversation.getParticipants().stream()
+                .map(cp -> cp.getUser().getId())
+                .distinct()
+                .count();
+
+        if (distinctUsers == 1) {
+            throw new WebApplicationException("Cannot message yourself", 400);
+        }
+
         // Load sender
         User sender = userRepository.findById(senderId);
         if (sender == null) {
