@@ -27,13 +27,13 @@ public class TypingEventService {
         // Validate conversation
         Conversation conversation = conversationRepository.findById(req.conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("Conversation not found", 404);
+            throw new WebApplicationException("error.conversation.notfound", 404);
         }
 
         // Validate user
         User user = userRepository.findById(req.userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Check participant membership
@@ -41,7 +41,7 @@ public class TypingEventService {
                 .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("User not in conversation", 403);
+            throw new WebApplicationException("error.message.notparticipant", 403);
         }
 
         // Build JSON payload

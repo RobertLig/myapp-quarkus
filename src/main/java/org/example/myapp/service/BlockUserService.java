@@ -23,20 +23,20 @@ public class BlockUserService {
     public void block(BlockUserRequest req) {
 
         if (req.blockerId.equals(req.blockedId)) {
-            throw new WebApplicationException("Cannot block yourself", 400);
+            throw new WebApplicationException("error.block.self", 400);
         }
 
         User blocker = userRepository.findById(req.blockerId);
         User blocked = userRepository.findById(req.blockedId);
 
         if (blocker == null || blocked == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Check if already blocked
         boolean exists = userBlockRepository.exists(req.blockerId, req.blockedId);
         if (exists) {
-            throw new WebApplicationException("User already blocked", 409);
+            throw new WebApplicationException("error.block.exists", 409);
         }
 
         UserBlock ub = new UserBlock();
@@ -55,7 +55,7 @@ public class BlockUserService {
         ).firstResult();
 
         if (ub == null) {
-            throw new WebApplicationException("Block entry not found", 404);
+            throw new WebApplicationException("error.block.notfound", 404);
         }
 
         userBlockRepository.delete(ub);

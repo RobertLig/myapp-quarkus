@@ -37,7 +37,7 @@ public class AttachmentService {
 
         User user = userRepository.findById(req.userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Validate user is a participant
@@ -45,7 +45,7 @@ public class AttachmentService {
                 .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("User is not a participant", 403);
+            throw new WebApplicationException("error.message.notparticipant", 403);
         }
 
         // Create attachment

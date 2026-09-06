@@ -36,12 +36,12 @@ public class ReactionService {
 
         Message message = messageRepository.findById(messageId);
         if (message == null) {
-            throw new WebApplicationException("Message not found", 404);
+            throw new WebApplicationException("error.message.notfound", 404);
         }
 
         User user = userRepository.findById(req.userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         Long conversationId = message.getConversation().getId();
@@ -51,7 +51,7 @@ public class ReactionService {
                 .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("User is not a participant", 403);
+            throw new WebApplicationException("error.message.notparticipant", 403);
         }
 
         // Find existing reaction

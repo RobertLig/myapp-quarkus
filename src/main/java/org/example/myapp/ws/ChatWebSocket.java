@@ -39,7 +39,7 @@ public class ChatWebSocket {
         }
 
         if (token == null || token.isBlank()) {
-            close(session, "Missing token");
+            close(session, "error.auth.missing.token");
             return;
         }
 
@@ -48,13 +48,13 @@ public class ChatWebSocket {
         try {
             authenticatedUserId = authService.validateAndExtractUserId(token);
         } catch (Exception e) {
-            close(session, "Invalid token");
+            close(session, "error.auth.invalid.token");
             return;
         }
 
         // Prevent impersonation
         if (!authenticatedUserId.equals(userId)) {
-            close(session, "User mismatch");
+            close(session, "error.auth.user.mismatch");
             return;
         }
 
@@ -65,7 +65,7 @@ public class ChatWebSocket {
                 .anyMatch(cp -> cp.getConversation().getId().equals(conversationId));
 
         if (!isParticipant) {
-            close(session, "Not a participant");
+            close(session, "error.websocket.notparticipant");
             return;
         }
 

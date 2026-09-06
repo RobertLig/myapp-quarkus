@@ -47,7 +47,7 @@ public class MessageService {
         // Load conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("Conversation not found", 404);
+            throw new WebApplicationException("error.conversation.notfound", 404);
         }
 
         // Prevent sending messages to yourself
@@ -57,13 +57,13 @@ public class MessageService {
                 .count();
 
         if (distinctUsers == 1) {
-            throw new WebApplicationException("Cannot message yourself", 400);
+            throw new WebApplicationException("error.message.self", 400);
         }
 
         // Load sender
         User sender = userRepository.findById(senderId);
         if (sender == null) {
-            throw new WebApplicationException("Sender not found", 404);
+            throw new WebApplicationException("error.sender.notfound", 404);
         }
 
         // Check if sender is a participant
@@ -71,7 +71,7 @@ public class MessageService {
                 .anyMatch(cp -> cp.getUser().getId().equals(senderId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("Sender is not a participant", 403);
+            throw new WebApplicationException("error.message.notparticipant", 403);
         }
 
         // Check if sender is blocked by any participant
@@ -80,7 +80,7 @@ public class MessageService {
 
             if (!otherUserId.equals(senderId)) {
                 if (userBlockRepository.exists(otherUserId, senderId)) {
-                    throw new WebApplicationException("Sender is blocked", 403);
+                    throw new WebApplicationException("error.message.blocked", 403);
                 }
             }
         }
@@ -129,12 +129,12 @@ public class MessageService {
 
         Message message = messageRepository.findById(messageId);
         if (message == null) {
-            throw new WebApplicationException("Message not found", 404);
+            throw new WebApplicationException("error.message.notfound", 404);
         }
 
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         switch (mode.toLowerCase()) {
@@ -144,7 +144,7 @@ public class MessageService {
                         .anyMatch(cp -> cp.getUser().getId().equals(userId));
 
                 if (!isRecipient) {
-                    throw new WebApplicationException("Not message recipient", 403);
+                    throw new WebApplicationException("error.message.not.recipient", 403);
                 }
                 message.setDeletedForRecipientAt(new Date());
                 break;
@@ -152,14 +152,14 @@ public class MessageService {
             case "global":
                 // Sender deletes → full removal
                 if (!message.getSender().getId().equals(userId)) {
-                    throw new WebApplicationException("Not message sender", 403);
+                    throw new WebApplicationException("error.message.not.sender", 403);
                 }
 
                 messageRepository.delete(message);
                 break;
 
             default:
-                throw new WebApplicationException("Invalid delete mode", 400);
+                throw new WebApplicationException("error.message.delete.mode", 400);
         }
 
         messageRepository.persist(message);
@@ -170,13 +170,13 @@ public class MessageService {
         // Validate conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("Conversation not found", 404);
+            throw new WebApplicationException("error.conversation.notfound", 404);
         }
 
         // Validate user
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Check if user is participant
@@ -184,7 +184,7 @@ public class MessageService {
                 .anyMatch(cp -> cp.getUser().getId().equals(userId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("Not a conversation participant", 403);
+            throw new WebApplicationException("error.message.notparticipant", 403);
         }
 
         // Load all messages

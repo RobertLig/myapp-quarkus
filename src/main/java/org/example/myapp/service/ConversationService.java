@@ -36,14 +36,14 @@ public class ConversationService {
         List<User> users = userRepository.findByIds(participantIds);
 
         if (users.size() != participantIds.size()) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Check blocks
         for (User u1 : users) {
             for (User u2 : users) {
                 if (!u1.equals(u2) && userBlockRepository.exists(u1.getId(), u2.getId())) {
-                    throw new WebApplicationException("User is blocked", 403);
+                    throw new WebApplicationException("error.user.blocked", 403);
                 }
             }
         }
@@ -76,20 +76,20 @@ public class ConversationService {
         // Load conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("Conversation not found", 404);
+            throw new WebApplicationException("error.conversation.notfound", 404);
         }
 
         // Load user
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Find participant
         ConversationParticipant cp = conversation.getParticipants().stream()
                 .filter(p -> p.getUser().getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new WebApplicationException("User is not a participant", 403));
+                .orElseThrow(() -> new WebApplicationException("error.message.notparticipant", 403));
 
         // Mark as deleted
         cp.setDeletedAt(new Date());
@@ -103,20 +103,20 @@ public class ConversationService {
         // Load conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("Conversation not found", 404);
+            throw new WebApplicationException("error.conversation.notfound", 404);
         }
 
         // Load user
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Find participant
         ConversationParticipant cp = conversation.getParticipants().stream()
                 .filter(p -> p.getUser().getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new WebApplicationException("User is not a participant", 403));
+                .orElseThrow(() -> new WebApplicationException("error.message.notparticipant", 403));
 
         // Restore conversation
         cp.setDeletedAt(null);
@@ -130,7 +130,7 @@ public class ConversationService {
         // Validate user
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound", 404);
         }
 
         // Load all conversations for this user

@@ -38,13 +38,13 @@ public class MessageEventService {
         // Validate conversation
         Conversation conversation = conversationRepository.findById(req.conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("Conversation not found", 404);
+            throw new WebApplicationException("error.conversation.notfound", 404);
         }
 
         // Validate user
         User user = userRepository.findById(req.userId);
         if (user == null) {
-            throw new WebApplicationException("User not found", 404);
+            throw new WebApplicationException("error.user.notfound ", 404);
         }
 
         // Check participant membership
@@ -52,7 +52,7 @@ public class MessageEventService {
                 .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("User not in conversation", 403);
+            throw new WebApplicationException("error.message.notparticipant", 403);
         }
 
         Message message = null;
@@ -63,11 +63,11 @@ public class MessageEventService {
             message = messageRepository.findById(req.messageId);
 
             if (message == null) {
-                throw new WebApplicationException("Message not found", 404);
+                throw new WebApplicationException("error.message.notfound", 404);
             }
 
             if (!message.getConversation().getId().equals(req.conversationId)) {
-                throw new WebApplicationException("Message not in conversation", 400);
+                throw new WebApplicationException("error.message.notinconversation", 400);
             }
         }
 
@@ -88,7 +88,7 @@ public class MessageEventService {
             ConversationParticipant cp = conversation.getParticipants().stream()
                     .filter(p -> p.getUser().getId().equals(req.userId))
                     .findFirst()
-                    .orElseThrow(() -> new WebApplicationException("Participant not found", 404));
+                    .orElseThrow(() -> new WebApplicationException("error.participant.notfound", 404));
 
             cp.setLastReadMessageId(req.messageId);
             cp.setUnreadCount(0);
