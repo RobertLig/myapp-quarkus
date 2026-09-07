@@ -141,4 +141,56 @@ public class ConversationService {
                 .filter(cp -> cp.getDeletedAt() == null)
                 .toList();
     }
+
+    public Conversation getOrCreateSupportConversation(Long userId, Long adminId) {
+
+        // 1. Load user
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("error.user.notfound", 404);
+        }
+
+        // 2. Load admin
+        User admin = userRepository.findById(adminId);
+        if (admin == null) {
+            throw new WebApplicationException("error.admin.notfound", 404);
+        }
+
+        // 3. Check if support conversation already exists
+        Conversation existing = conversationRepository.find(
+                "type = ?1 AND EXISTS (" +
+                        "SELECT cp FROM ConversationParticipant cp " +
+                        "WHERE cp.conversation.id = Conversation.id AND cp.user.id = ?2" +
+                        ")",
+                ConversationType.USER_TO_ADMIN,
+                userId
+        ).firstResult();
+
+        if (existing != null) {
+            return existing;
+        }
+
+        // 4. Create new support conversation
+        Conversation conversation = new Conversation();
+        conversation.setCreatedAt(new Date());
+        conversation.setType(ConversationType.USER_TO_ADMIN);
+        conversationRepository.persist(conversation);
+
+        // 5. Add user participant
+        ConversationParticipant pUser = new ConversationParticipant();
+        pUser.setUser(user);
+        pUser.setConversation(conversation);
+        pUser.setJoinedAt(new Date());
+        cpRepository.persist(pUser);
+
+        // 6. Add admin participant
+        ConversationParticipant pAdmin = new ConversationParticipant();
+        pAdmin.setUser(admin);
+        pAdmin.setConversation(conversation);
+        pAdmin.setJoinedAt(new Date());
+        cpRepository.persist(pAdmin);
+
+        // 7. Return the new conversation
+        return conversation;
+    }
 }

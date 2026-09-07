@@ -14,8 +14,8 @@ public class RateLimitService {
         Instant windowStart;
     }
 
-    private final Map<String, Counter> registerByIp = new ConcurrentHashMap<>();
-    private final Map<String, Counter> resetByIp = new ConcurrentHashMap<>();
+    private final Map<Object, Counter> registerByIp = new ConcurrentHashMap<>();
+    private final Map<Object, Counter> resetByIp = new ConcurrentHashMap<>();
 
     private static final int REGISTER_LIMIT = 5;      // 5 per hour per IP
     private static final int RESET_LIMIT = 5;         // 5 per hour per IP
@@ -25,7 +25,12 @@ public class RateLimitService {
 
     private static final int SUSPICION_THRESHOLD = 10; // block after 10 suspicious events
 
-    private boolean allowed(Map<String, Counter> store, String key, int limit) {
+    private final Map<Object, Counter> messageByUser = new ConcurrentHashMap<>();
+
+    private static final int MESSAGE_LIMIT = 30; // 30 messages per hour per user
+
+    private boolean allowed(Map<Object, Counter> store, Object key, int limit)
+    {
         Instant now = Instant.now();
         Counter c = store.computeIfAbsent(key, k -> {
             Counter nc = new Counter();
@@ -61,5 +66,9 @@ public class RateLimitService {
 
     public void decaySuspicion(String ip) {
         ipSuspicion.computeIfPresent(ip, (k, v) -> Math.max(0, v - 1));
+    }
+
+    public boolean allowMessage(Long userId) {
+        return allowed(messageByUser, userId, MESSAGE_LIMIT);
     }
 }

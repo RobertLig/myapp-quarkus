@@ -21,6 +21,9 @@ public class Conversation {
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
     private List<Message> messages;
 
+    @Enumerated(EnumType.STRING)
+    private ConversationType type;
+
     public void setId(Long id) { this.id = id; }
 
     public Long getId() { return id; }

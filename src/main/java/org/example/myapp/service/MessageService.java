@@ -42,7 +42,15 @@ public class MessageService {
     @Inject
     MessageEventRepository eventRepository;
 
+    @Inject
+    RateLimitService rateLimitService;
+
     public Message sendMessage(Long conversationId, Long senderId, String content) {
+
+        // Rate limit per user for messaging
+        if (!rateLimitService.allowMessage(senderId)) {
+            throw new WebApplicationException("error.rate.limit", 429);
+        }
 
         // Load conversation
         Conversation conversation = conversationRepository.findById(conversationId);
