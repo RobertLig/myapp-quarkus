@@ -2,16 +2,15 @@ package org.example.myapp.controller;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Context;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import java.util.Map;
 
+import org.example.myapp.dto.PasswordResetRequestDTO;
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
-import org.example.myapp.service.RateLimitService;
 import org.example.myapp.service.UserService;
 import org.example.myapp.service.AuthService;
 import jakarta.ws.rs.core.NewCookie;
@@ -24,9 +23,6 @@ public class AuthController {
     UserService userService;
 
     @Inject AuthService authService;
-
-    @Inject
-    RateLimitService rateLimitService;
 
     @Context
     io.vertx.core.http.HttpServerRequest request;
@@ -41,15 +37,11 @@ public class AuthController {
     @POST
     @Path("/reset/request")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response requestReset(Map<String, String> body) {
+    public Response requestReset(PasswordResetRequestDTO dto) {
 
         String ip = getClientIp();
-        if (!rateLimitService.allowReset(ip)) {
-            throw new WebApplicationException("error.rate.limit", 429);
-        }
+        userService.requestPasswordReset(dto.getEmail(), dto.getTrap(), ip);
 
-        String email = body.get("email");
-        userService.requestPasswordReset(email);
         return Response.ok(Map.of("message", "success.reset.email.sent")).build();
     }
 

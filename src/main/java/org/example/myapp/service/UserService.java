@@ -250,13 +250,49 @@ public class UserService {
         user.setVerificationToken(null);
     }
 
-    public void requestPasswordReset(String email) {
+    public void requestPasswordReset(String email, String trap, String clientIp) {
 
+        // 1. Honeypot (if you add a trap field to reset form)
+        if (trap != null && !trap.isBlank()) {
+            rateLimitService.addSuspicion(clientIp, 5);
+            log.warn("Reset honeypot triggered by IP: " + clientIp);
+            randomDelay();
+            return; // silent success
+        }
+
+        // 2. Disposable email detection
+        if (disposableEmailService.isDisposable(email)) {
+            rateLimitService.addSuspicion(clientIp, 3);
+            log.warn("Disposable email blocked for reset. IP: " + clientIp + ", email: " + email);
+            randomDelay();
+            return; // silent success
+        }
+
+        // 3. Rate limit
+        if (!rateLimitService.allowReset(clientIp)) {
+            rateLimitService.addSuspicion(clientIp, 2);
+            randomDelay();
+            return; // silent success
+        }
+
+        // 4. IP throttle
+        if (rateLimitService.isThrottled(clientIp)) {
+            log.warn("IP throttled for reset: " + clientIp);
+            randomDelay();
+            return; // silent success
+        }
+
+        // 5. Normal flow (silent for non-existing emails)
         User user = userRepository.find("email", email).firstResult();
 
         if (user == null) {
-            throw new WebApplicationException("error.email.notfound", 404);
+            // DO NOT reveal anything
+            randomDelay();
+            return; // silent success
         }
+
+        // 6. Real reset email
+        rateLimitService.decaySuspicion(clientIp);
 
         String token = tokenService.generateToken();
         user.setResetPasswordToken(token);
