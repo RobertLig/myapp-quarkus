@@ -1,6 +1,8 @@
 package org.example.myapp.controller;
 
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Context;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
@@ -9,6 +11,7 @@ import java.util.Map;
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
+import org.example.myapp.service.RateLimitService;
 import org.example.myapp.service.UserService;
 import org.example.myapp.service.AuthService;
 import jakarta.ws.rs.core.NewCookie;
@@ -22,6 +25,12 @@ public class AuthController {
 
     @Inject AuthService authService;
 
+    @Inject
+    RateLimitService rateLimitService;
+
+    @Context
+    io.vertx.core.http.HttpServerRequest request;
+
     @GET
     @Path("/verify")
     public Response verifyEmail(@QueryParam("token") String token) {
@@ -33,6 +42,12 @@ public class AuthController {
     @Path("/reset/request")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response requestReset(Map<String, String> body) {
+
+        String ip = getClientIp();
+        if (!rateLimitService.allowReset(ip)) {
+            throw new WebApplicationException("error.rate.limit", 429);
+        }
+
         String email = body.get("email");
         userService.requestPasswordReset(email);
         return Response.ok(Map.of("message", "success.reset.email.sent")).build();
@@ -92,8 +107,16 @@ public class AuthController {
     @POST
     @Path("/register")
     public Response register(UserDTO dto) {
-        User user = userService.register(dto);
-        return Response.ok(UserMapper.toDTO(user)).build();
+        String ip = getClientIp();
+
+        User user = userService.register(dto, ip);
+
+        if (user.getId() == -1L) {
+            // honeypot triggered → pretend success
+            return Response.ok(Map.of("message", "success.registration")).build();
+        }else {
+            return Response.ok(UserMapper.toDTO(user)).build();
+        }
     }
 
     @POST
@@ -123,5 +146,13 @@ public class AuthController {
         return Response.ok(
                 Map.of("message", "success.logout")
         ).cookie(clearedCookie).build();
+    }
+
+    private String getClientIp() {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            return xff.split(",")[0].trim();
+        }
+        return request.remoteAddress().host();
     }
 }

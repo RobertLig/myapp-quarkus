@@ -12,6 +12,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.util.Optional;
 import jakarta.ws.rs.WebApplicationException;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class UserService {
@@ -28,7 +29,54 @@ public class UserService {
     @Inject
     GoogleService googleService;
 
-    public User register(UserDTO dto) {
+    @Inject
+    DisposableEmailService disposableEmailService;
+
+    @Inject
+    RateLimitService rateLimitService;
+
+    private static final Logger log = Logger.getLogger(UserService.class);
+
+    public User register(UserDTO dto, String clientIp) {
+
+        // Honeypot check — if filled, it's a bot
+        if (dto.getTrap() != null && !dto.getTrap().isBlank()) {
+
+            rateLimitService.addSuspicion(clientIp, 5);
+
+            log.warn("Honeypot triggered by IP: " + clientIp);
+
+            // mimic real processing time
+            randomDelay();
+
+            // return a fake user DTO without persisting anything
+            return fakeUser(dto);
+        }
+
+        // Disposable email detection
+        if (disposableEmailService.isDisposable(dto.getEmail())) {
+            rateLimitService.addSuspicion(clientIp, 3);
+
+            log.warn("Disposable email blocked. IP: " + clientIp + ", email: " + dto.getEmail());
+
+            randomDelay();
+
+            return fakeUser(dto); // same silent fake success as honeypot
+        }
+
+        if (!rateLimitService.allowRegister(clientIp)) {
+            rateLimitService.addSuspicion(clientIp, 2);
+            throw new WebApplicationException("error.rate.limit", 429);
+        }
+
+        //ip throttle
+        if (rateLimitService.isThrottled(clientIp)) {
+            log.warn("IP throttled: " + clientIp);
+            randomDelay();
+            return fakeUser(dto); // silent fake success
+        }
+
+        rateLimitService.decaySuspicion(clientIp);
 
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new WebApplicationException("error.email.inuse", 400);
@@ -70,6 +118,22 @@ public class UserService {
 
 
         return user;
+    }
+
+    private User fakeUser(UserDTO dto) {
+        User fake = new User();
+        fake.setId(-1L); // impossible ID
+        fake.setEmail(dto.getEmail());
+        fake.setName(dto.getName());
+        fake.setEmailVerified(false);
+        return fake;
+    }
+
+    private void randomDelay() {
+        try {
+            long delay = 150 + (long)(Math.random() * 300); // 150–450 ms
+            Thread.sleep(delay);
+        } catch (InterruptedException ignored) {}
     }
 
     public User login(String email, String password) {

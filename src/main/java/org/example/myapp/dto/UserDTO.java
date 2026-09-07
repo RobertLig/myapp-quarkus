@@ -22,6 +22,9 @@ public class UserDTO {
 
     private String locale;
 
+    // Honeypot field — bots fill this, humans never do
+    private String trap;
+
     // ===== GETTERS =====
 
     public String getName() {
@@ -51,6 +54,8 @@ public class UserDTO {
     public String getPhotoUrl() {
         return photoUrl;
     }
+
+    public String getTrap() { return trap; }
 
     // ===== SETTERS =====
 
@@ -84,4 +89,6 @@ public class UserDTO {
 
     public String getLocale() { return locale; }
     public void setLocale(String locale) { this.locale = locale; }
+
+    public void setTrap(String trap) { this.trap = trap; }
 }
