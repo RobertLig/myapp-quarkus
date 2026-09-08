@@ -9,8 +9,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.example.myapp.dto.*;
 import org.example.myapp.mapper.MessageMapper;
+import org.example.myapp.model.Conversation;
 import org.example.myapp.model.Message;
 import org.example.myapp.service.MessageService;
+import org.example.myapp.service.ConversationService;
 
 import java.util.List;
 
@@ -21,6 +23,9 @@ public class MessageController {
 
     @Inject
     MessageService messageService;
+
+    @Inject
+    ConversationService conversationService;
 
     @POST
     public Response sendMessage(SendMessageRequest req) {
@@ -63,5 +68,29 @@ public class MessageController {
                 .toList();
 
         return Response.ok(dtos).build();
+    }
+
+    @POST
+    @Path("/support/send")
+    public Response sendSupportMessage(SendSupportMessageRequest req) {
+
+        Long userId = req.userId;      // authenticated user
+        Long adminId = req.adminId;    // your admin user ID
+
+        // 1. Find or create support conversation
+        Conversation conversation =
+                conversationService.getOrCreateSupportConversation(userId, adminId);
+
+        // 2. Send message using existing messaging logic
+        Message message = messageService.sendMessage(
+                conversation.getId(),
+                userId,
+                req.content
+        );
+
+        // 3. Convert to DTO
+        MessageDTO dto = MessageMapper.toDTO(message);
+
+        return Response.ok(dto).build();
     }
 }

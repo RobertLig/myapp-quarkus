@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.model.Conversation;
 import org.example.myapp.model.ConversationParticipant;
+import org.example.myapp.model.ConversationType;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.ConversationParticipantRepository;
 import org.example.myapp.repository.ConversationRepository;

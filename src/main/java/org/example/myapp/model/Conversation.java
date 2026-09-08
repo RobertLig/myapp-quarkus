@@ -39,4 +39,6 @@ public class Conversation {
     public void setParticipants(List<ConversationParticipant> participants) { this.participants = participants; }
 
     public List<ConversationParticipant> getParticipants() { return participants; }
+
+    public void setType(ConversationType conversationType) { this.type = conversationType; }
 }
