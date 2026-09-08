@@ -133,46 +133,6 @@ public class MessageService {
         return message;
     }
 
-    public void deleteMessage(Long messageId, Long userId, String mode) {
-
-        Message message = messageRepository.findById(messageId);
-        if (message == null) {
-            throw new WebApplicationException("error.message.notfound", 404);
-        }
-
-        User user = userRepository.findById(userId);
-        if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
-        }
-
-        switch (mode.toLowerCase()) {
-
-            case "recipient":
-                boolean isRecipient = message.getConversation().getParticipants().stream()
-                        .anyMatch(cp -> cp.getUser().getId().equals(userId));
-
-                if (!isRecipient) {
-                    throw new WebApplicationException("error.message.not.recipient", 403);
-                }
-                message.setDeletedForRecipientAt(new Date());
-                break;
-
-            case "global":
-                // Sender deletes → full removal
-                if (!message.getSender().getId().equals(userId)) {
-                    throw new WebApplicationException("error.message.not.sender", 403);
-                }
-
-                messageRepository.delete(message);
-                break;
-
-            default:
-                throw new WebApplicationException("error.message.delete.mode", 400);
-        }
-
-        messageRepository.persist(message);
-    }
-
     public List<Message> listMessages(Long conversationId, Long userId) {
 
         // Validate conversation

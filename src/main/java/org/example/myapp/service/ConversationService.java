@@ -194,4 +194,22 @@ public class ConversationService {
         // 7. Return the new conversation
         return conversation;
     }
+
+    public List<ConversationParticipant> listSupportConversations(Long adminId) {
+
+        // Validate admin
+        User admin = userRepository.findById(adminId);
+        if (admin == null) {
+            throw new WebApplicationException("error.admin.notfound", 404);
+        }
+
+        // Load all conversations where admin is a participant
+        List<ConversationParticipant> cps = cpRepository.findByUser(adminId);
+
+        // Filter only USER_TO_ADMIN conversations
+        return cps.stream()
+                .filter(cp -> cp.getDeletedAt() == null)
+                .filter(cp -> cp.getConversation().getType() == ConversationType.USER_TO_ADMIN)
+                .toList();
+    }
 }

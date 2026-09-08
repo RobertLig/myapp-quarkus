@@ -42,19 +42,6 @@ public class MessageController {
     }
 
     @POST
-    @Path("/delete")
-    public Response deleteMessage(DeleteMessageRequest req) {
-
-        messageService.deleteMessage(req.messageId, req.userId, req.mode);
-
-        DeleteMessageResponse res = new DeleteMessageResponse();
-        res.messageId = req.messageId;
-        res.status = "deleted";
-
-        return Response.ok(res).build();
-    }
-
-    @POST
     @Path("/list")
     public Response listMessages(ListMessagesRequest req) {
 

@@ -41,4 +41,6 @@ public class Conversation {
     public List<ConversationParticipant> getParticipants() { return participants; }
 
     public void setType(ConversationType conversationType) { this.type = conversationType; }
+
+    public ConversationType getType() { return type; }
 }

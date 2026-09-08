@@ -74,4 +74,18 @@ public class ConversationController {
 
         return messageService.search(conversationId, query, before, limit);
     }
+
+    @GET
+    @Path("/support/admin/{adminId}")
+    public Response listSupportConversations(@PathParam("adminId") Long adminId) {
+
+        // Load all conversations where admin participates AND type = USER_TO_ADMIN
+        List<ConversationParticipant> cps = conversationService.listSupportConversations(adminId);
+
+        List<ConversationListItemDTO> dtos = cps.stream()
+                .map(conversationMapper::toListItemDTO)
+                .toList();
+
+        return Response.ok(dtos).build();
+    }
 }
