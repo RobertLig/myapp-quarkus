@@ -93,4 +93,20 @@ public class MessageController {
 
         return Response.ok(dto).build();
     }
+
+    @POST
+    @Path("/support/reply")
+    public Response replyToSupport(AdminReplyRequest req) {
+
+        // Admin replies inside an existing support conversation
+        Message message = messageService.sendMessage(
+                req.conversationId,
+                req.adminId,
+                req.content
+        );
+
+        MessageDTO dto = MessageMapper.toDTO(message);
+
+        return Response.ok(dto).build();
+    }
 }
