@@ -48,6 +48,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Announcement> announcements;
 
+    private boolean termsAccepted;
+
     // ===== LIFECYCLE CALLBACKS =====
     @PrePersist
     public void onCreate() {
@@ -175,4 +177,7 @@ public class User {
     public void setGoogleId(String googleId) {
         this.googleId = googleId;
     }
+
+    public boolean isTermsAccepted() { return termsAccepted; }
+    public void setTermsAccepted(boolean termsAccepted) { this.termsAccepted = termsAccepted; }
 }

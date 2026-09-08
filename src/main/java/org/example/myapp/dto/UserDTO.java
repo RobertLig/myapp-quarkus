@@ -25,6 +25,9 @@ public class UserDTO {
     // Honeypot field — bots fill this, humans never do
     private String trap;
 
+    @NotNull(message = "{validation.user.terms.required}")
+    private Boolean termsAccepted;
+
     // ===== GETTERS =====
 
     public String getName() {
@@ -91,4 +94,7 @@ public class UserDTO {
     public void setLocale(String locale) { this.locale = locale; }
 
     public void setTrap(String trap) { this.trap = trap; }
+
+    public Boolean getTermsAccepted() { return termsAccepted; }
+    public void setTermsAccepted(Boolean termsAccepted) { this.termsAccepted = termsAccepted; }
 }

@@ -39,6 +39,10 @@ public class UserService {
 
     public User register(UserDTO dto, String clientIp) {
 
+        if (dto.getTermsAccepted() == null || !dto.getTermsAccepted()) {
+            throw new WebApplicationException("error.terms.notaccepted", 400);
+        }
+
         // Honeypot check — if filled, it's a bot
         if (dto.getTrap() != null && !dto.getTrap().isBlank()) {
 
@@ -102,6 +106,8 @@ public class UserService {
 
         String locale = dto.getLocale() != null ? dto.getLocale() : "en";
         user.setLocale(locale);
+
+        user.setTermsAccepted(dto.getTermsAccepted());
 
         userRepository.persist(user);
 
