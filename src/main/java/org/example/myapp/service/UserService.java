@@ -2,8 +2,10 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
+import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.UserRepository;
@@ -37,7 +39,8 @@ public class UserService {
 
     private static final Logger log = Logger.getLogger(UserService.class);
 
-    public User register(UserDTO dto, String clientIp) {
+    @Transactional
+    public User register(RegistrationDTO dto, String clientIp) {
 
         if (dto.getTermsAccepted() == null || !dto.getTermsAccepted()) {
             throw new WebApplicationException("error.terms.notaccepted", 400);
@@ -126,7 +129,7 @@ public class UserService {
         return user;
     }
 
-    private User fakeUser(UserDTO dto) {
+    private User fakeUser(RegistrationDTO dto) {
         User fake = new User();
         fake.setId(-1L); // impossible ID
         fake.setEmail(dto.getEmail());
@@ -254,6 +257,9 @@ public class UserService {
 
         user.setEmailVerified(true);
         user.setVerificationToken(null);
+
+        userRepository.persist(user);   // <-- REQUIRED
+        userRepository.flush();         // <-- OPTIONAL but recommended
     }
 
     public void requestPasswordReset(String email, String trap, String clientIp) {

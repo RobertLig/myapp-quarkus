@@ -8,6 +8,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.Map;
 
 import org.example.myapp.dto.PasswordResetRequestDTO;
+import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
@@ -98,7 +99,8 @@ public class AuthController {
 
     @POST
     @Path("/register")
-    public Response register(UserDTO dto) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response register(RegistrationDTO dto) {
         String ip = getClientIp();
 
         User user = userService.register(dto, ip);
