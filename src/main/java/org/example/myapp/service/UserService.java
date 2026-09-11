@@ -247,6 +247,7 @@ public class UserService {
         return storedHash.equals(hash);
     }
 
+    @Transactional
     public void verifyEmail(String token) {
 
         User user = userRepository.find("verificationToken", token).firstResult();
