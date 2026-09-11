@@ -15,12 +15,14 @@ public class RegistrationDTO {
     private String password;
 
     @NotNull(message = "{validation.user.terms.required}")
+    @AssertTrue(message = "{validation.user.terms.mustAccept}")
     private Boolean termsAccepted;
 
     // Honeypot field — bots fill this, humans never do
     private String trap;
 
     // Locale is set automatically by frontend (navigator.language)
+    @NotBlank(message = "{validation.user.locale.required}")
     private String locale;
 
     // ===== GETTERS =====

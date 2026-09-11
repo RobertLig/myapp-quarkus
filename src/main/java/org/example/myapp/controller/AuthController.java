@@ -1,6 +1,7 @@
 package org.example.myapp.controller;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.*;
@@ -100,7 +101,7 @@ public class AuthController {
     @POST
     @Path("/register")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response register(RegistrationDTO dto) {
+    public Response register(@Valid RegistrationDTO dto) {
         String ip = getClientIp();
 
         User user = userService.register(dto, ip);

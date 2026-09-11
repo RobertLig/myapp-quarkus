@@ -115,7 +115,7 @@ public class UserService {
         userRepository.persist(user);
 
         // Send email (or return link in dev mode)
-        emailService.sendActionEmail(
+        /*emailService.sendActionEmail(
                 user.getEmail(),
                 user.getLocale(),
                 "email.verify.subject",
@@ -123,7 +123,7 @@ public class UserService {
                 "email.verify.button",
                 "email.verify.fallback",
                 "https://yourdomain.com/auth/verify?token=" + token
-        );
+        ); */
 
 
         return user;
