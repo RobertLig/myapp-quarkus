@@ -1,6 +1,7 @@
 package org.example.myapp.dto;
 
 import jakarta.validation.constraints.*;
+import org.example.myapp.model.Locale;
 
 public class RegistrationDTO {
 
@@ -22,8 +23,8 @@ public class RegistrationDTO {
     private String trap;
 
     // Locale is set automatically by frontend (navigator.language)
-    @NotBlank(message = "{validation.user.locale.required}")
-    private String locale;
+    @NotNull(message = "{validation.user.locale.required}")
+    private Locale locale;
 
     // ===== GETTERS =====
 
@@ -32,7 +33,7 @@ public class RegistrationDTO {
     public String getPassword() { return password; }
     public Boolean getTermsAccepted() { return termsAccepted; }
     public String getTrap() { return trap; }
-    public String getLocale() { return locale; }
+    public Locale getLocale() { return locale; }
 
     // ===== SETTERS =====
 
@@ -41,5 +42,5 @@ public class RegistrationDTO {
     public void setPassword(String password) { this.password = password; }
     public void setTermsAccepted(Boolean termsAccepted) { this.termsAccepted = termsAccepted; }
     public void setTrap(String trap) { this.trap = trap; }
-    public void setLocale(String locale) { this.locale = locale; }
+    public void setLocale(Locale locale) { this.locale = locale; }
 }

@@ -80,7 +80,6 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
                     .build();
         }
 
-
         // Internal server error
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(Map.of(

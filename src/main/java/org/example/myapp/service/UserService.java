@@ -7,6 +7,7 @@ import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
 import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
+import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.UserRepository;
 import java.util.Base64;
@@ -107,7 +108,10 @@ public class UserService {
         user.setVerificationToken(token);
         user.setEmailVerified(false);
 
-        String locale = dto.getLocale() != null ? dto.getLocale() : "en";
+        String locale = dto.getLocale() != null
+                ? dto.getLocale().name()
+                : "en";
+
         user.setLocale(locale);
 
         user.setTermsAccepted(dto.getTermsAccepted());
