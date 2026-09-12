@@ -25,11 +25,6 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(Exception exception) {
 
-        // Validation errors
-        if (exception instanceof ConstraintViolationException cve) {
-            return handleValidationException(cve);
-        }
-
         // Not found
         if (exception instanceof NotFoundException nfe) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -91,24 +86,6 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
                 .entity(Map.of(
                         "error", messageService.get("error.internal", headers),
                         "message", exception.getMessage()
-                ))
-                .build();
-    }
-
-    private Response handleValidationException(ConstraintViolationException cve) {
-        Set<ConstraintViolation<?>> violations = cve.getConstraintViolations();
-        Map<String, String> errors = new HashMap<>();
-
-        for (ConstraintViolation<?> v : violations) {
-            String field = v.getPropertyPath().toString();
-            String message = v.getMessage();
-            errors.put(field, message);
-        }
-
-        return Response.status(Response.Status.BAD_REQUEST)
-                .entity(Map.of(
-                        "error", messageService.get("validation.error", headers),
-                        "details", errors
                 ))
                 .build();
     }
