@@ -266,6 +266,7 @@ public class UserService {
         userRepository.flush();         // <-- OPTIONAL but recommended
     }
 
+    @Transactional
     public void requestPasswordReset(String email, String trap, String clientIp) {
 
         // 1. Honeypot (if you add a trap field to reset form)
@@ -326,6 +327,7 @@ public class UserService {
         );
     }
 
+    @Transactional
     public void resetPassword(String token, String newPassword) {
 
         User user = userRepository.find("resetPasswordToken", token).firstResult();

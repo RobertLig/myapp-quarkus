@@ -8,10 +8,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import java.util.Map;
 
-import org.example.myapp.dto.PasswordResetConfirmDTO;
-import org.example.myapp.dto.PasswordResetRequestDTO;
-import org.example.myapp.dto.RegistrationDTO;
-import org.example.myapp.dto.UserDTO;
+import org.example.myapp.dto.*;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
 import org.example.myapp.service.UserService;
@@ -69,7 +66,7 @@ public class AuthController {
 
     @POST
     @Path("/login")
-    public Response login(UserDTO dto) {
+    public Response login(@Valid LoginDTO dto) {
         User user = userService.login(dto.getEmail(), dto.getPassword());
         return buildAuthResponse(user);
     }
