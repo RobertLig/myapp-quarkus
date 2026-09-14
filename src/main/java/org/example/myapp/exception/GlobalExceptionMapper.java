@@ -25,11 +25,23 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(Exception exception) {
 
+        // ⭐ Skip validation errors — let ValidationExceptionMapper handle them
+        if (exception instanceof ConstraintViolationException) {
+            throw (ConstraintViolationException) exception;
+        }
+
         // Not found
         if (exception instanceof NotFoundException nfe) {
+            String translated;
+            try {
+                translated = messageService.get("error.notfound", headers);
+            } catch (MissingResourceException e) {
+                translated = "Not found";
+            }
+
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of(
-                            "error", messageService.get("error.notfound", headers),
+                            "error", translated,
                             "message", nfe.getMessage()
                     ))
                     .build();
@@ -66,7 +78,12 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
                     param = sub[1];
                 }
 
-                String translated = messageService.get(key, headers);
+                String translated;
+                try {
+                    translated = messageService.get(key, headers);
+                } catch (MissingResourceException e) {
+                    translated = "mama"; // fallback
+                }
 
                 if (param != null) {
                     translated = translated.replace("{0}", param);

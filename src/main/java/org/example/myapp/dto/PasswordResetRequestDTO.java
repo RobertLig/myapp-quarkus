@@ -1,7 +1,12 @@
 package org.example.myapp.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public class PasswordResetRequestDTO {
 
+    @Email(message = "{validation.user.email.invalid}")
+    @NotBlank(message = "{validation.user.email.required}")
     private String email;
 
     // Honeypot field — bots fill this, humans never do

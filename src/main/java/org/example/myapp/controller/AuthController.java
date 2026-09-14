@@ -8,6 +8,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import java.util.Map;
 
+import org.example.myapp.dto.PasswordResetConfirmDTO;
 import org.example.myapp.dto.PasswordResetRequestDTO;
 import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
@@ -39,7 +40,7 @@ public class AuthController {
     @POST
     @Path("/reset/request")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response requestReset(PasswordResetRequestDTO dto) {
+    public Response requestReset(@Valid PasswordResetRequestDTO dto) {
 
         String ip = getClientIp();
         userService.requestPasswordReset(dto.getEmail(), dto.getTrap(), ip);
@@ -50,12 +51,9 @@ public class AuthController {
     @POST
     @Path("/reset/confirm")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response confirmReset(Map<String, String> body) {
+    public Response confirmReset(@Valid PasswordResetConfirmDTO dto) {
 
-        String token = body.get("token");
-        String newPassword = body.get("password");
-
-        userService.resetPassword(token, newPassword);
+        userService.resetPassword(dto.getToken(), dto.getPassword());
 
         return Response.ok(Map.of("message", "success.reset.completed")).build();
     }
