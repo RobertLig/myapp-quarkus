@@ -16,14 +16,14 @@ public class GoogleService {
     @ConfigProperty(name = "google.client.id")
     String googleClientId;
 
-    private final GoogleIdTokenVerifier verifier =
-            new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
-
     public GooglePayload verify(String idTokenString) {
 
         try {
+            GoogleIdTokenVerifier verifier =
+                    new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+                            .setAudience(Collections.singletonList(googleClientId))
+                            .build();
+
             GoogleIdToken idToken = verifier.verify(idTokenString);
 
             if (idToken == null) {

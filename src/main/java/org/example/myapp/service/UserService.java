@@ -348,6 +348,7 @@ public class UserService {
         user.setResetPasswordToken(null);
     }
 
+    @Transactional
     public User loginWithGoogle(String idToken) {
 
         GooglePayload payload = googleService.verify(idToken);
