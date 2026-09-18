@@ -58,9 +58,8 @@ public class AuthController {
     @POST
     @Path("/google")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response googleLogin(Map<String, String> body) {
-        String idToken = body.get("idToken");
-        User user = userService.loginWithGoogle(idToken);
+    public Response googleLogin(@Valid GoogleLoginDTO dto) {
+        User user = userService.loginWithGoogle(dto.getIdToken());
         return buildAuthResponse(user);
     }
 

@@ -1,14 +1,14 @@
 package org.example.myapp.auth;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Collections;
 
 @ApplicationScoped
 public class GoogleService {
@@ -16,38 +16,28 @@ public class GoogleService {
     @ConfigProperty(name = "google.client.id")
     String googleClientId;
 
-    private final HttpClient httpClient = HttpClient.newHttpClient();
-    private final ObjectMapper mapper = new ObjectMapper();
-
-    public GooglePayload verify(String idToken) {
-
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken))
-                    .GET()
+    private final GoogleIdTokenVerifier verifier =
+            new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
                     .build();
 
-            HttpResponse<String> response =
-                    httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    public GooglePayload verify(String idTokenString) {
 
-            if (response.statusCode() != 200) {
+        try {
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+
+            if (idToken == null) {
                 throw new WebApplicationException("error.google.invalid", 400);
             }
 
-            JsonNode json = mapper.readTree(response.body());
+            GoogleIdToken.Payload payload = idToken.getPayload();
 
-            // Validate audience (client ID)
-            String aud = json.get("aud").asText();
-            if (!aud.equals(googleClientId)) {
-                throw new WebApplicationException("error.google.invalid", 400);
-            }
+            GooglePayload result = new GooglePayload();
+            result.setEmail(payload.getEmail());
+            result.setName((String) payload.get("name"));
+            result.setSubject(payload.getSubject());
 
-            GooglePayload payload = new GooglePayload();
-            payload.setEmail(json.get("email").asText());
-            payload.setName(json.get("name").asText());
-            payload.setSubject(json.get("sub").asText());
-
-            return payload;
+            return result;
 
         } catch (Exception e) {
             throw new WebApplicationException("error.google.failed", 400);
