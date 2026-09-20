@@ -7,7 +7,6 @@ import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
 import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
-import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.UserRepository;
 import java.util.Base64;
@@ -357,15 +356,28 @@ public class UserService {
         String name = payload.getName();
         String googleId = payload.getSubject();
 
-        User user = userRepository.find("email", email).firstResult();
+        // 1️⃣ First: try to find by googleId (best, stable identifier)
+        User user = userRepository.find("googleId", googleId).firstResult();
 
+        // 2️⃣ Second: fallback — find by email (handles first-time Google login)
+        if (user == null) {
+            user = userRepository.find("email", email).firstResult();
+        }
+
+        // 3️⃣ If still null → create new user
         if (user == null) {
             user = new User();
             user.setEmail(email);
             user.setName(name);
             user.setGoogleId(googleId);
-            user.setEmailVerified(true); // Google guarantees email ownership
+            user.setEmailVerified(true);
+            user.setTermsAccepted(true);
             userRepository.persist(user);
+        } else {
+            // 4️⃣ If user exists but googleId is missing → attach it
+            if (user.getGoogleId() == null) {
+                user.setGoogleId(googleId);
+            }
         }
 
         return user;
