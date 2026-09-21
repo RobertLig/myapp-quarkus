@@ -20,10 +20,14 @@ import io.quarkus.security.identity.SecurityIdentity;
 @Produces(MediaType.APPLICATION_JSON)
 public class UserController {
 
-    @Inject UserService userService;
+    @Inject
+    UserService userService;
+
     @Inject
     UserAvatarService avatarService;
-    @Inject SecurityIdentity identity;
+
+    @Inject
+    SecurityIdentity identity;
 
     private Long getLoggedInUserId() {
         return Long.valueOf(identity.getPrincipal().getName());

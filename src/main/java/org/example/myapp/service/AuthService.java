@@ -1,56 +1,37 @@
 package org.example.myapp.service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.smallrye.jwt.build.Jwt;
+import io.smallrye.jwt.auth.principal.JWTParser;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.example.myapp.model.User;
 
-import java.util.Date;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import io.jsonwebtoken.security.Keys;
-import java.security.Key;
-
 @ApplicationScoped
 public class AuthService {
-
-    @ConfigProperty(name = "jwt.secret")
-    String secretKey;
 
     @Inject
     UserService userService;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
-    }
+    @Inject
+    JWTParser jwtParser;
 
     public String generateToken(User user) {
-        return Jwts.builder()
-                .setSubject(String.valueOf(user.getId()))
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 15)) // 15 min
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
+        return Jwt.issuer("your-app")
+                .subject(String.valueOf(user.getId()))
+                .expiresIn(900)
+                .sign();
     }
 
     public String generateRefreshToken(User user) {
-        return Jwts.builder()
-                .setSubject(String.valueOf(user.getId()))
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 30)) // 30 days
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
+        return Jwt.issuer("your-app")
+                .subject(String.valueOf(user.getId()))
+                .expiresIn(60 * 60 * 24 * 30)
+                .sign();
     }
 
     public String refresh(String refreshToken) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(refreshToken)
-                    .getBody();
+            var claims = jwtParser.parse(refreshToken);
 
             Long userId = Long.valueOf(claims.getSubject());
             User user = userService.getUserById(userId)
@@ -62,11 +43,12 @@ public class AuthService {
             throw new jakarta.ws.rs.WebApplicationException("error.token.invalid", 401);
         }
     }
+}
 
-    public Long validateAndExtractUserId(String token) {
+    /* delete this method later. public Long validateAndExtractUserId(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
+                    .setSigningKey(getPrivateKey())
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -76,5 +58,5 @@ public class AuthService {
         } catch (Exception e) {
             throw new jakarta.ws.rs.WebApplicationException("error.token.invalid", 401);
         }
-    }
-}
+    } */
+
