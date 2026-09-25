@@ -112,6 +112,12 @@ public class AuthController {
     @Path("/refresh")
     public Response refresh(@CookieParam("refreshToken") String refreshToken) {
 
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "Refresh token cookie is missing"))
+                    .build();
+        }
+
         String newAccessToken = authService.refresh(refreshToken);
 
         return Response.ok(
