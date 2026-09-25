@@ -20,7 +20,7 @@ public class AuthService {
                 .subject(String.valueOf(user.getId()))
                 .expiresIn(900)
                 .sign();
-    }
+    } 
 
     public String generateRefreshToken(User user) {
         return Jwt.issuer("your-app")
@@ -44,19 +44,4 @@ public class AuthService {
         }
     }
 }
-
-    /* delete this method later. public Long validateAndExtractUserId(String token) {
-        try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(getPrivateKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-
-            return Long.valueOf(claims.getSubject());
-
-        } catch (Exception e) {
-            throw new jakarta.ws.rs.WebApplicationException("error.token.invalid", 401);
-        }
-    } */
 

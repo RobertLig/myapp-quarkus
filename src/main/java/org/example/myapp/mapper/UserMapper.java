@@ -7,10 +7,10 @@ public class UserMapper {
 
     public static UserResponseDTO toDTO(User user) {
         UserResponseDTO dto = new UserResponseDTO();
-        dto.id = user.getId();
-        dto.name = user.getName();
-        dto.email = user.getEmail();
-        dto.photoUrl = user.getPhotoUrl();
+        dto.setId(user.getId());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        dto.setPhotoUrl(user.getPhotoUrl());
         return dto;
     }
 }
