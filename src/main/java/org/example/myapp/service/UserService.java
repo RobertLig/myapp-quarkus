@@ -210,6 +210,7 @@ public class UserService {
         return user;
     }
 
+    @Transactional
     public boolean deleteUser(Long userId) {
         User user = userRepository.findById(userId);
 

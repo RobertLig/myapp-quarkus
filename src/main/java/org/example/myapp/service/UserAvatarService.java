@@ -10,8 +10,12 @@ public class UserAvatarService {
 
     @Inject
     ImageStoreService imageStoreService;
-    @Inject ImageLimitService imageLimitService;
-    @Inject UserService userService;
+
+    @Inject
+    ImageLimitService imageLimitService;
+
+    @Inject
+    UserService userService;
 
     public String uploadAvatar(Long userId, byte[] file) {
         User user = userService.getUserById(userId)
