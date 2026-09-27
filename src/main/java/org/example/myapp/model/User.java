@@ -19,7 +19,8 @@ public class User {
     private String password;
     private String salt;
 
-    private String ageRange;
+    @Enumerated(EnumType.STRING)
+    private AgeRange ageRange;
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
@@ -40,7 +41,8 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private String locale; // "en", "pl"
+    @Enumerated(EnumType.STRING)
+    private Locale locale; // "en", "pl"
 
     private String googleId;
 
@@ -95,7 +97,7 @@ public class User {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
-    public String getAgeRange() {
+    public AgeRange getAgeRange() {
         return ageRange;
     }
 
@@ -147,7 +149,7 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public void setAgeRange(String ageRange) {
+    public void setAgeRange(AgeRange ageRange) {
         this.ageRange = ageRange;
     }
 
@@ -167,8 +169,8 @@ public class User {
         this.announcements = announcements;
     }
 
-    public String getLocale() { return locale; }
-    public void setLocale(String locale) { this.locale = locale; }
+    public Locale getLocale() { return locale; }
+    public void setLocale(Locale locale) { this.locale = locale; }
 
     public String getGoogleId() {
         return googleId;

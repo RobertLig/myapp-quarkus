@@ -2,6 +2,7 @@ package org.example.myapp.controller;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -47,7 +48,7 @@ public class UserController {
     @PUT
     @Path("/me")
     @RolesAllowed({"USER", "ADMIN"})
-    public Response updateMe(UserDTO dto) {
+    public Response updateMe(@Valid UserDTO dto) {
         Long userId = getLoggedInUserId();
         User updated = userService.updateProfile(userId, dto);
         return Response.ok(UserMapper.toDTO(updated)).build();

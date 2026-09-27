@@ -1,32 +1,26 @@
 package org.example.myapp.dto;
 
 import jakarta.validation.constraints.*;
+import org.example.myapp.model.AgeRange;
 import org.example.myapp.model.Gender;
+import org.example.myapp.model.Locale;
 
 public class UserDTO {
 
-    @NotBlank(message = "{validation.user.name.required}")
     private String name;
 
     @Email(message = "{validation.user.email.invalid}")
-    @NotBlank(message = "{validation.user.email.required}")
     private String email;
 
-    @NotBlank(message = "{validation.user.password.required}")
     private String password;
 
-    private String ageRange;
+    private AgeRange ageRange;
     private Gender gender;
     private String phone;
     private String photoUrl;
 
-    private String locale;
-
-    // Honeypot field — bots fill this, humans never do
-    private String trap;
-
-    @NotNull(message = "{validation.user.terms.required}")
-    private Boolean termsAccepted;
+    // Locale is set automatically by frontend (navigator.language)
+    private Locale locale;
 
     // ===== GETTERS =====
 
@@ -42,7 +36,7 @@ public class UserDTO {
         return password;
     }
 
-    public String getAgeRange() {
+    public AgeRange getAgeRange() {
         return ageRange;
     }
 
@@ -58,8 +52,6 @@ public class UserDTO {
         return photoUrl;
     }
 
-    public String getTrap() { return trap; }
-
     // ===== SETTERS =====
 
     public void setName(String name) {
@@ -74,7 +66,7 @@ public class UserDTO {
         this.password = password;
     }
 
-    public void setAgeRange(String ageRange) {
+    public void setAgeRange(AgeRange ageRange) {
         this.ageRange = ageRange;
     }
 
@@ -90,11 +82,6 @@ public class UserDTO {
         this.photoUrl = photoUrl;
     }
 
-    public String getLocale() { return locale; }
-    public void setLocale(String locale) { this.locale = locale; }
-
-    public void setTrap(String trap) { this.trap = trap; }
-
-    public Boolean getTermsAccepted() { return termsAccepted; }
-    public void setTermsAccepted(Boolean termsAccepted) { this.termsAccepted = termsAccepted; }
+    public Locale getLocale() { return locale; }
+    public void setLocale(Locale locale) { this.locale = locale; }
 }

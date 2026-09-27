@@ -7,6 +7,7 @@ import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
 import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
+import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.UserRepository;
 import java.util.Base64;
@@ -107,9 +108,9 @@ public class UserService {
         user.setVerificationToken(token);
         user.setEmailVerified(false);
 
-        String locale = dto.getLocale() != null
-                ? dto.getLocale().name()
-                : "en";
+        Locale locale = dto.getLocale() != null
+                ? dto.getLocale() //.name()
+                : Locale.en;
 
         user.setLocale(locale);
 
@@ -120,7 +121,7 @@ public class UserService {
         // Send email (or return link in dev mode)
         emailService.sendActionEmail(
                 user.getEmail(),
-                user.getLocale(),
+                user.getLocale().name(),
                 "email.verify.subject",
                 "email.verify.intro",
                 "email.verify.button",
@@ -165,6 +166,7 @@ public class UserService {
         return user;
     }
 
+    @Transactional
     public User updateProfile(Long userId, UserDTO dto) {
         User user = userRepository.findById(userId);
 
@@ -194,7 +196,12 @@ public class UserService {
             user.setPassword(hashPassword(dto.getPassword(), user.getSalt()));
         }
 
-        // Optional fields
+        Locale locale = dto.getLocale() != null
+                ? dto.getLocale()
+                : Locale.en;
+
+        user.setLocale(locale);
+
         if (dto.getAgeRange() != null) user.setAgeRange(dto.getAgeRange());
         if (dto.getGender() != null) user.setGender(dto.getGender());
         if (dto.getPhone() != null) user.setPhone(dto.getPhone());
@@ -317,7 +324,7 @@ public class UserService {
 
         emailService.sendActionEmail(
                 user.getEmail(),
-                user.getLocale(),
+                user.getLocale().name(),
                 "email.reset.subject",
                 "email.reset.intro",
                 "email.reset.button",
