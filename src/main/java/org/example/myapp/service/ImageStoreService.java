@@ -1,7 +1,8 @@
 package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -18,20 +19,20 @@ public class ImageStoreService {
 
     private static final long MAX_SIZE_BYTES = 500L * 1024L; // 500 KB
 
-    private final String bucketName = "your-bucket-name"; // change this
-    private final Region region = Region.EU_CENTRAL_1;     // change if needed
+    @ConfigProperty(name = "bucket.name")
+    String bucketName;
 
-    private final S3Client s3 = S3Client.builder()
-            .region(region)
-            .credentialsProvider(DefaultCredentialsProvider.create())
-            .build();
+    @ConfigProperty(name = "quarkus.s3.aws.region")
+    String region;
+
+    @Inject
+    S3Client s3;
 
     // ------------------------------------------------------------
     // VALIDATION
     // ------------------------------------------------------------
 
     public void validateImage(byte[] file) {
-
         if (file == null || file.length == 0) {
             throw new IllegalArgumentException("photo.empty");
         }
@@ -63,7 +64,6 @@ public class ImageStoreService {
     // ------------------------------------------------------------
 
     public String upload(byte[] file) {
-
         validateImage(file);
 
         String key = "images/" + UUID.randomUUID();
@@ -71,13 +71,13 @@ public class ImageStoreService {
         PutObjectRequest req = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
-                .contentType("image/jpeg") // safe default
-                .acl("public-read")        // allow public access
+                .contentType("image/jpeg")
+                .acl("public-read")
                 .build();
 
         s3.putObject(req, RequestBody.fromBytes(file));
 
-        return "https://" + bucketName + ".s3." + region.id() + ".amazonaws.com/" + key;
+        return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + key;
     }
 
     // ------------------------------------------------------------
@@ -85,7 +85,6 @@ public class ImageStoreService {
     // ------------------------------------------------------------
 
     public void delete(String url) {
-
         if (url == null || url.isBlank()) {
             return;
         }
