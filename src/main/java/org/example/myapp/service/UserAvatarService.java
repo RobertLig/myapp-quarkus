@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.model.User;
 
@@ -9,14 +10,15 @@ import org.example.myapp.model.User;
 public class UserAvatarService {
 
     @Inject
-    ImageStoreService imageStoreService;
+    ImageLimitService imageLimitService;
 
     @Inject
-    ImageLimitService imageLimitService;
+    ImageStoreService imageStoreService;
 
     @Inject
     UserService userService;
 
+    @Transactional
     public String uploadAvatar(Long userId, byte[] file) {
         User user = userService.getUserById(userId)
                 .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));

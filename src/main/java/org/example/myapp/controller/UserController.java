@@ -6,12 +6,17 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.RestPath;
 
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
 import org.example.myapp.service.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
 
 import io.quarkus.security.identity.SecurityIdentity;
@@ -67,9 +72,20 @@ public class UserController {
     @Path("/me/avatar")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed({"USER", "ADMIN"})
-    public Response uploadAvatar(@FormParam("file") byte[] file) {
+    public Response uploadAvatar(@RestForm("file") FileUpload fileUpload) {
+        if (fileUpload == null || fileUpload.uploadedFile() == null) {
+            throw new IllegalArgumentException("photo.empty");
+        }
+
+        byte[] fileBytes;
+        try {
+            fileBytes = Files.readAllBytes(fileUpload.uploadedFile());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read uploaded file", e);
+        }
+
         Long userId = getLoggedInUserId();
-        String url = avatarService.uploadAvatar(userId, file);
+        String url = avatarService.uploadAvatar(userId, fileBytes);
         return Response.ok(Map.of("avatarUrl", url)).build();
     }
 
