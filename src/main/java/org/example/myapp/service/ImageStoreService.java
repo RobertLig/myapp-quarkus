@@ -4,10 +4,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,8 +21,8 @@ public class ImageStoreService {
     @ConfigProperty(name = "bucket.name")
     String bucketName;
 
-    @ConfigProperty(name = "quarkus.s3.aws.region")
-    String region;
+    @ConfigProperty(name = "s3.public-url")
+    String s3BaseUrl;
 
     @Inject
     S3Client s3;
@@ -50,11 +49,25 @@ public class ImageStoreService {
             mime = null;
         }
 
-        if (mime == null ||
-                (!mime.equals("image/jpeg") &&
-                        !mime.equals("image/jpg") &&
-                        !mime.equals("image/png"))) {
+        // Fallback magic-byte detection for PNG / JPEG if guessContentTypeFromStream returns null
+        boolean isPng = file.length >= 8
+                && (file[0] & 0xFF) == 0x89
+                && (file[1] & 0xFF) == 0x50
+                && (file[2] & 0xFF) == 0x4E
+                && (file[3] & 0xFF) == 0x47;
 
+        boolean isJpeg = file.length >= 3
+                && (file[0] & 0xFF) == 0xFF
+                && (file[1] & 0xFF) == 0xD8
+                && (file[2] & 0xFF) == 0xFF;
+
+        boolean isValidMime = mime != null && (
+                mime.equals("image/jpeg") ||
+                        mime.equals("image/jpg")  ||
+                        mime.equals("image/png")
+        );
+
+        if (!isValidMime && !isPng && !isJpeg) {
             throw new IllegalArgumentException("photo.invalidtype");
         }
     }
@@ -72,12 +85,12 @@ public class ImageStoreService {
                 .bucket(bucketName)
                 .key(key)
                 .contentType("image/jpeg")
-                .acl("public-read")
                 .build();
 
         s3.putObject(req, RequestBody.fromBytes(file));
 
-        return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + key;
+        // Dynamically uses LocalStack in dev, AWS S3 URL in prod
+        return s3BaseUrl + "/" + key;
     }
 
     // ------------------------------------------------------------
@@ -100,7 +113,10 @@ public class ImageStoreService {
     }
 
     private String extractKey(String url) {
-        int idx = url.indexOf(".amazonaws.com/");
-        return url.substring(idx + ".amazonaws.com/".length());
+        int idx = url.indexOf("/images/");
+        if (idx != -1) {
+            return url.substring(idx + 1); // Returns "images/<UUID>"
+        }
+        return url;
     }
 }
