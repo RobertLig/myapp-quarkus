@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.MissingResourceException;
 
 @Provider
-public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
+public class IllegalArgumentExceptionMapper implements ExceptionMapper<IllegalArgumentException> {
 
     @Inject
     MessageService messageService;
@@ -20,18 +20,27 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
     HttpHeaders headers;
 
     @Override
-    public Response toResponse(Exception exception) {
-        String errorTitle;
+    public Response toResponse(IllegalArgumentException exception) {
+        String key = exception.getMessage();
+        String message;
+
         try {
-            errorTitle = messageService.get("error.internal", headers);
+            message = messageService.get(key, headers);
         } catch (MissingResourceException e) {
-            errorTitle = "Internal Server Error";
+            message = key; // Fallback if key is missing in .properties
         }
 
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        String errorTitle;
+        try {
+            errorTitle = messageService.get("error.badrequest", headers);
+        } catch (MissingResourceException e) {
+            errorTitle = "Bad Request";
+        }
+
+        return Response.status(Response.Status.BAD_REQUEST)
                 .entity(Map.of(
                         "error", errorTitle,
-                        "message", exception.getMessage() != null ? exception.getMessage() : "Unexpected system error"
+                        "message", message
                 ))
                 .build();
     }

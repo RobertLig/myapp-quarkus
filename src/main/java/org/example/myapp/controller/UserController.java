@@ -73,19 +73,8 @@ public class UserController {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed({"USER", "ADMIN"})
     public Response uploadAvatar(@RestForm("file") FileUpload fileUpload) {
-        if (fileUpload == null || fileUpload.uploadedFile() == null) {
-            throw new IllegalArgumentException("photo.empty");
-        }
-
-        byte[] fileBytes;
-        try {
-            fileBytes = Files.readAllBytes(fileUpload.uploadedFile());
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read uploaded file", e);
-        }
-
         Long userId = getLoggedInUserId();
-        String url = avatarService.uploadAvatar(userId, fileBytes);
+        String url = avatarService.uploadAvatar(userId, fileUpload);
         return Response.ok(Map.of("avatarUrl", url)).build();
     }
 

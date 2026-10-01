@@ -1,6 +1,7 @@
 package org.example.myapp.exception;
 
 import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -11,7 +12,7 @@ import java.util.Map;
 import java.util.MissingResourceException;
 
 @Provider
-public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
+public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundException> {
 
     @Inject
     MessageService messageService;
@@ -20,18 +21,18 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
     HttpHeaders headers;
 
     @Override
-    public Response toResponse(Exception exception) {
-        String errorTitle;
+    public Response toResponse(NotFoundException exception) {
+        String translatedTitle;
         try {
-            errorTitle = messageService.get("error.internal", headers);
+            translatedTitle = messageService.get("error.notfound", headers);
         } catch (MissingResourceException e) {
-            errorTitle = "Internal Server Error";
+            translatedTitle = "Not found";
         }
 
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        return Response.status(Response.Status.NOT_FOUND)
                 .entity(Map.of(
-                        "error", errorTitle,
-                        "message", exception.getMessage() != null ? exception.getMessage() : "Unexpected system error"
+                        "error", translatedTitle,
+                        "message", exception.getMessage() != null ? exception.getMessage() : ""
                 ))
                 .build();
     }
