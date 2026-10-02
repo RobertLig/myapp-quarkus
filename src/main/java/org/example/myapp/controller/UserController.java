@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
@@ -45,7 +46,7 @@ public class UserController {
     public Response getMe() {
         Long userId = getLoggedInUserId();
         User user = userService.getUserById(userId)
-                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
+                .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
 
         return Response.ok(UserMapper.toDTO(user)).build();
     }

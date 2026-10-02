@@ -4,6 +4,8 @@ import io.smallrye.jwt.build.Jwt;
 import io.smallrye.jwt.auth.principal.JWTParser;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.User;
 import java.util.Collections;
 
@@ -37,12 +39,13 @@ public class AuthService {
 
             Long userId = Long.valueOf(claims.getSubject());
             User user = userService.getUserById(userId)
-                    .orElseThrow(() -> new jakarta.ws.rs.WebApplicationException("error.user.notfound", 404));
+                    .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
 
             return generateToken(user);
 
         } catch (Exception e) {
-            throw new jakarta.ws.rs.WebApplicationException("error.token.invalid", 401);
+            // Refresh token failure (401 Unauthorized)
+            throw DomainException.unauthorized("error.token.invalid");
         }
     }
 }

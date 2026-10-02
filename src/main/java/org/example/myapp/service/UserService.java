@@ -7,6 +7,7 @@ import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
 import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
+import org.example.myapp.exception.FieldValidationException;
 import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.UserRepository;
@@ -42,10 +43,6 @@ public class UserService {
 
     @Transactional
     public User register(RegistrationDTO dto, String clientIp) {
-
-        if (dto.getTermsAccepted() == null || !dto.getTermsAccepted()) {
-            throw new WebApplicationException("error.terms.notaccepted", 400);
-        }
 
         // Honeypot check — if filled, it's a bot
         if (dto.getTrap() != null && !dto.getTrap().isBlank()) {
@@ -87,7 +84,7 @@ public class UserService {
         rateLimitService.decaySuspicion(clientIp);
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new WebApplicationException("error.email.inuse", 400);
+            throw new FieldValidationException("email", "error.email.inuse");
         }
 
         User user = new User();
@@ -160,7 +157,7 @@ public class UserService {
         }
 
         if (!user.isEmailVerified()) {
-            throw new WebApplicationException("error.email.notverified", 403);
+            throw new FieldValidationException("email", "error.email.notverified");
         }
 
         return user;
@@ -263,7 +260,7 @@ public class UserService {
         User user = userRepository.find("verificationToken", token).firstResult();
 
         if (user == null) {
-            throw new WebApplicationException("error.verification.invalid", 400);
+            throw new FieldValidationException("token", "error.verification.invalid");
         }
 
         user.setEmailVerified(true);
@@ -340,7 +337,7 @@ public class UserService {
         User user = userRepository.find("resetPasswordToken", token).firstResult();
 
         if (user == null) {
-            throw new WebApplicationException("error.reset.invalid", 400);
+            throw new FieldValidationException("token", "error.reset.invalid");
         }
 
         // Generate new salt

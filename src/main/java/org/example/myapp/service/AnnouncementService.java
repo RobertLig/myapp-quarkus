@@ -4,7 +4,6 @@ import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.model.*;
 import org.example.myapp.dto.*;
 import org.example.myapp.repository.AnnouncementRepository;
-import org.example.myapp.validation.AnnouncementValidator;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -15,9 +14,6 @@ import java.util.Optional;
 
 @ApplicationScoped
 public class AnnouncementService {
-
-    @Inject
-    AnnouncementValidator announcementValidator;
 
     @Inject
     AnnouncementRepository announcementRepository;

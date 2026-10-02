@@ -57,16 +57,13 @@ public class AnnouncementDTO {
     @NotBlank(message = "{error.receptionDateTime.required}") //error.date.order
     public LocalDateTime receptionDateTime;
 
-    @Valid
     @NotNull(message = "{error.translation.required}")
     @Size(min = 1, max = 1, message = "{error.translation.single}")
-    public List<AnnouncementTranslationDTO> translations;
+    public List< @Valid AnnouncementTranslationDTO> translations;
 
-    @Valid
-    public List<StopDTO> stops;
+    public List<@Valid StopDTO> stops;
 
-    @Valid
-    public List<PhotoDTO> photos;
+    public List<@Valid PhotoDTO> photos;
 
     public AnnouncementDTO() {
     }
