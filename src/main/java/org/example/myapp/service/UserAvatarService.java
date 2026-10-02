@@ -42,7 +42,7 @@ public class UserAvatarService {
         try {
             fileBytes = Files.readAllBytes(fileUpload.uploadedFile());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read uploaded file", e);
+            throw new RuntimeException("error.internal", e);
         }
 
         // 4. Delete Old Avatar from S3 if present

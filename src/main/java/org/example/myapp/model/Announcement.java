@@ -3,6 +3,7 @@ package org.example.myapp.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+
 import org.example.myapp.model.translation.AnnouncementTranslation;
 
 @Entity
