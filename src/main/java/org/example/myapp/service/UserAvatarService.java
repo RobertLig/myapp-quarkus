@@ -1,5 +1,6 @@
 package org.example.myapp.service;
 
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.exception.FieldValidationException;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -32,10 +33,10 @@ public class UserAvatarService {
 
         // 2. Validate User & Business Rules
         User user = userService.getUserById(userId)
-                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
+                .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
 
         if (!imageLimitService.canAddUserAvatar(user)) {
-            throw new WebApplicationException("avatar.limit", 400);
+            throw new FieldValidationException("avatar", "avatar.limit");
         }
 
         // 3. Read Temp File Bytes
@@ -55,10 +56,10 @@ public class UserAvatarService {
 
     public void deleteAvatar(Long userId) {
         User user = userService.getUserById(userId)
-                .orElseThrow(() -> new WebApplicationException("error.user.notfound", 404));
+                .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
 
         if (user.getPhotoUrl() == null) {
-            throw new WebApplicationException("avatar.none", 400);
+            throw new FieldValidationException("avatar", "avatar.none");
         }
 
         imageStoreService.delete(user.getPhotoUrl());
