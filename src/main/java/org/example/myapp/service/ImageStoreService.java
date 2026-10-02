@@ -3,6 +3,7 @@ package org.example.myapp.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.example.myapp.exception.FieldValidationException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -33,11 +34,11 @@ public class ImageStoreService {
 
     public void validateImage(byte[] file) {
         if (file == null || file.length == 0) {
-            throw new IllegalArgumentException("photo.empty");
+            throw new FieldValidationException("avatar", "photo.empty");
         }
 
         if (file.length > MAX_SIZE_BYTES) {
-            throw new IllegalArgumentException("photo.toobig");
+            throw new FieldValidationException("avatar", "photo.toobig");
         }
 
         String mime;
@@ -68,7 +69,7 @@ public class ImageStoreService {
         );
 
         if (!isValidMime && !isPng && !isJpeg) {
-            throw new IllegalArgumentException("photo.invalidtype");
+            throw new FieldValidationException("avatar", "photo.invalidtype");
         }
     }
 

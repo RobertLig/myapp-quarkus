@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.MissingResourceException;
 
 @Provider
-public class IllegalArgumentExceptionMapper implements ExceptionMapper<IllegalArgumentException> {
+public class FieldValidationExceptionMapper implements ExceptionMapper<FieldValidationException> {
 
     @Inject
     MessageService messageService;
@@ -20,27 +20,25 @@ public class IllegalArgumentExceptionMapper implements ExceptionMapper<IllegalAr
     HttpHeaders headers;
 
     @Override
-    public Response toResponse(IllegalArgumentException exception) {
-        String key = exception.getMessage();
-        String message;
-
+    public Response toResponse(FieldValidationException exception) {
+        String translatedMessage;
         try {
-            message = messageService.get(key, headers);
+            translatedMessage = messageService.get(exception.getMessageKey(), headers);
         } catch (MissingResourceException e) {
-            message = key; // Fallback if key is missing in .properties
+            translatedMessage = exception.getMessageKey();
         }
 
-        String errorTitle;
+        String title;
         try {
-            errorTitle = messageService.get("error.badrequest", headers);
+            title = messageService.get("validation.error", headers);
         } catch (MissingResourceException e) {
-            errorTitle = "Bad Request";
+            title = "Validation error";
         }
 
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(Map.of(
-                        "error", errorTitle,
-                        "message", message
+                        "error", title,
+                        "details", Map.of(exception.getField(), translatedMessage)
                 ))
                 .build();
     }

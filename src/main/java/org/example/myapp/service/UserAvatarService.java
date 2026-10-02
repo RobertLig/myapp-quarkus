@@ -1,5 +1,6 @@
 package org.example.myapp.service;
 
+import org.example.myapp.exception.FieldValidationException;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,7 +27,7 @@ public class UserAvatarService {
     public String uploadAvatar(Long userId, FileUpload fileUpload) {
         // 1. Validate File Upload Presence
         if (fileUpload == null || fileUpload.uploadedFile() == null) {
-            throw new IllegalArgumentException("photo.empty");
+            throw new FieldValidationException("avatar", "photo.empty");
         }
 
         // 2. Validate User & Business Rules
@@ -44,15 +45,6 @@ public class UserAvatarService {
         } catch (IOException e) {
             throw new RuntimeException("error.internal", e);
         }
-
-        // 4. Delete Old Avatar from S3 if present
-        /* if (user.getPhotoUrl() != null && !user.getPhotoUrl().isBlank()) {
-            try {
-                imageStoreService.delete(user.getPhotoUrl());
-            } catch (Exception ignored) {
-                // Prevent cleanup failures from blocking the new upload
-            }
-        } */
 
         // 5. Upload New Avatar to S3 & Update Entity
         String url = imageStoreService.upload(fileBytes);

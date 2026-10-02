@@ -78,12 +78,6 @@ public class AnnouncementService {
 
     private void applyAnnouncementData(Announcement announcement, AnnouncementDTO dto) {
 
-        // --- VALIDATION ---
-        var errors = announcementValidator.validate(dto);
-        if (!errors.isEmpty()) {
-            throw new WebApplicationException(String.join(";", errors), 400);
-        }
-
         // --- BASIC FIELDS ---
         announcement.setType(dto.type);
 
