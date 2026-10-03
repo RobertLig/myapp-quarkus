@@ -7,6 +7,8 @@ import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
 import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.exception.FieldValidationException;
 import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
@@ -15,7 +17,6 @@ import java.util.Base64;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.util.Optional;
-import jakarta.ws.rs.WebApplicationException;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -71,7 +72,7 @@ public class UserService {
 
         if (!rateLimitService.allowRegister(clientIp)) {
             rateLimitService.addSuspicion(clientIp, 2);
-            throw new WebApplicationException("error.rate.limit", 429);
+            throw DomainException.tooManyRequests("error.rate.limit");
         }
 
         //ip throttle
@@ -149,11 +150,11 @@ public class UserService {
         User user = userRepository.findByEmail(email);
 
         if (user == null) {
-            throw new WebApplicationException("error.login.invalid", 401);
+            throw new FieldValidationException("email", "error.login.invalid");
         }
 
         if (!verifyPassword(password, user.getPassword(), user.getSalt())) {
-            throw new WebApplicationException("error.login.invalid", 401);
+            throw new FieldValidationException("email", "error.login.invalid");
         }
 
         if (!user.isEmailVerified()) {
@@ -168,7 +169,7 @@ public class UserService {
         User user = userRepository.findById(userId);
 
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Name
@@ -182,7 +183,7 @@ public class UserService {
             if (!dto.getEmail().equals(user.getEmail()) &&
                     userRepository.existsByEmail(dto.getEmail())) {
 
-                throw new WebApplicationException("error.email.inuse", 400);
+                throw new FieldValidationException("email", "error.email.inuse");
             }
 
             user.setEmail(dto.getEmail());
