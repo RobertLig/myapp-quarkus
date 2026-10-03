@@ -9,15 +9,12 @@ import jakarta.ws.rs.core.Response;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.jboss.resteasy.reactive.RestForm;
-import org.jboss.resteasy.reactive.RestPath;
 
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
 import org.example.myapp.service.*;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Map;
 
 import io.quarkus.security.identity.SecurityIdentity;

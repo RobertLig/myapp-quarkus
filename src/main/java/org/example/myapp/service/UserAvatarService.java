@@ -53,6 +53,7 @@ public class UserAvatarService {
         return url;
     }
 
+    @Transactional
     public void deleteAvatar(Long userId) {
         User user = userService.getUserById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
