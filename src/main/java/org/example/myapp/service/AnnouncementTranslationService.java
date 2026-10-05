@@ -88,17 +88,29 @@ public class AnnouncementTranslationService {
     // TRANSLATION GENERATION
     // -----------------------
 
-    public List<AnnouncementTranslation> generateTranslations(AnnouncementTranslationDTO original, Announcement announcement) {
+    public List<AnnouncementTranslation> generateTranslations(
+            AnnouncementTranslationDTO original,
+            Announcement announcement,
+            String defaultLang) {
 
-        String srcLang = original.language != null ? original.language.toLowerCase().trim() : "en";
+        // 1. Check if original language is explicitly sent in JSON
+        String srcLang = null;
+        if (original != null && original.language != null && !original.language.isBlank()) {
+            srcLang = original.language.toLowerCase().trim();
+        } else {
+            srcLang = defaultLang; // Fall back to Accept-Language header
+        }
 
-        // Translate to English using original language as source
-        var enTitle = translationService.translate(original.title, srcLang, "en");
-        var enDesc  = translationService.translate(original.description, srcLang, "en");
+        String title = (original != null && original.title != null) ? original.title : "";
+        String description = (original != null && original.description != null) ? original.description : "";
 
-        // Translate to Polish using original language as source
-        var plTitle = translationService.translate(original.title, srcLang, "pl");
-        var plDesc  = translationService.translate(original.description, srcLang, "pl");
+        // 2. Translate to English using resolved source language
+        var enTitle = translationService.translate(title, srcLang, "en");
+        var enDesc  = translationService.translate(description, srcLang, "en");
+
+        // 3. Translate to Polish using resolved source language
+        var plTitle = translationService.translate(title, srcLang, "pl");
+        var plDesc  = translationService.translate(description, srcLang, "pl");
 
         AnnouncementTranslation en = new AnnouncementTranslation("en", enTitle.text, enDesc.text);
         en.setAnnouncement(announcement);
@@ -107,5 +119,31 @@ public class AnnouncementTranslationService {
         pl.setAnnouncement(announcement);
 
         return List.of(en, pl);
+    }
+
+    /**
+     * Returns a single matching translation based on target language,
+     * with fallback to 'en', or first available.
+     */
+    public AnnouncementTranslationDTO toSingleDTO(List<AnnouncementTranslation> translations, String targetLang) {
+        if (translations == null || translations.isEmpty()) {
+            return null;
+        }
+
+        String lang = (targetLang != null && !targetLang.isBlank()) ? targetLang.toLowerCase().trim() : "en";
+
+        // 1. Exact match
+        AnnouncementTranslation match = translations.stream()
+                .filter(t -> t.getLanguage() != null && t.getLanguage().equalsIgnoreCase(lang))
+                .findFirst()
+                // 2. Fallback to English
+                .orElseGet(() -> translations.stream()
+                        .filter(t -> t.getLanguage() != null && t.getLanguage().equalsIgnoreCase("en"))
+                        .findFirst()
+                        // 3. Fallback to first available entry
+                        .orElse(translations.get(0))
+                );
+
+        return toDTO(match);
     }
 }

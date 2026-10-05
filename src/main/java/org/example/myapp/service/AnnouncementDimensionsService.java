@@ -5,6 +5,8 @@ import org.example.myapp.dto.AnnouncementDimensionsDTO;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @ApplicationScoped
 public class AnnouncementDimensionsService {
@@ -34,6 +36,11 @@ public class AnnouncementDimensionsService {
             length = metric.length;
         }
 
+        // Round all dimensions to 2 decimal places
+        width = roundToTwoDecimals(width);
+        height = roundToTwoDecimals(height);
+        length = roundToTwoDecimals(length);
+
         return new AnnouncementDimensions(width, height, length);
     }
 
@@ -42,11 +49,25 @@ public class AnnouncementDimensionsService {
     // -----------------------
 
     public AnnouncementDimensionsDTO toDTO(AnnouncementDimensions d) {
+        if (d == null) {
+            return null;
+        }
+
         AnnouncementDimensionsDTO dto = new AnnouncementDimensionsDTO();
-        dto.width = d.getWidth();
-        dto.height = d.getHeight();
-        dto.length = d.getLength();
+        dto.width = roundToTwoDecimals(d.getWidth());
+        dto.height = roundToTwoDecimals(d.getHeight());
+        dto.length = roundToTwoDecimals(d.getLength());
         dto.unit = "metric"; // always metric in DB
         return dto;
+    }
+
+    // -----------------------
+    // HELPER METHOD
+    // -----------------------
+
+    private double roundToTwoDecimals(double val) {
+        return BigDecimal.valueOf(val)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 }

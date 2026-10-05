@@ -4,6 +4,8 @@ import org.example.myapp.model.AnnouncementWeight;
 import org.example.myapp.dto.AnnouncementWeightDTO;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @ApplicationScoped
 public class AnnouncementWeightService {
@@ -23,7 +25,10 @@ public class AnnouncementWeightService {
             value = value * 0.45359237;
         }
 
-        return new AnnouncementWeight(value);
+        // Round to 2 decimal places
+        double roundedValue = roundToTwoDecimals(value);
+
+        return new AnnouncementWeight(roundedValue);
     }
 
     // -----------------------
@@ -31,9 +36,21 @@ public class AnnouncementWeightService {
     // -----------------------
 
     public AnnouncementWeightDTO toDTO(AnnouncementWeight w) {
+        if (w == null) return null;
+
         AnnouncementWeightDTO dto = new AnnouncementWeightDTO();
-        dto.value = w.getValue();
+        dto.value = roundToTwoDecimals(w.getValue());
         dto.unit = "metric"; // always metric in DB
         return dto;
+    }
+
+    // -----------------------
+    // HELPER METHOD
+    // -----------------------
+
+    private double roundToTwoDecimals(double val) {
+        return BigDecimal.valueOf(val)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 }

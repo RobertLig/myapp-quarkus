@@ -6,7 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class DimensionConversionService {
 
     private static final double INCH_TO_CM = 2.54;
-    private static final double CM_TO_INCH = 1 / INCH_TO_CM;
+    private static final double CM_TO_INCH = 1.0 / INCH_TO_CM;
 
     // Convert inches → centimeters (imperial → metric)
     public double inchesToCm(double inches) {
@@ -36,7 +36,7 @@ public class DimensionConversionService {
         );
     }
 
-    // Simple record to hold converted values
+    // Simple record/class to hold converted values
     public static class ConvertedDimensions {
         public final double width;
         public final double height;

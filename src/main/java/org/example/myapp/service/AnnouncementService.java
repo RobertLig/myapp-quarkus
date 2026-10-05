@@ -1,6 +1,5 @@
 package org.example.myapp.service;
 
-import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.*;
 import org.example.myapp.dto.*;
@@ -50,7 +49,7 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public Announcement create(AnnouncementDTO dto) {
+    public Announcement create(AnnouncementDTO dto, String defaultLang) {
 
         var user = userService.getUserById(dto.userId);
         if (user.isEmpty()) {
@@ -59,7 +58,7 @@ public class AnnouncementService {
 
         Announcement announcement = new Announcement(dto.type, user.get());
 
-        applyAnnouncementData(announcement, dto);
+        applyAnnouncementData(announcement, dto, defaultLang);
 
         announcementRepository.persist(announcement);
         return announcement;
@@ -68,16 +67,15 @@ public class AnnouncementService {
     @Transactional
     public Announcement update(Announcement existing, AnnouncementDTO dto) {
 
-        applyAnnouncementData(existing, dto);
+        applyAnnouncementData(existing, dto, "en-placeholder");
 
         return existing;
     }
 
-    private void applyAnnouncementData(Announcement announcement, AnnouncementDTO dto) {
+    private void applyAnnouncementData(Announcement announcement, AnnouncementDTO dto, String defaultLang) {
 
         // --- BASIC FIELDS ---
         announcement.setType(dto.type);
-
         announcement.setPostingPlace(dto.postingPlace);
         announcement.setPostingLatitude(dto.postingLatitude);
         announcement.setPostingLongitude(dto.postingLongitude);
@@ -98,18 +96,16 @@ public class AnnouncementService {
             announcement.setUser(userOpt.get());
         }
 
-        // --- DIMENSIONS ---
+        // --- DIMENSIONS & WEIGHT ---
         announcement.setDimensions(dimensionsService.toEntity(dto.dimensions));
-
-        // --- WEIGHT ---
         announcement.setWeight(weightService.toEntity(dto.weight));
 
         // --- TRANSLATIONS ---
         var translations = announcementTranslationService.generateTranslations(
-                dto.translations.get(0),
-                announcement
+                (dto.translations != null && !dto.translations.isEmpty()) ? dto.translations.get(0) : null,
+                announcement,
+                defaultLang
         );
-
         announcement.setTranslations(translations);
 
         // --- STOPS ---
@@ -126,7 +122,9 @@ public class AnnouncementService {
     // ENTITY → DTO
     // -----------------------
 
-    public AnnouncementDTO toAnnouncementDTO(Announcement a) {
+    // In AnnouncementService.java
+
+    public AnnouncementDTO toAnnouncementDTO(Announcement a, String targetLang) {
         AnnouncementDTO dto = new AnnouncementDTO();
 
         dto.id = a.getId();
@@ -149,7 +147,11 @@ public class AnnouncementService {
         dto.dimensions = dimensionsService.toDTO(a.getDimensions());
         dto.weight = weightService.toDTO(a.getWeight());
 
-        dto.translations = announcementTranslationService.toDTOList(a.getTranslations());
+        // --- TRANSLATIONS (Returns single matching language in a list) ---
+        AnnouncementTranslationDTO resolvedTranslation =
+                announcementTranslationService.toSingleDTO(a.getTranslations(), targetLang);
+
+        dto.translations = (resolvedTranslation != null) ? List.of(resolvedTranslation) : List.of();
 
         dto.stops = a.getStops().stream()
                 .map(stopService::toDTO)
@@ -160,6 +162,11 @@ public class AnnouncementService {
                 .toList();
 
         return dto;
+    }
+
+    // Keep single-argument overload for backwards compatibility if needed
+    public AnnouncementDTO toAnnouncementDTO(Announcement a) {
+        return toAnnouncementDTO(a, "en");
     }
 
     // -----------------------

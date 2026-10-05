@@ -1,6 +1,5 @@
 package org.example.myapp.controller;
 
-import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.core.Context;
@@ -21,9 +20,12 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.UriInfo;
 import jakarta.validation.Valid;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @Path("/announcements")
 @Produces(MediaType.APPLICATION_JSON)
@@ -79,17 +81,40 @@ public class AnnouncementController {
 
     @POST
     @RolesAllowed({"USER", "ADMIN"})
-    public Response create(@Valid AnnouncementDTO dto, @Context HttpHeaders headers) {
+    public Response create(
+            @Valid AnnouncementDTO dto,
+            @Context HttpHeaders headers,
+            @Context UriInfo uriInfo) {
 
-        // Override or set user ID from session/token
         dto.userId = getLoggedInUserId();
 
-        Announcement saved = announcementService.create(dto);
+        String defaultLang = resolveLanguageHeader(headers);
+        Announcement saved = announcementService.create(dto, defaultLang);
 
-        return Response.ok(java.util.Map.of(
-                "message", messageService.get("announcement.created", headers),
-                "announcement", announcementService.toAnnouncementDTO(saved)
-        )).build();
+        // Build URI for the new resource: http://hostname/announcements/{id}
+        URI locationUri = uriInfo.getAbsolutePathBuilder()
+                .path(String.valueOf(saved.getId()))
+                .build();
+
+        return Response.created(locationUri)
+                .entity(Map.of(
+                        "message", messageService.get("announcement.created", headers),
+                        "announcement", announcementService.toAnnouncementDTO(saved, defaultLang)
+                ))
+                .build();
+    }
+
+    private String resolveLanguageHeader(HttpHeaders headers) {
+        if (headers != null) {
+            var locales = headers.getAcceptableLanguages();
+            if (locales != null && !locales.isEmpty() && locales.get(0) != null) {
+                String lang = locales.get(0).getLanguage();
+                if (lang != null && !lang.isBlank()) {
+                    return lang.toLowerCase().trim();
+                }
+            }
+        }
+        return "en";
     }
 
     @PUT
@@ -130,7 +155,6 @@ public class AnnouncementController {
                     .build();
         }
     }
-
 
     @DELETE
     @Path("/{id}")
