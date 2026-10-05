@@ -1,6 +1,7 @@
 package org.example.myapp.service;
 
 import jakarta.ws.rs.WebApplicationException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.*;
 import org.example.myapp.dto.*;
 import org.example.myapp.repository.AnnouncementRepository;
@@ -53,7 +54,7 @@ public class AnnouncementService {
 
         var user = userService.getUserById(dto.userId);
         if (user.isEmpty()) {
-            throw new WebApplicationException("error.user.required", 400);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         Announcement announcement = new Announcement(dto.type, user.get());
@@ -92,7 +93,7 @@ public class AnnouncementService {
         if (dto.userId != null) {
             var userOpt = userService.getUserById(dto.userId);
             if (userOpt.isEmpty()) {
-                throw new WebApplicationException("error.user.required", 400);
+                throw new EntityNotFoundException("error.user.notfound");
             }
             announcement.setUser(userOpt.get());
         }

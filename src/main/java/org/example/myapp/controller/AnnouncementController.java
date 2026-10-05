@@ -1,5 +1,9 @@
 package org.example.myapp.controller;
 
+import io.quarkus.security.Authenticated;
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.core.Context;
 import org.example.myapp.dto.AnnouncementDTO;
 import org.example.myapp.dto.PaginationResponse;
 import org.example.myapp.dto.PhotoDTO;
@@ -41,6 +45,13 @@ public class AnnouncementController {
     @Inject
     MessageService messageService;
 
+    @Inject
+    SecurityIdentity identity;
+
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
+    }
+
     // ------------------------------------------------------------
     // CRUD
     // ------------------------------------------------------------
@@ -67,7 +78,11 @@ public class AnnouncementController {
     }
 
     @POST
-    public Response create(@Valid AnnouncementDTO dto, HttpHeaders headers) {
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response create(@Valid AnnouncementDTO dto, @Context HttpHeaders headers) {
+
+        // Override or set user ID from session/token
+        dto.userId = getLoggedInUserId();
 
         Announcement saved = announcementService.create(dto);
 

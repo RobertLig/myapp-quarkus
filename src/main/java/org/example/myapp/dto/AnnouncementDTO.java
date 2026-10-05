@@ -51,10 +51,10 @@ public class AnnouncementDTO {
     public double receptionLongitude;
 
 
-    @NotBlank(message = "{error.postingDateTime.required}")
+    @NotNull(message = "{error.postingDateTime.required}")
     public LocalDateTime postingDateTime;
 
-    @NotBlank(message = "{error.receptionDateTime.required}") //error.date.order
+    @NotNull(message = "{error.receptionDateTime.required}")
     public LocalDateTime receptionDateTime;
 
     @NotNull(message = "{error.translation.required}")

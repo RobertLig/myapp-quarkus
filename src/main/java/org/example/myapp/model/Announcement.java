@@ -2,6 +2,7 @@ package org.example.myapp.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.example.myapp.model.translation.AnnouncementTranslation;
@@ -59,13 +60,13 @@ public class Announcement {
     private User user;
 
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AnnouncementTranslation> translations;
+    private List<AnnouncementTranslation> translations = new ArrayList<>();
 
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Stop> stops;
+    private List<Stop> stops = new ArrayList<>();
 
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Photo> photos;
+    private List<Photo> photos = new ArrayList<>();
 
     // ===== GETTERS & SETTERS =====
 

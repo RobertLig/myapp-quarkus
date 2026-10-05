@@ -90,24 +90,20 @@ public class AnnouncementTranslationService {
 
     public List<AnnouncementTranslation> generateTranslations(AnnouncementTranslationDTO original, Announcement announcement) {
 
-        var enTitle = translationService.translate(original.title, "en");
-        var enDesc  = translationService.translate(original.description, "en");
+        String srcLang = original.language != null ? original.language.toLowerCase().trim() : "en";
 
-        var plTitle = translationService.translate(original.title, "pl");
-        var plDesc  = translationService.translate(original.description, "pl");
+        // Translate to English using original language as source
+        var enTitle = translationService.translate(original.title, srcLang, "en");
+        var enDesc  = translationService.translate(original.description, srcLang, "en");
 
-        AnnouncementTranslation en = new AnnouncementTranslation(
-                "en",
-                enTitle.text,
-                enDesc.text
-        );
+        // Translate to Polish using original language as source
+        var plTitle = translationService.translate(original.title, srcLang, "pl");
+        var plDesc  = translationService.translate(original.description, srcLang, "pl");
+
+        AnnouncementTranslation en = new AnnouncementTranslation("en", enTitle.text, enDesc.text);
         en.setAnnouncement(announcement);
 
-        AnnouncementTranslation pl = new AnnouncementTranslation(
-                "pl",
-                plTitle.text,
-                plDesc.text
-        );
+        AnnouncementTranslation pl = new AnnouncementTranslation("pl", plTitle.text, plDesc.text);
         pl.setAnnouncement(announcement);
 
         return List.of(en, pl);

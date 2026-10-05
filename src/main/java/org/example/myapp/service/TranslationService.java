@@ -1,43 +1,55 @@
 package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.example.myapp.client.MyMemoryClient;
 import org.example.myapp.dto.TranslatedText;
 
 @ApplicationScoped
 public class TranslationService {
 
-    private static final String API_URL = "https://libretranslate.com/translate";
+    @Inject
+    @RestClient
+    MyMemoryClient myMemoryClient;
 
-    private final Client client = ClientBuilder.newClient();
+    public TranslatedText translate(String text, String sourceLang, String targetLang) {
+        if (text == null || text.isBlank()) {
+            return new TranslatedText("");
+        }
 
-    public TranslatedText translate(String text, String targetLang) {
+        // If source and target languages are identical, no translation API call needed
+        if (sourceLang != null && sourceLang.equalsIgnoreCase(targetLang)) {
+            return new TranslatedText(text);
+        }
 
         try {
-            JsonObject requestJson = Json.createObjectBuilder()
-                    .add("q", text)
-                    .add("source", "auto")
-                    .add("target", targetLang)
-                    .add("format", "text")
-                    .build();
+            // Build explicit language pair (e.g., "en|pl" or "autodetect|pl")
+            String src = (sourceLang != null && !sourceLang.isBlank()) ? sourceLang : "autodetect";
+            String langPair = src + "|" + targetLang;
 
-            JsonObject responseJson = client
-                    .target(API_URL)
-                    .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(requestJson), JsonObject.class);
+            var response = myMemoryClient.translate(text, langPair);
 
-            String translated = responseJson.getString("translatedText");
+            if (response != null && response.responseData != null && response.responseData.translatedText != null) {
+                String translated = response.responseData.translatedText;
 
-            return new TranslatedText(translated);
+                // Handle MyMemory error response strings
+                if (translated.contains("PLEASE SELECT TWO DISTINCT LANGUAGES")) {
+                    return new TranslatedText(text);
+                }
 
+                return new TranslatedText(translated);
+            }
         } catch (Exception e) {
-            // You can log this if needed
-            throw new RuntimeException("Translation failed: " + e.getMessage());
+            System.err.println("Translation warning: " + e.getMessage());
         }
+
+        // Fallback: return original text if translation service fails
+        return new TranslatedText(text);
+    }
+
+    // Overload for convenience if source language isn't known
+    public TranslatedText translate(String text, String targetLang) {
+        return translate(text, null, targetLang);
     }
 }
