@@ -1,5 +1,6 @@
 package org.example.myapp.service;
 
+import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.*;
 import org.example.myapp.dto.*;
@@ -9,6 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,11 +67,23 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public Announcement update(Announcement existing, AnnouncementDTO dto) {
+    public Announcement update(Long id, AnnouncementDTO dto, Long userId, String defaultLang) {
+        Announcement existing = announcementRepository.findByIdOptional(id)
+                .orElseThrow(() -> new EntityNotFoundException("error.notfound"));
 
-        applyAnnouncementData(existing, dto, "en-placeholder");
+        // Ownership check (throws ForbiddenException if not owner or admin)
+        checkOwnership(userId, existing);
 
-        return existing;
+        // Apply basic fields, translations, dimensions, weight, stops
+        applyAnnouncementData(existing, dto, defaultLang);
+
+        return existing; // JPA/Panache automatically flushes managed entity updates on transaction commit
+    }
+
+    private void checkOwnership(Long userId, Announcement announcement) {
+        if (announcement.getUser() == null || !announcement.getUser().getId().equals(userId)) {
+            throw DomainException.forbidden("error.unauthorized.access");
+        }
     }
 
     private void applyAnnouncementData(Announcement announcement, AnnouncementDTO dto, String defaultLang) {
@@ -101,16 +115,34 @@ public class AnnouncementService {
         announcement.setWeight(weightService.toEntity(dto.weight));
 
         // --- TRANSLATIONS ---
-        var translations = announcementTranslationService.generateTranslations(
+        var newTranslations = announcementTranslationService.generateTranslations(
                 (dto.translations != null && !dto.translations.isEmpty()) ? dto.translations.get(0) : null,
                 announcement,
                 defaultLang
         );
-        announcement.setTranslations(translations);
+
+        // Mutate existing collection safely (Works for both CREATE and UPDATE)
+        if (announcement.getTranslations() == null) {
+            announcement.setTranslations(new ArrayList<>(newTranslations));
+        } else {
+            announcement.getTranslations().clear();
+            if (newTranslations != null) {
+                announcement.getTranslations().addAll(newTranslations);
+            }
+        }
 
         // --- STOPS ---
-        var stops = stopService.generateStops(dto.stops, announcement);
-        announcement.setStops(stops);
+        var newStops = stopService.generateStops(dto.stops, announcement);
+
+        // Mutate existing collection safely (Works for both CREATE and UPDATE)
+        if (announcement.getStops() == null) {
+            announcement.setStops(new ArrayList<>(newStops));
+        } else {
+            announcement.getStops().clear();
+            if (newStops != null) {
+                announcement.getStops().addAll(newStops);
+            }
+        }
     }
 
     @Transactional

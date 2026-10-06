@@ -119,41 +119,20 @@ public class AnnouncementController {
 
     @PUT
     @Path("/{id}")
+    @RolesAllowed({"USER", "ADMIN"})
     public Response update(@PathParam("id") Long id,
                            @Valid AnnouncementDTO dto,
-                           HttpHeaders headers) {
+                           @Context HttpHeaders headers) {
 
-        var announcementOpt = announcementService.findById(id);
+        Long loggedInUserId = getLoggedInUserId();
+        String defaultLang = resolveLanguageHeader(headers);
 
-        if (announcementOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
+        Announcement updated = announcementService.update(id, dto, loggedInUserId, defaultLang);
 
-        Announcement existing = announcementOpt.get();
-
-        // Ownership check
-        Response ownership = checkOwnership(dto.userId, existing, headers);
-        if (ownership != null) return ownership;
-
-        try {
-            Announcement updated = announcementService.update(existing, dto);
-
-            return Response.ok(java.util.Map.of(
-                    "message", messageService.get("announcement.updated", headers),
-                    "announcement", announcementService.toAnnouncementDTO(updated)
-            )).build();
-
-        } catch (IllegalArgumentException ex) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", ex.getMessage()
-                    ))
-                    .build();
-        }
+        return Response.ok(Map.of(
+                "message", messageService.get("announcement.updated", headers),
+                "announcement", announcementService.toAnnouncementDTO(updated, defaultLang)
+        )).build();
     }
 
     @DELETE
