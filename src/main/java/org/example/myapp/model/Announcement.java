@@ -44,13 +44,13 @@ public class Announcement {
 
     // Posting place
     private String postingPlace;
-    private double postingLatitude;
-    private double postingLongitude;
+    private Double postingLatitude;
+    private Double postingLongitude;
 
     // Reception place
     private String receptionPlace;
-    private double receptionLatitude;
-    private double receptionLongitude;
+    private Double receptionLatitude;
+    private Double receptionLongitude;
 
     private LocalDateTime postingDateTime;
     private LocalDateTime receptionDateTime;
@@ -110,19 +110,19 @@ public class Announcement {
         this.postingPlace = postingPlace;
     }
 
-    public double getPostingLatitude() {
+    public Double getPostingLatitude() {
         return postingLatitude;
     }
 
-    public void setPostingLatitude(double postingLatitude) {
+    public void setPostingLatitude(Double postingLatitude) {
         this.postingLatitude = postingLatitude;
     }
 
-    public double getPostingLongitude() {
+    public Double getPostingLongitude() {
         return postingLongitude;
     }
 
-    public void setPostingLongitude(double postingLongitude) {
+    public void setPostingLongitude(Double postingLongitude) {
         this.postingLongitude = postingLongitude;
     }
 
@@ -134,11 +134,11 @@ public class Announcement {
         this.receptionPlace = receptionPlace;
     }
 
-    public double getReceptionLatitude() {
+    public Double getReceptionLatitude() {
         return receptionLatitude;
     }
 
-    public void setReceptionLatitude(double receptionLatitude) {
+    public void setReceptionLatitude(Double receptionLatitude) {
         this.receptionLatitude = receptionLatitude;
     }
 

@@ -89,17 +89,17 @@ public class AnnouncementController {
         dto.userId = getLoggedInUserId();
 
         String defaultLang = resolveLanguageHeader(headers);
-        Announcement saved = announcementService.create(dto, defaultLang);
+        AnnouncementDTO createdDto = announcementService.create(dto, defaultLang);
 
         // Build URI for the new resource: http://hostname/announcements/{id}
         URI locationUri = uriInfo.getAbsolutePathBuilder()
-                .path(String.valueOf(saved.getId()))
+                .path(String.valueOf(createdDto.getId()))
                 .build();
 
         return Response.created(locationUri)
                 .entity(Map.of(
                         "message", messageService.get("announcement.created", headers),
-                        "announcement", announcementService.toAnnouncementDTO(saved, defaultLang)
+                        "announcement", createdDto
                 ))
                 .build();
     }
@@ -127,11 +127,11 @@ public class AnnouncementController {
         Long loggedInUserId = getLoggedInUserId();
         String defaultLang = resolveLanguageHeader(headers);
 
-        Announcement updated = announcementService.update(id, dto, loggedInUserId, defaultLang);
+        AnnouncementDTO updatedDto = announcementService.update(id, dto, loggedInUserId, defaultLang);
 
         return Response.ok(Map.of(
                 "message", messageService.get("announcement.updated", headers),
-                "announcement", announcementService.toAnnouncementDTO(updated, defaultLang)
+                "announcement", updatedDto
         )).build();
     }
 

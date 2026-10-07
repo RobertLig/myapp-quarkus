@@ -51,7 +51,7 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public Announcement create(AnnouncementDTO dto, String defaultLang) {
+    public AnnouncementDTO create(AnnouncementDTO dto, String defaultLang) {
 
         var user = userService.getUserById(dto.userId);
         if (user.isEmpty()) {
@@ -63,11 +63,11 @@ public class AnnouncementService {
         applyAnnouncementData(announcement, dto, defaultLang);
 
         announcementRepository.persist(announcement);
-        return announcement;
+        return toAnnouncementDTO(announcement, defaultLang);
     }
 
     @Transactional
-    public Announcement update(Long id, AnnouncementDTO dto, Long userId, String defaultLang) {
+    public AnnouncementDTO update(Long id, AnnouncementDTO dto, Long userId, String defaultLang) {
         Announcement existing = announcementRepository.findByIdOptional(id)
                 .orElseThrow(() -> new EntityNotFoundException("error.notfound"));
 
@@ -77,7 +77,7 @@ public class AnnouncementService {
         // Apply basic fields, translations, dimensions, weight, stops
         applyAnnouncementData(existing, dto, defaultLang);
 
-        return existing; // JPA/Panache automatically flushes managed entity updates on transaction commit
+        return toAnnouncementDTO(existing, defaultLang);
     }
 
     private void checkOwnership(Long userId, Announcement announcement) {

@@ -33,22 +33,26 @@ public class AnnouncementDTO {
     @NotBlank(message = "{error.postingPlace.required}")
     public String postingPlace;
 
+    @NotNull(message = "{error.postingLatitude.required}")
     @Range(min = -90, max = 90, message = "{error.posting.latitude.range}")
-    public double postingLatitude;
+    public Double postingLatitude;
 
+    @NotNull(message = "{error.postingLongitude.required}")
     @Range(min = -180, max = 180, message = "{error.posting.longitude.range}")
-    public double postingLongitude;
+    public Double postingLongitude;
 
 
     // Reception place
     @NotBlank(message = "{error.receptionPlace.required}") //error.place.same
     public String receptionPlace;
 
+    @NotNull(message = "{error.receptionLatitude.required}")
     @Range(min = -90, max = 90, message = "{error.reception.latitude.range}")
-    public double receptionLatitude;
+    public Double receptionLatitude;
 
+    @NotNull(message = "{error.receptionLongitude.required}")
     @Range(min = -180, max = 180, message = "{error.reception.longitude.range}") //error.coordinates.same
-    public double receptionLongitude;
+    public Double receptionLongitude;
 
 
     @NotNull(message = "{error.postingDateTime.required}")
@@ -66,5 +70,9 @@ public class AnnouncementDTO {
     public List<@Valid PhotoDTO> photos;
 
     public AnnouncementDTO() {
+    }
+
+    public Long getId() {
+        return id;
     }
 }
