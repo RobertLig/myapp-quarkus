@@ -28,29 +28,22 @@ public class ImageStoreService {
     @Inject
     S3Client s3;
 
-    // ------------------------------------------------------------
-    // VALIDATION
-    // ------------------------------------------------------------
-
-    public void validateImage(byte[] file) {
+    public String validateAndDetectMime(byte[] file) {
         if (file == null || file.length == 0) {
-            throw new FieldValidationException("avatar", "photo.empty");
+            throw new FieldValidationException("photo", "photo.empty");
         }
 
         if (file.length > MAX_SIZE_BYTES) {
-            throw new FieldValidationException("avatar", "photo.toobig");
+            throw new FieldValidationException("photo", "photo.toobig");
         }
 
         String mime;
         try {
-            mime = URLConnection.guessContentTypeFromStream(
-                    new ByteArrayInputStream(file)
-            );
+            mime = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(file));
         } catch (IOException e) {
             mime = null;
         }
 
-        // Fallback magic-byte detection for PNG / JPEG if guessContentTypeFromStream returns null
         boolean isPng = file.length >= 8
                 && (file[0] & 0xFF) == 0x89
                 && (file[1] & 0xFF) == 0x50
@@ -62,41 +55,28 @@ public class ImageStoreService {
                 && (file[1] & 0xFF) == 0xD8
                 && (file[2] & 0xFF) == 0xFF;
 
-        boolean isValidMime = mime != null && (
-                mime.equals("image/jpeg") ||
-                        mime.equals("image/jpg")  ||
-                        mime.equals("image/png")
-        );
-
-        if (!isValidMime && !isPng && !isJpeg) {
-            throw new FieldValidationException("avatar", "photo.invalidtype");
+        if ("image/png".equals(mime) || isPng) {
+            return "image/png";
+        } else if ("image/jpeg".equals(mime) || "image/jpg".equals(mime) || isJpeg) {
+            return "image/jpeg";
         }
+
+        throw new FieldValidationException("photo", "photo.invalidtype");
     }
 
-    // ------------------------------------------------------------
-    // UPLOAD
-    // ------------------------------------------------------------
-
     public String upload(byte[] file) {
-        validateImage(file);
-
+        String mimeType = validateAndDetectMime(file);
         String key = "images/" + UUID.randomUUID();
 
         PutObjectRequest req = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
-                .contentType("image/jpeg")
+                .contentType(mimeType)
                 .build();
 
         s3.putObject(req, RequestBody.fromBytes(file));
-
-        // Dynamically uses LocalStack in dev, AWS S3 URL in prod
         return s3BaseUrl + "/" + key;
     }
-
-    // ------------------------------------------------------------
-    // DELETE
-    // ------------------------------------------------------------
 
     public void delete(String url) {
         if (url == null || url.isBlank()) {
@@ -116,7 +96,7 @@ public class ImageStoreService {
     private String extractKey(String url) {
         int idx = url.indexOf("/images/");
         if (idx != -1) {
-            return url.substring(idx + 1); // Returns "images/<UUID>"
+            return url.substring(idx + 1);
         }
         return url;
     }

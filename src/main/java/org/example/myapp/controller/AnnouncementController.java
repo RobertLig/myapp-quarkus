@@ -11,9 +11,12 @@ import org.example.myapp.model.Announcement;
 import org.example.myapp.model.Photo;
 import org.example.myapp.service.AnnouncementService;
 import org.example.myapp.service.PhotoService;
+import org.example.myapp.service.AnnouncementPhotoService;
 import org.example.myapp.service.ImageStoreService;
 import org.example.myapp.service.ImageLimitService;
 import org.example.myapp.i18n.MessageService;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -37,6 +40,9 @@ public class AnnouncementController {
 
     @Inject
     PhotoService photoService;
+
+    @Inject
+    AnnouncementPhotoService announcementPhotoService;
 
     @Inject
     ImageStoreService imageStoreService;
@@ -179,60 +185,12 @@ public class AnnouncementController {
     @POST
     @Path("/{id}/photos")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadPhoto(@PathParam("id") Long id,
-                                @QueryParam("userId") Long userId,
-                                @FormParam("file") byte[] file,
-                                HttpHeaders headers) {
-
-        var announcementOpt = announcementService.findById(id);
-
-        if (announcementOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        Announcement announcement = announcementOpt.get();
-
-        // Ownership check
-        Response ownership = checkOwnership(userId, announcement, headers);
-        if (ownership != null) return ownership;
-
-        // Check limit
-        if (!imageLimitService.canAddAnnouncementPhoto(announcement)) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("photo.limit", headers)
-                    ))
-                    .build();
-        }
-
-        // Upload to S3
-        String url;
-        try {
-            url = imageStoreService.upload(file);
-        } catch (IllegalArgumentException ex) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get(ex.getMessage(), headers)
-                    ))
-                    .build();
-        }
-
-        // Save photo in DB
-        int nextPosition = announcement.getPhotos().size();
-        Photo photo = new Photo(url, nextPosition);
-
-        photo.setAnnouncement(announcement);
-
-        Photo saved = photoService.create(photo);
-
-        return Response.ok(java.util.Map.of(
-                "message", messageService.get("photo.uploaded", headers),
-                "photo", photoService.toDTO(saved)
-        )).build();
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response uploadPhoto(@PathParam("id") Long announcementId,
+                                @RestForm("file") FileUpload fileUpload) {
+        Long currentUserId = getLoggedInUserId();
+        PhotoDTO photoDTO = announcementPhotoService.uploadPhoto(announcementId, currentUserId, fileUpload);
+        return Response.status(Response.Status.CREATED).entity(photoDTO).build();
     }
 
     // ------------------------------------------------------------
@@ -240,58 +198,13 @@ public class AnnouncementController {
     // ------------------------------------------------------------
 
     @DELETE
-    @Path("/{announcementId}/photos/{photoId}")
-    public Response deletePhoto(@PathParam("announcementId") Long announcementId,
-                                @PathParam("photoId") Long photoId,
-                                @QueryParam("userId") Long userId,
-                                HttpHeaders headers) {
-
-        // 1. Check announcement exists
-        var announcementOpt = announcementService.findById(announcementId);
-        if (announcementOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        Announcement announcement = announcementOpt.get();
-
-        // 2. Ownership check
-        Response ownership = checkOwnership(userId, announcement, headers);
-        if (ownership != null) return ownership;
-
-        // 3. Check photo exists
-        var photoOpt = photoService.findById(photoId);
-        if (photoOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        Photo photo = photoOpt.get();
-
-        // 4. Ensure photo belongs to this announcement
-        if (!photo.getAnnouncement().getId().equals(announcementId)) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("photo.mismatch", headers)
-                    ))
-                    .build();
-        }
-
-        // 5. Delete from S3
-        imageStoreService.delete(photo.getUrl());
-
-        // 6. Delete from DB
-        photoService.delete(photoId);
-
-        return Response.ok(java.util.Map.of(
-                "message", messageService.get("photo.deleted", headers)
-        )).build();
+    @Path("/{id}/photos/{photoId}")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response deletePhoto(@PathParam("id") Long announcementId,
+                                @PathParam("photoId") Long photoId) {
+        Long currentUserId = getLoggedInUserId();
+        announcementPhotoService.deletePhoto(announcementId, photoId, currentUserId);
+        return Response.noContent().build();
     }
 
     @PUT
