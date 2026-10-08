@@ -16,6 +16,10 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class AnnouncementPhotoService {
@@ -35,7 +39,7 @@ public class AnnouncementPhotoService {
     @Transactional
     public PhotoDTO uploadPhoto(Long announcementId, Long currentUserId, FileUpload fileUpload) {
         if (fileUpload == null || fileUpload.uploadedFile() == null) {
-            throw new FieldValidationException("photo", "photo.empty"); //upload up to three photos (photo)
+            throw new FieldValidationException("photo", "photo.empty"); //photos? (photo?)
         }
 
         Announcement announcement = announcementRepository.findByIdOptional(announcementId)
@@ -48,7 +52,7 @@ public class AnnouncementPhotoService {
 
         // Limit Check
         if (!imageLimitService.canAddAnnouncementPhoto(announcement)) {
-            throw new FieldValidationException("photo", "photo.limit"); //up to three photos (photo)
+            throw new FieldValidationException("photo", "photo.limit"); //photos? (photo?)
         }
 
         // Read Bytes
@@ -100,6 +104,59 @@ public class AnnouncementPhotoService {
         for (int i = 0; i < remaining.size(); i++) {
             remaining.get(i).setPosition(i);
         }
+    }
+
+    @Transactional
+    public List<PhotoDTO> sortPhotos(Long announcementId, Long currentUserId, List<PhotoDTO> sortedPhotos) {
+        if (sortedPhotos == null || sortedPhotos.isEmpty()) {
+            throw new FieldValidationException("photos", "photo.empty"); //photos? (photo?)
+        }
+
+        Announcement announcement = announcementRepository.findByIdOptional(announcementId)
+                .orElseThrow(() -> new EntityNotFoundException("error.announcement.notfound"));
+
+        // Ownership check
+        if (!announcement.getUser().getId().equals(currentUserId)) {
+            throw DomainException.forbidden("error.unauthorized.access");
+        }
+
+        List<Photo> existingPhotos = announcement.getPhotos();
+
+        // 1. Validate list lengths match
+        if (sortedPhotos.size() != existingPhotos.size()) {
+            throw new FieldValidationException("photos", "photo.mismatch"); //photos? (photo?)
+        }
+
+        // 2. Validate that incoming DTO photo IDs exactly match existing entity IDs
+        Set<Long> existingIds = existingPhotos.stream()
+                .map(Photo::getId)
+                .collect(Collectors.toSet());
+
+        Set<Long> incomingIds = sortedPhotos.stream()
+                .map(dto -> dto.id)
+                .collect(Collectors.toSet());
+
+        if (!existingIds.equals(incomingIds)) {
+            throw new FieldValidationException("photos", "photo.mismatch");
+        }
+
+        // 3. Map existing photos by ID for in-memory lookup (0 DB queries in loop)
+        Map<Long, Photo> photoMap = existingPhotos.stream()
+                .collect(Collectors.toMap(Photo::getId, Function.identity()));
+
+        // 4. Re-assign new positions sequentially based on array index order
+        for (int i = 0; i < sortedPhotos.size(); i++) {
+            Long photoId = sortedPhotos.get(i).id;
+            Photo photo = photoMap.get(photoId);
+            photo.setPosition(i);
+        }
+
+        // Sort response collection by new position
+        existingPhotos.sort((p1, p2) -> Integer.compare(p1.getPosition(), p2.getPosition()));
+
+        return existingPhotos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     public PhotoDTO toDTO(Photo photo) {

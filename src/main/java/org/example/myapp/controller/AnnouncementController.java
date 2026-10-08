@@ -209,61 +209,12 @@ public class AnnouncementController {
 
     @PUT
     @Path("/{id}/photos/sort")
-    public Response sortPhotos(@PathParam("id") Long id,
-                               @QueryParam("userId") Long userId,
-                               List<PhotoDTO> sortedPhotos,
-                               HttpHeaders headers) {
-
-        // 1. Check announcement exists
-        var announcementOpt = announcementService.findById(id);
-        if (announcementOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        Announcement announcement = announcementOpt.get();
-
-        // 2. Ownership check
-        Response ownership = checkOwnership(userId, announcement, headers);
-        if (ownership != null) return ownership;
-
-        // 3. Validate all photos belong to this announcement
-        for (PhotoDTO dto : sortedPhotos) {
-            var photoOpt = photoService.findById(dto.id);
-
-            if (photoOpt.isEmpty()) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(java.util.Map.of(
-                                "error", messageService.get("error.notfound", headers)
-                        ))
-                        .build();
-            }
-
-            Photo photo = photoOpt.get();
-
-            if (!photo.getAnnouncement().getId().equals(id)) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(java.util.Map.of(
-                                "error", messageService.get("photo.mismatch", headers)
-                        ))
-                        .build();
-            }
-        }
-
-        // 4. Apply new positions
-        for (int i = 0; i < sortedPhotos.size(); i++) {
-            PhotoDTO dto = sortedPhotos.get(i);
-            Photo photo = photoService.findById(dto.id).get();
-            photo.setPosition(i);
-            photoService.update(photo);
-        }
-
-        return Response.ok(java.util.Map.of(
-                "message", messageService.get("photo.sorted", headers)
-        )).build();
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response sortPhotos(@PathParam("id") Long announcementId,
+                               List<PhotoDTO> sortedPhotos) {
+        Long currentUserId = getLoggedInUserId();
+        List<PhotoDTO> updatedPhotos = announcementPhotoService.sortPhotos(announcementId, currentUserId, sortedPhotos);
+        return Response.ok(updatedPhotos).build();
     }
 
     @PUT

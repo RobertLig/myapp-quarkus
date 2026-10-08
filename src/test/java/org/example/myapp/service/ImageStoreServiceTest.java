@@ -23,7 +23,7 @@ public class ImageStoreServiceTest {
     @Test
     public void testValidateImageEmptyFile() {
         FieldValidationException ex = assertThrows(FieldValidationException.class, () ->
-                imageStoreService.validateImage(new byte[0])
+                imageStoreService.validateAndDetectMime(new byte[0])
         );
         assertEquals("photo.empty", ex.getMessageKey());
     }
@@ -32,7 +32,7 @@ public class ImageStoreServiceTest {
     public void testValidateImageExceedsMaxSize() {
         byte[] oversizedFile = new byte[(500 * 1024) + 1]; // 500KB + 1 byte
         FieldValidationException ex = assertThrows(FieldValidationException.class, () ->
-                imageStoreService.validateImage(oversizedFile)
+                imageStoreService.validateAndDetectMime(oversizedFile)
         );
         assertEquals("photo.toobig", ex.getMessageKey());
     }
@@ -41,7 +41,7 @@ public class ImageStoreServiceTest {
     public void testValidateImageInvalidFileType() {
         byte[] plainTextBytes = "This is not an image".getBytes();
         FieldValidationException ex = assertThrows(FieldValidationException.class, () ->
-                imageStoreService.validateImage(plainTextBytes)
+                imageStoreService.validateAndDetectMime(plainTextBytes)
         );
         assertEquals("photo.invalidtype", ex.getMessageKey());
     }
@@ -50,13 +50,13 @@ public class ImageStoreServiceTest {
     public void testValidateValidJpegMagicBytes() {
         // Valid JPEG Magic Bytes: 0xFF 0xD8 0xFF
         byte[] jpegHeader = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x00};
-        assertDoesNotThrow(() -> imageStoreService.validateImage(jpegHeader));
+        assertDoesNotThrow(() -> imageStoreService.validateAndDetectMime(jpegHeader));
     }
 
     @Test
     public void testValidateValidPngMagicBytes() {
         // Valid PNG Magic Bytes: 0x89 0x50 0x4E 0x47
         byte[] pngHeader = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
-        assertDoesNotThrow(() -> imageStoreService.validateImage(pngHeader));
+        assertDoesNotThrow(() -> imageStoreService.validateAndDetectMime(pngHeader));
     }
 }
