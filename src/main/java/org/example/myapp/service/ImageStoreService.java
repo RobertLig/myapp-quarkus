@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URLConnection;
+import java.util.List;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -91,6 +92,15 @@ public class ImageStoreService {
                 .build();
 
         s3.deleteObject(req);
+    }
+
+    public void deleteAll(List<String> urls) {
+        if (urls == null || urls.isEmpty()) {
+            return;
+        }
+        for (String url : urls) {
+            delete(url);
+        }
     }
 
     private String extractKey(String url) {

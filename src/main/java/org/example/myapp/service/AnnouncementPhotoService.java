@@ -15,6 +15,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -155,6 +156,40 @@ public class AnnouncementPhotoService {
         existingPhotos.sort((p1, p2) -> Integer.compare(p1.getPosition(), p2.getPosition()));
 
         return existingPhotos.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<PhotoDTO> setMainPhoto(Long announcementId, Long photoId, Long currentUserId) {
+        // 1. Fetch Announcement
+        Announcement announcement = announcementRepository.findByIdOptional(announcementId)
+                .orElseThrow(() -> new EntityNotFoundException("error.announcement.notfound"));
+
+        // 2. Authorization Check
+        if (!announcement.getUser().getId().equals(currentUserId)) {
+            throw DomainException.forbidden("error.unauthorized.access");
+        }
+
+        // 3. Find target photo inside the announcement's photos
+        Photo mainPhoto = announcement.getPhotos().stream()
+                .filter(photo -> photo.getId().equals(photoId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("error.photo.notfound"));
+
+        // 4. Reorder positions (Main photo becomes index 0, others shifted)
+        mainPhoto.setPosition(0);
+
+        int pos = 1;
+        for (Photo photo : announcement.getPhotos()) {
+            if (!photo.getId().equals(photoId)) {
+                photo.setPosition(pos++);
+            }
+        }
+
+        // 5. Return sorted list of DTOs
+        return announcement.getPhotos().stream()
+                .sorted(Comparator.comparingInt(Photo::getPosition))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }

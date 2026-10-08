@@ -143,35 +143,11 @@ public class AnnouncementController {
 
     @DELETE
     @Path("/{id}")
-    public Response delete(@PathParam("id") Long id,
-                           @QueryParam("userId") Long userId,
-                           HttpHeaders headers) {
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response delete(@PathParam("id") Long id, @Context HttpHeaders headers) {
+        Long currentUserId = getLoggedInUserId();
 
-        var announcementOpt = announcementService.findById(id);
-
-        if (announcementOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        Announcement announcement = announcementOpt.get();
-
-        // Ownership check
-        Response ownership = checkOwnership(userId, announcement, headers);
-        if (ownership != null) return ownership;
-
-        boolean deleted = announcementService.delete(id);
-
-        if (!deleted) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
+        announcementService.delete(id, currentUserId);
 
         return Response.ok(java.util.Map.of(
                 "message", messageService.get("announcement.deleted", headers)
@@ -218,68 +194,13 @@ public class AnnouncementController {
     }
 
     @PUT
-    @Path("/{announcementId}/photos/{photoId}/main")
-    public Response setMainPhoto(@PathParam("announcementId") Long announcementId,
-                                 @PathParam("photoId") Long photoId,
-                                 @QueryParam("userId") Long userId,
-                                 HttpHeaders headers) {
-
-        // 1. Check announcement exists
-        var announcementOpt = announcementService.findById(announcementId);
-        if (announcementOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        Announcement announcement = announcementOpt.get();
-
-        // 2. Ownership check
-        Response ownership = checkOwnership(userId, announcement, headers);
-        if (ownership != null) return ownership;
-
-        // 3. Check photo exists
-        var photoOpt = photoService.findById(photoId);
-        if (photoOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.notfound", headers)
-                    ))
-                    .build();
-        }
-
-        Photo selected = photoOpt.get();
-
-        // 4. Ensure photo belongs to this announcement
-        if (!selected.getAnnouncement().getId().equals(announcementId)) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("photo.mismatch", headers)
-                    ))
-                    .build();
-        }
-
-        // 5. Reorder photos: selected becomes position 0
-        List<Photo> photos = announcement.getPhotos();
-
-        // Step 1: set selected photo to position 0
-        selected.setPosition(0);
-        photoService.update(selected);
-
-        // Step 2: shift all other photos
-        int pos = 1;
-        for (Photo p : photos) {
-            if (!p.getId().equals(photoId)) {
-                p.setPosition(pos++);
-                photoService.update(p);
-            }
-        }
-
-        return Response.ok(java.util.Map.of(
-                "message", messageService.get("photo.main.set", headers)
-        )).build();
+    @Path("/{id}/photos/{photoId}/main")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response setMainPhoto(@PathParam("id") Long announcementId,
+                                 @PathParam("photoId") Long photoId) {
+        Long currentUserId = getLoggedInUserId();
+        List<PhotoDTO> photos = announcementPhotoService.setMainPhoto(announcementId, photoId, currentUserId);
+        return Response.ok(photos).build();
     }
 
     private Response checkOwnership(Long userId, Announcement announcement, HttpHeaders headers) {

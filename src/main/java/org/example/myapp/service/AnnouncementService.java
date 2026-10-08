@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class AnnouncementService {
@@ -37,6 +38,9 @@ public class AnnouncementService {
 
     @Inject
     PhotoService photoService;
+
+    @Inject
+    ImageStoreService imageStoreService;
 
     // -----------------------
     // CRUD
@@ -69,7 +73,7 @@ public class AnnouncementService {
     @Transactional
     public AnnouncementDTO update(Long id, AnnouncementDTO dto, Long userId, String defaultLang) {
         Announcement existing = announcementRepository.findByIdOptional(id)
-                .orElseThrow(() -> new EntityNotFoundException("error.notfound"));
+                .orElseThrow(() -> new EntityNotFoundException("error.announcement.notfound"));
 
         // Ownership check (throws ForbiddenException if not owner or admin)
         checkOwnership(userId, existing);
@@ -146,8 +150,23 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public boolean delete(Long id) {
-        return announcementRepository.deleteById(id);
+    public void delete(Long id, Long currentUserId) {
+        Announcement announcement = announcementRepository.findByIdOptional(id)
+                .orElseThrow(() -> new EntityNotFoundException("error.notfound"));
+
+        // Ownership validation
+        checkOwnership(currentUserId, announcement);
+
+        // Extract S3 image URLs before deleting the entity
+        List<String> photoUrls = announcement.getPhotos().stream()
+                .map(Photo::getUrl)
+                .collect(Collectors.toList());
+
+        // Delete from database
+        announcementRepository.delete(announcement);
+
+        // Delete files from S3
+        imageStoreService.deleteAll(photoUrls);
     }
 
     // -----------------------
