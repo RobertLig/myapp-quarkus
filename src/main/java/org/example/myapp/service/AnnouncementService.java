@@ -224,21 +224,16 @@ public class AnnouncementService {
     // Pagination
     // -----------------------
 
-    public PaginationResponse<AnnouncementDTO> getPaginated(int page, int size) {
+    @Transactional
+    public PaginationResponse<AnnouncementDTO> getPaginated(int page, int size, String targetLang) {
         List<Announcement> entities = announcementRepository.findPaginated(page, size);
         long total = announcementRepository.countAll();
 
         List<AnnouncementDTO> dtos = entities.stream()
-                .map(this::toAnnouncementDTO)
+                .map(entity -> toAnnouncementDTO(entity, targetLang))
                 .toList();
 
         return new PaginationResponse<>(dtos, total, page, size);
-    }
-
-    //ownership
-    public boolean isOwner(Long userId, Announcement announcement) {
-        return announcement.getUser() != null &&
-                announcement.getUser().getId().equals(userId);
     }
 
     public PaginationResponse<AnnouncementDTO> search(AnnouncementSearchDTO filters, int page, int size) {

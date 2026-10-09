@@ -17,7 +17,12 @@ public class AnnouncementRepository implements PanacheRepository<Announcement> {
     // ------------------------------------------------------------
 
     public List<Announcement> findPaginated(int page, int size) {
-        return findAll().page(page, size).list();
+
+        //return findAll().page(page, size).list();
+
+        return find("ORDER BY id DESC")
+                .page(page, size)
+                .list();
     }
 
     public long countAll() {

@@ -15,6 +15,6 @@ public class PaginationResponse<T> {
         this.totalItems = totalItems;
         this.page = page;
         this.size = size;
-        this.totalPages = (long) Math.ceil((double) totalItems / size);
+        this.totalPages = (size > 0) ? (long) Math.ceil((double) totalItems / size) : 0;
     }
 }

@@ -67,9 +67,11 @@ public class AnnouncementController {
     @GET
     public PaginationResponse<AnnouncementDTO> list(
             @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("10") int size) {
+            @QueryParam("size") @DefaultValue("10") int size,
+            @Context HttpHeaders headers) {
 
-        return announcementService.getPaginated(page, size);
+        String targetLang = resolveLanguageHeader(headers);
+        return announcementService.getPaginated(page, size, targetLang);
     }
 
     @GET
@@ -201,17 +203,6 @@ public class AnnouncementController {
         Long currentUserId = getLoggedInUserId();
         List<PhotoDTO> photos = announcementPhotoService.setMainPhoto(announcementId, photoId, currentUserId);
         return Response.ok(photos).build();
-    }
-
-    private Response checkOwnership(Long userId, Announcement announcement, HttpHeaders headers) {
-        if (!announcementService.isOwner(userId, announcement)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(java.util.Map.of(
-                            "error", messageService.get("error.forbidden", headers)
-                    ))
-                    .build();
-        }
-        return null; // means OK
     }
 
     @POST
