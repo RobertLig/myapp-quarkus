@@ -12,11 +12,18 @@ import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.exception.FieldValidationException;
 import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
+import org.example.myapp.model.Announcement;
+import org.example.myapp.model.Photo;
 import org.example.myapp.repository.UserRepository;
+import org.example.myapp.repository.AnnouncementRepository;
+
 import java.util.Base64;
+import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.util.Optional;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -24,6 +31,12 @@ public class UserService {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    AnnouncementRepository announcementRepository;
+
+    @Inject
+    ImageStoreService imageStoreService;
 
     @Inject
     EmailService emailService;
@@ -209,15 +222,23 @@ public class UserService {
     }
 
     @Transactional
-    public boolean deleteUser(Long userId) {
-        User user = userRepository.findById(userId);
+    public void deleteUser(Long userId) {
+        User user = userRepository.findByIdOptional(userId)
+                .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
 
-        if (user == null) {
-            return false; // user does not exist
-        }
+        // Fetch user's announcements to gather S3 photo URLs before cascading DB deletion
+        List<Announcement> announcements = announcementRepository.list("user.id", userId);
 
+        List<String> photoUrls = announcements.stream()
+                .flatMap(a -> a.getPhotos().stream())
+                .map(Photo::getUrl)
+                .collect(Collectors.toList());
+
+        // Deleting the user automatically cascades to Announcements and Photos in DB
         userRepository.delete(user);
-        return true;
+
+        // Clean up files stored in AWS S3
+        imageStoreService.deleteAll(photoUrls);
     }
 
     public Optional<User> getUserById(Long id) {

@@ -142,11 +142,11 @@ public class Announcement {
         this.receptionLatitude = receptionLatitude;
     }
 
-    public double getReceptionLongitude() {
+    public Double getReceptionLongitude() {
         return receptionLongitude;
     }
 
-    public void setReceptionLongitude(double receptionLongitude) {
+    public void setReceptionLongitude(Double receptionLongitude) {
         this.receptionLongitude = receptionLongitude;
     }
 
