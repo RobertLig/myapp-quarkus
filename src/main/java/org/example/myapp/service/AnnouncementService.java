@@ -224,12 +224,6 @@ public class AnnouncementService {
         return dto;
     }
 
-    // Keep single-argument overload for backwards compatibility if needed
-    public AnnouncementDTO toAnnouncementDTO(Announcement a) {
-
-        return toAnnouncementDTO(a, "en");
-    }
-
     // -----------------------
     // Pagination
     // -----------------------
@@ -246,13 +240,13 @@ public class AnnouncementService {
         return new PaginationResponse<>(dtos, total, page, size);
     }
 
-    public PaginationResponse<AnnouncementDTO> search(AnnouncementSearchDTO filters, int page, int size) {
-
+    @Transactional
+    public PaginationResponse<AnnouncementDTO> search(AnnouncementSearchDTO filters, int page, int size, String targetLang) {
         List<Announcement> results = announcementRepository.search(filters, page, size);
         long total = announcementRepository.countSearch(filters);
 
         List<AnnouncementDTO> dtos = results.stream()
-                .map(this::toAnnouncementDTO)
+                .map(entity -> toAnnouncementDTO(entity, targetLang))
                 .toList();
 
         return new PaginationResponse<>(dtos, total, page, size);

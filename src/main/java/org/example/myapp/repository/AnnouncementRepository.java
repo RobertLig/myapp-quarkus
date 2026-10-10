@@ -91,27 +91,7 @@ public class AnnouncementRepository implements PanacheRepository<Announcement> {
             params.put("receptionPlace", f.receptionPlace);
         }
 
-        // Posting coordinates
-        if (f.postingLatitude != null) {
-            jpql.append(" AND a.postingLatitude = :postingLatitude");
-            params.put("postingLatitude", f.postingLatitude);
-        }
-        if (f.postingLongitude != null) {
-            jpql.append(" AND a.postingLongitude = :postingLongitude");
-            params.put("postingLongitude", f.postingLongitude);
-        }
-
-        // Reception coordinates
-        if (f.receptionLatitude != null) {
-            jpql.append(" AND a.receptionLatitude = :receptionLatitude");
-            params.put("receptionLatitude", f.receptionLatitude);
-        }
-        if (f.receptionLongitude != null) {
-            jpql.append(" AND a.receptionLongitude = :receptionLongitude");
-            params.put("receptionLongitude", f.receptionLongitude);
-        }
-
-        // Radius search (Haversine)
+        // Radius search (Haversine) takes precedence over exact coordinate matching for posting location
         if (f.radiusKm != null && f.postingLatitude != null && f.postingLongitude != null) {
 
             jpql.append("""
@@ -129,6 +109,27 @@ public class AnnouncementRepository implements PanacheRepository<Announcement> {
             params.put("centerLat", f.postingLatitude);
             params.put("centerLon", f.postingLongitude);
             params.put("radiusKm", f.radiusKm);
+
+        } else {
+            // Exact posting coordinates (only applied if not doing a radius search)
+            if (f.postingLatitude != null) {
+                jpql.append(" AND a.postingLatitude = :postingLatitude");
+                params.put("postingLatitude", f.postingLatitude);
+            }
+            if (f.postingLongitude != null) {
+                jpql.append(" AND a.postingLongitude = :postingLongitude");
+                params.put("postingLongitude", f.postingLongitude);
+            }
+        }
+
+        // Reception coordinates (exact match)
+        if (f.receptionLatitude != null) {
+            jpql.append(" AND a.receptionLatitude = :receptionLatitude");
+            params.put("receptionLatitude", f.receptionLatitude);
+        }
+        if (f.receptionLongitude != null) {
+            jpql.append(" AND a.receptionLongitude = :receptionLongitude");
+            params.put("receptionLongitude", f.receptionLongitude);
         }
 
         // Posting date

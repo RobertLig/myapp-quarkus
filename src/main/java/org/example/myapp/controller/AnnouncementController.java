@@ -7,13 +7,8 @@ import org.example.myapp.dto.AnnouncementDTO;
 import org.example.myapp.dto.PaginationResponse;
 import org.example.myapp.dto.PhotoDTO;
 import org.example.myapp.dto.AnnouncementSearchDTO;
-import org.example.myapp.model.Announcement;
-import org.example.myapp.model.Photo;
 import org.example.myapp.service.AnnouncementService;
-import org.example.myapp.service.PhotoService;
 import org.example.myapp.service.AnnouncementPhotoService;
-import org.example.myapp.service.ImageStoreService;
-import org.example.myapp.service.ImageLimitService;
 import org.example.myapp.i18n.MessageService;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -39,16 +34,7 @@ public class AnnouncementController {
     AnnouncementService announcementService;
 
     @Inject
-    PhotoService photoService;
-
-    @Inject
     AnnouncementPhotoService announcementPhotoService;
-
-    @Inject
-    ImageStoreService imageStoreService;
-
-    @Inject
-    ImageLimitService imageLimitService;
 
     @Inject
     MessageService messageService;
@@ -72,6 +58,17 @@ public class AnnouncementController {
 
         String targetLang = resolveLanguageHeader(headers);
         return announcementService.getPaginated(page, size, targetLang);
+    }
+
+    @POST
+    @Path("/search")
+    public PaginationResponse<AnnouncementDTO> search(AnnouncementSearchDTO filters,
+                                                      @QueryParam("page") @DefaultValue("0") int page,
+                                                      @QueryParam("size") @DefaultValue("10") int size,
+                                                      @Context HttpHeaders headers) {
+
+        String targetLang = resolveLanguageHeader(headers);
+        return announcementService.search(filters, page, size, targetLang);
     }
 
     @GET
@@ -200,14 +197,5 @@ public class AnnouncementController {
         Long currentUserId = getLoggedInUserId();
         List<PhotoDTO> photos = announcementPhotoService.setMainPhoto(announcementId, photoId, currentUserId);
         return Response.ok(photos).build();
-    }
-
-    @POST
-    @Path("/search")
-    public PaginationResponse<AnnouncementDTO> search(AnnouncementSearchDTO filters,
-                                                      @QueryParam("page") @DefaultValue("0") int page,
-                                                      @QueryParam("size") @DefaultValue("10") int size) {
-
-        return announcementService.search(filters, page, size);
     }
 }
