@@ -50,8 +50,17 @@ public class AnnouncementService {
         return announcementRepository.listAll();
     }
 
+    //remove later?
     public Optional<Announcement> findById(Long id) {
+
         return announcementRepository.findByIdOptional(id);
+    }
+
+    public AnnouncementDTO getById(Long id, String targetLang) {
+        Announcement announcement = announcementRepository.findByIdOptional(id)
+                .orElseThrow(() -> new EntityNotFoundException("error.announcement.notfound"));
+
+        return toAnnouncementDTO(announcement, targetLang);
     }
 
     @Transactional
@@ -152,7 +161,7 @@ public class AnnouncementService {
     @Transactional
     public void delete(Long id, Long currentUserId) {
         Announcement announcement = announcementRepository.findByIdOptional(id)
-                .orElseThrow(() -> new EntityNotFoundException("error.notfound"));
+                .orElseThrow(() -> new EntityNotFoundException("error.announcement.notfound"));
 
         // Ownership validation
         checkOwnership(currentUserId, announcement);
@@ -217,6 +226,7 @@ public class AnnouncementService {
 
     // Keep single-argument overload for backwards compatibility if needed
     public AnnouncementDTO toAnnouncementDTO(Announcement a) {
+
         return toAnnouncementDTO(a, "en");
     }
 

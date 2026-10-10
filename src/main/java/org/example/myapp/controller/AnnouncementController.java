@@ -76,15 +76,12 @@ public class AnnouncementController {
 
     @GET
     @Path("/{id}")
-    public Response getById(@PathParam("id") Long id, HttpHeaders headers) {
-        return announcementService.findById(id)
-                .map(announcementService::toAnnouncementDTO)
-                .map(dto -> Response.ok(dto).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND)
-                        .entity(java.util.Map.of(
-                                "error", messageService.get("error.notfound", headers)
-                        ))
-                        .build());
+    public AnnouncementDTO getById(
+            @PathParam("id") Long id,
+            @Context HttpHeaders headers) {
+
+        String targetLang = resolveLanguageHeader(headers);
+        return announcementService.getById(id, targetLang);
     }
 
     @POST
