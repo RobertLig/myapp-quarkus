@@ -2,6 +2,8 @@ package org.example.myapp.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 public class Photo {
 
@@ -14,10 +16,17 @@ public class Photo {
     @Column(nullable = false)
     public int position;
 
-
     @ManyToOne
     @JoinColumn(name = "announcement_id")
     private Announcement announcement;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     // Required by JPA
     protected Photo() {
@@ -62,5 +71,13 @@ public class Photo {
 
     public void setAnnouncement(Announcement announcement) {
         this.announcement = announcement;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

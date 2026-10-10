@@ -12,14 +12,17 @@ public class DomainException extends RuntimeException {
     }
 
     public static DomainException unauthorized(String messageKey) {
+
         return new DomainException(messageKey, 401);
     }
 
     public static DomainException forbidden(String messageKey) {
+
         return new DomainException(messageKey, 403);
     }
 
     public static DomainException tooManyRequests(String messageKey) {
+
         return new DomainException(messageKey, 429);
     }
 

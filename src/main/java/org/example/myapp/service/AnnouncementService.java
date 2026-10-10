@@ -10,6 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +66,14 @@ public class AnnouncementService {
 
     @Transactional
     public AnnouncementDTO create(AnnouncementDTO dto, String defaultLang) {
+
+        // 1. Define your limit window (e.g., max 5 announcements per hour)
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+        long recentCount = announcementRepository.count("user.id = ?1 and createdAt >= ?2", dto.userId, oneHourAgo);
+
+        if (recentCount >= 5) {
+            throw DomainException.tooManyRequests("error.rate.limit");
+        }
 
         var user = userService.getUserById(dto.userId);
         if (user.isEmpty()) {

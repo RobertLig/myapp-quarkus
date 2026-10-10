@@ -68,6 +68,14 @@ public class Announcement {
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Photo> photos = new ArrayList<>();
 
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
     // ===== GETTERS & SETTERS =====
 
     public Long getId() {
@@ -196,5 +204,13 @@ public class Announcement {
 
     public void setPhotos(List<Photo> photos) {
         this.photos = photos;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

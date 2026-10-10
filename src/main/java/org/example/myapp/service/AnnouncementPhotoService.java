@@ -15,6 +15,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,17 @@ public class AnnouncementPhotoService {
 
     @Transactional
     public PhotoDTO uploadPhoto(Long announcementId, Long currentUserId, FileUpload fileUpload) {
+
+        // Limit: Max 3 photo uploads per user per hour
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+        long recentPhotosCount = photoRepository.count(
+                "announcement.user.id = ?1 and createdAt >= ?2", currentUserId, oneHourAgo
+        );
+
+        if (recentPhotosCount >= 3) {
+            throw DomainException.tooManyRequests("error.rate.limit");
+        }
+
         if (fileUpload == null || fileUpload.uploadedFile() == null) {
             throw new FieldValidationException("photo", "photo.empty"); //photos? (photo?)
         }
