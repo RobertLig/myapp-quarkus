@@ -10,14 +10,17 @@ public class PresenceService {
     private final Map<Long, Boolean> online = new ConcurrentHashMap<>();
 
     public void setOnline(Long userId) {
+
         online.put(userId, true);
     }
 
     public void setOffline(Long userId) {
+
         online.put(userId, false);
     }
 
     public boolean isOnline(Long userId) {
+
         return online.getOrDefault(userId, false);
     }
 }

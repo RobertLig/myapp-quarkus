@@ -27,10 +27,12 @@ public class DomainException extends RuntimeException {
     }
 
     public String getMessageKey() {
+
         return messageKey;
     }
 
     public int getStatus() {
+
         return status;
     }
 }

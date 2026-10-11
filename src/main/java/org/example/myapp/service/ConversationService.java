@@ -3,10 +3,9 @@ package org.example.myapp.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
-import org.example.myapp.model.Conversation;
-import org.example.myapp.model.ConversationParticipant;
-import org.example.myapp.model.ConversationType;
-import org.example.myapp.model.User;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
+import org.example.myapp.model.*;
 import org.example.myapp.repository.ConversationParticipantRepository;
 import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.UserBlockRepository;
@@ -37,14 +36,14 @@ public class ConversationService {
         List<User> users = userRepository.findByIds(participantIds);
 
         if (users.size() != participantIds.size()) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Check blocks
         for (User u1 : users) {
             for (User u2 : users) {
                 if (!u1.equals(u2) && userBlockRepository.exists(u1.getId(), u2.getId())) {
-                    throw new WebApplicationException("error.user.blocked", 403);
+                    throw DomainException.forbidden("error.user.blocked");
                 }
             }
         }
@@ -55,9 +54,19 @@ public class ConversationService {
             return existing.get();
         }
 
+        // Determine conversation type based on participants' roles
+        ConversationType determinedType = ConversationType.USER_TO_USER;
+        for (User user : users) {
+            if (user.getRole() == Role.ADMIN) {
+                determinedType = ConversationType.USER_TO_ADMIN;
+                break; // Stop checking once we find an admin
+            }
+        }
+
         // Create new conversation
         Conversation conversation = new Conversation();
         conversation.setCreatedAt(new Date());
+        conversation.setType(determinedType);
         conversationRepository.persist(conversation);
 
         // Add participants

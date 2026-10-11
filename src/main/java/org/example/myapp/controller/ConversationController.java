@@ -1,5 +1,7 @@
 package org.example.myapp.controller;
 
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -11,6 +13,7 @@ import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.service.ConversationService;
 import org.example.myapp.service.MessageService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Path("/conversations")
@@ -27,14 +30,30 @@ public class ConversationController {
     @Inject
     ConversationMapper conversationMapper;
 
+    @Inject
+    SecurityIdentity identity;
+
     @POST
+    @RolesAllowed({"USER", "ADMIN"})
     public Response createConversation(CreateConversationRequest req) {
+        Long currentUserId = getLoggedInUserId();
+
+        // Optional improvement: Ensure the logged-in user is part of the participants
+        if (req.participantIds == null) {
+            req.participantIds = new ArrayList<>();
+        }
+        if (!req.participantIds.contains(currentUserId)) {
+            req.participantIds.add(currentUserId);
+        }
 
         Conversation conversation = conversationService.createConversation(req.participantIds);
-
         ConversationDTO dto = ConversationMapper.toDTO(conversation);
 
         return Response.ok(dto).build();
+    }
+
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
     }
 
     @GET
