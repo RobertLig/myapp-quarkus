@@ -89,10 +89,12 @@ public class UserController {
     @DELETE
     @Path("/me/avatar")
     @RolesAllowed({"USER", "ADMIN"})
-    public Response deleteAvatar() {
+    public Response deleteAvatar(@Context HttpHeaders headers) {
         Long userId = getLoggedInUserId();
         avatarService.deleteAvatar(userId);
-        return Response.ok(Map.of("message", "avatar.deleted")).build();
+        return Response.ok(Map.of(
+                "message", messageService.get("avatar.deleted", headers)
+        )).build();
     }
 }
 

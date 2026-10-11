@@ -30,6 +30,12 @@ public class UserAvatarService {
             throw new FieldValidationException("avatar", "photo.empty");
         }
 
+        // 1. CHECK FILE SIZE FIRST (Prevents memory spikes before reading bytes)
+        long maxSizeBytes = 500L * 1024L; // match your ImageStoreService limit (500 KB)
+        if (fileUpload.size() > maxSizeBytes) {
+            throw new FieldValidationException("photo", "photo.toobig");
+        }
+
         // 2. Validate User & Business Rules
         User user = userService.getUserById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));

@@ -18,7 +18,7 @@ import java.util.UUID;
 @ApplicationScoped
 public class ImageStoreService {
 
-    private static final long MAX_SIZE_BYTES = 500L * 1024L; // 500 KB
+    //private static final long MAX_SIZE_BYTES = 500L * 1024L; // 500 KB
 
     @ConfigProperty(name = "bucket.name")
     String bucketName;
@@ -34,9 +34,9 @@ public class ImageStoreService {
             throw new FieldValidationException("photo", "photo.empty");
         }
 
-        if (file.length > MAX_SIZE_BYTES) {
+        /* if (file.length > MAX_SIZE_BYTES) {
             throw new FieldValidationException("photo", "photo.toobig");
-        }
+        } */
 
         String mime;
         try {
