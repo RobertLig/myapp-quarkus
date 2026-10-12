@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
@@ -10,6 +11,7 @@ import org.example.myapp.repository.ConversationParticipantRepository;
 import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
+import org.hibernate.Hibernate;
 
 import java.util.Date;
 import java.util.List;
@@ -30,12 +32,26 @@ public class ConversationService {
     @Inject
     UserBlockRepository userBlockRepository;
 
+    @Transactional
     public Conversation createConversation(List<Long> participantIds) {
 
-        // Load users
-        List<User> users = userRepository.findByIds(participantIds);
+        if (participantIds == null || participantIds.isEmpty()) {
+            throw DomainException.badRequest("error.participantIDs.required");
+        }
 
-        if (users.size() != participantIds.size()) {
+        // 1. Remove duplicate participant IDs sent in the request (e.g., [1, 1] -> [1])
+        List<Long> uniqueParticipantIds = participantIds.stream().distinct().toList();
+
+        // 2. Prevent creating a conversation with yourself (must have at least 2 distinct users,
+        // or adjust this rule if self-messaging is allowed)
+        if (uniqueParticipantIds.size() < 2) {
+            throw DomainException.badRequest("error.conversation.invalid_participants");
+        }
+
+        // Load users using the unique list
+        List<User> users = userRepository.findByIds(uniqueParticipantIds);
+
+        if (users.size() != uniqueParticipantIds.size()) {
             throw new EntityNotFoundException("error.user.notfound");
         }
 
@@ -51,7 +67,9 @@ public class ConversationService {
         // Check if conversation already exists
         Optional<Conversation> existing = conversationRepository.findExistingConversation(participantIds);
         if (existing.isPresent()) {
-            return existing.get();
+            Conversation conv = existing.get();
+            Hibernate.initialize(conv.getParticipants()); // Force load participants while session is open!
+            return conv;
         }
 
         // Determine conversation type based on participants' roles

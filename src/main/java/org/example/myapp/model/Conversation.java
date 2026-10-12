@@ -2,6 +2,7 @@ package org.example.myapp.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -16,10 +17,10 @@ public class Conversation {
     private Date createdAt;
 
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
-    private List<ConversationParticipant> participants;
+    private List<ConversationParticipant> participants = new ArrayList<>();
 
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
-    private List<Message> messages;
+    private List<Message> messages = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private ConversationType type;

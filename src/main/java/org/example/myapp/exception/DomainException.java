@@ -11,6 +11,11 @@ public class DomainException extends RuntimeException {
         this.status = status;
     }
 
+    public static DomainException badRequest(String messageKey) {
+
+        return new DomainException(messageKey, 400);
+    }
+
     public static DomainException unauthorized(String messageKey) {
 
         return new DomainException(messageKey, 401);
