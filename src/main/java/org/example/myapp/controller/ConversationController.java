@@ -13,7 +13,6 @@ import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.service.ConversationService;
 import org.example.myapp.service.MessageService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Path("/conversations")
@@ -38,15 +37,7 @@ public class ConversationController {
     public Response createConversation(CreateConversationRequest req) {
         Long currentUserId = getLoggedInUserId();
 
-        // Optional improvement: Ensure the logged-in user is part of the participants
-        if (req.participantIds == null) {
-            req.participantIds = new ArrayList<>();
-        }
-        if (!req.participantIds.contains(currentUserId)) {
-            req.participantIds.add(currentUserId);
-        }
-
-        Conversation conversation = conversationService.createConversation(req.participantIds);
+        Conversation conversation = conversationService.createConversation(req.participantIds, currentUserId);
         ConversationDTO dto = ConversationMapper.toDTO(conversation);
 
         return Response.ok(dto).build();

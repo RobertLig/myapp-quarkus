@@ -13,9 +13,11 @@ import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 import org.hibernate.Hibernate;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ConversationService {
@@ -33,17 +35,23 @@ public class ConversationService {
     UserBlockRepository userBlockRepository;
 
     @Transactional
-    public Conversation createConversation(List<Long> participantIds) {
+    public Conversation createConversation(List<Long> participantIds, Long currentUserId) {
 
         if (participantIds == null || participantIds.isEmpty()) {
             throw DomainException.badRequest("error.participantIDs.required");
         }
 
-        // 1. Remove duplicate participant IDs sent in the request (e.g., [1, 1] -> [1])
-        List<Long> uniqueParticipantIds = participantIds.stream().distinct().toList();
+        // Remove duplicate participant IDs and collect into a MUTABLE list
+        List<Long> uniqueParticipantIds = participantIds.stream()
+                .distinct()
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        // 2. Prevent creating a conversation with yourself (must have at least 2 distinct users,
-        // or adjust this rule if self-messaging is allowed)
+        // Ensure the logged-in user is included in the participant list first
+        if (!uniqueParticipantIds.contains(currentUserId)) {
+            uniqueParticipantIds.add(currentUserId);
+        }
+
+        // Now validate the size (e.g. at least 2 distinct participants after the logged-in user is added)
         if (uniqueParticipantIds.size() < 2) {
             throw DomainException.badRequest("error.conversation.invalid_participants");
         }
@@ -65,7 +73,7 @@ public class ConversationService {
         }
 
         // Check if conversation already exists
-        Optional<Conversation> existing = conversationRepository.findExistingConversation(participantIds);
+        Optional<Conversation> existing = conversationRepository.findExistingConversation(uniqueParticipantIds);
         if (existing.isPresent()) {
             Conversation conv = existing.get();
             Hibernate.initialize(conv.getParticipants()); // Force load participants while session is open!
