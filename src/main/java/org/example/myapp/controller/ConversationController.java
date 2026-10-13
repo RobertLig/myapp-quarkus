@@ -48,14 +48,13 @@ public class ConversationController {
     }
 
     @GET
-    @Path("/list/{userId}")
-    public Response listConversations(@PathParam("userId") Long userId) {
+    @Path("/list")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response listConversations() {
+        // Match createConversation pattern: get ID from security context
+        Long currentUserId = getLoggedInUserId();
 
-        List<ConversationParticipant> cps = conversationService.listConversations(userId);
-
-        List<ConversationListItemDTO> dtos = cps.stream()
-                .map(conversationMapper::toListItemDTO)
-                .toList();
+        List<ConversationListItemDTO> dtos = conversationService.listConversations(currentUserId);
 
         return Response.ok(dtos).build();
     }

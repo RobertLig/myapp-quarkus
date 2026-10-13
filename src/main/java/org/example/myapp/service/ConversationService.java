@@ -6,7 +6,9 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
+import org.example.myapp.dto.ConversationListItemDTO;
 import org.example.myapp.model.*;
+import org.example.myapp.mapper.ConversationMapper;
 import org.example.myapp.repository.ConversationParticipantRepository;
 import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.UserBlockRepository;
@@ -37,6 +39,9 @@ public class ConversationService {
 
     @Inject
     UserBlockRepository userBlockRepository;
+
+    @Inject
+    ConversationMapper conversationMapper;
 
     @Transactional
     public Conversation createConversation(List<Long> participantIds, Long announcementId, Long currentUserId) {
@@ -174,21 +179,25 @@ public class ConversationService {
         cp.setUnreadCount(0);
     }
 
-    public List<ConversationParticipant> listConversations(Long userId) {
-
-        // Validate user
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public List<ConversationListItemDTO> listConversations(Long userId) {
+        // Optional: validate user exists if necessary
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
-        // Load all conversations for this user
-        List<ConversationParticipant> cps = cpRepository.findByUser(userId);
+        // Fetch pre-loaded conversations and participants in one go
+        List<ConversationParticipant> cps = cpRepository.findActiveByUserWithDetails(userId);
 
-        // Filter out conversations deleted by this user
+        // Map directly to DTOs safely within the open transaction
         return cps.stream()
-                .filter(cp -> cp.getDeletedAt() == null)
+                .map(conversationMapper::toListItemDTO)
                 .toList();
+    }
+
+    public boolean isUserInConversation(Long userId, Long conversationId) {
+        return cpRepository.isUserInConversation(userId, conversationId);
     }
 
     public Conversation getOrCreateSupportConversation(Long userId, Long adminId) {

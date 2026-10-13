@@ -60,10 +60,7 @@ public class ChatWebSocket {
         }
 
         // Validate membership
-        boolean isParticipant = conversationService
-                .listConversations(userId)
-                .stream()
-                .anyMatch(cp -> cp.getConversation().getId().equals(conversationId));
+        boolean isParticipant = conversationService.isUserInConversation(userId, conversationId);
 
         if (!isParticipant) {
             close(session, "error.websocket.notparticipant");
