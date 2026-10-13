@@ -85,15 +85,13 @@ public class ConversationController {
     }
 
     @GET
-    @Path("/support/admin/{adminId}")
-    public Response listSupportConversations(@PathParam("adminId") Long adminId) {
+    @Path("/support")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response listSupportConversations() {
+        // Get user/admin ID securely from the security context
+        Long currentUserId = getLoggedInUserId();
 
-        // Load all conversations where admin participates AND type = USER_TO_ADMIN
-        List<ConversationParticipant> cps = conversationService.listSupportConversations(adminId);
-
-        List<ConversationListItemDTO> dtos = cps.stream()
-                .map(conversationMapper::toListItemDTO)
-                .toList();
+        List<ConversationListItemDTO> dtos = conversationService.listSupportConversations(currentUserId);
 
         return Response.ok(dtos).build();
     }

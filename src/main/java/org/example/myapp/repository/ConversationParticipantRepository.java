@@ -20,11 +20,6 @@ public class ConversationParticipantRepository implements PanacheRepository<Conv
         ).list();
     }
 
-    //remove later
-    public List<ConversationParticipant> findByUser(Long userId) {
-        return find("user.id", userId).list();
-    }
-
     public boolean isUserInConversation(Long userId, Long conversationId) {
         long count = find(
                 "user.id = :userId and conversation.id = :convId and deletedAt is null",

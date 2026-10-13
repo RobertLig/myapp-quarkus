@@ -252,21 +252,21 @@ public class ConversationService {
         return conversation;
     }
 
-    public List<ConversationParticipant> listSupportConversations(Long adminId) {
-
-        // Validate admin
-        User admin = userRepository.findById(adminId);
-        if (admin == null) {
-            throw new WebApplicationException("error.admin.notfound", 404);
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public List<ConversationListItemDTO> listSupportConversations(Long userId) {
+        // Validate user exists
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
-        // Load all conversations where admin is a participant
-        List<ConversationParticipant> cps = cpRepository.findByUser(adminId);
+        // Fetch pre-loaded active conversations and participants
+        List<ConversationParticipant> cps = cpRepository.findActiveByUserWithDetails(userId);
 
-        // Filter only USER_TO_ADMIN conversations
+        // Filter only USER_TO_ADMIN conversations and map directly to DTOs
         return cps.stream()
-                .filter(cp -> cp.getDeletedAt() == null)
                 .filter(cp -> cp.getConversation().getType() == ConversationType.USER_TO_ADMIN)
+                .map(conversationMapper::toListItemDTO)
                 .toList();
     }
 }
