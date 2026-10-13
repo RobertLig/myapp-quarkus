@@ -11,6 +11,7 @@ import org.example.myapp.repository.ConversationParticipantRepository;
 import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
+import org.example.myapp.repository.AnnouncementRepository;
 import org.hibernate.Hibernate;
 
 import java.util.ArrayList;
@@ -32,10 +33,13 @@ public class ConversationService {
     UserRepository userRepository;
 
     @Inject
+    AnnouncementRepository announcementRepository;
+
+    @Inject
     UserBlockRepository userBlockRepository;
 
     @Transactional
-    public Conversation createConversation(List<Long> participantIds, Long currentUserId) {
+    public Conversation createConversation(List<Long> participantIds, Long announcementId, Long currentUserId) {
 
         if (participantIds == null || participantIds.isEmpty()) {
             throw DomainException.badRequest("error.participantIDs.required");
@@ -80,6 +84,14 @@ public class ConversationService {
             return conv;
         }
 
+        Announcement announcement = null;
+        if (announcementId != null) {
+            announcement = announcementRepository.findById(announcementId);
+            if (announcement == null) {
+                throw new EntityNotFoundException("error.announcement.notfound");
+            }
+        }
+
         // Determine conversation type based on participants' roles
         ConversationType determinedType = ConversationType.USER_TO_USER;
         for (User user : users) {
@@ -91,6 +103,7 @@ public class ConversationService {
 
         // Create new conversation
         Conversation conversation = new Conversation();
+        conversation.setAnnouncement(announcement);
         conversation.setCreatedAt(new Date());
         conversation.setType(determinedType);
         conversationRepository.persist(conversation);

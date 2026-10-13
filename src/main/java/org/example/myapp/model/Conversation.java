@@ -12,7 +12,9 @@ public class Conversation {
     @GeneratedValue
     private Long id;
 
-    private Long announcementId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "announcement_id")
+    private Announcement announcement;
 
     private Date createdAt;
 
@@ -44,4 +46,8 @@ public class Conversation {
     public void setType(ConversationType conversationType) { this.type = conversationType; }
 
     public ConversationType getType() { return type; }
+
+    public void setAnnouncement(Announcement announcement) {
+        this.announcement = announcement;
+    }
 }

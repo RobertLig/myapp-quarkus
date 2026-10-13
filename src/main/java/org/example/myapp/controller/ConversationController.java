@@ -37,7 +37,7 @@ public class ConversationController {
     public Response createConversation(CreateConversationRequest req) {
         Long currentUserId = getLoggedInUserId();
 
-        Conversation conversation = conversationService.createConversation(req.participantIds, currentUserId);
+        Conversation conversation = conversationService.createConversation(req.participantIds, req.announcementId, currentUserId);
         ConversationDTO dto = ConversationMapper.toDTO(conversation);
 
         return Response.ok(dto).build();
