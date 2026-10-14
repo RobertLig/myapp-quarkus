@@ -1,12 +1,15 @@
 package org.example.myapp.controller;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.annotation.security.RolesAllowed;
+
 import org.example.myapp.dto.*;
 import org.example.myapp.mapper.MessageMapper;
 import org.example.myapp.model.Conversation;
@@ -16,10 +19,15 @@ import org.example.myapp.service.ConversationService;
 
 import java.util.List;
 
+import io.quarkus.security.identity.SecurityIdentity;
+
 @Path("/messages")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class MessageController {
+
+    @Inject
+    SecurityIdentity identity;
 
     @Inject
     MessageService messageService;
@@ -28,17 +36,22 @@ public class MessageController {
     ConversationService conversationService;
 
     @POST
-    public Response sendMessage(SendMessageRequest req) {
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response sendMessage(@Valid SendMessageRequest req) {
+        Long currentUserId = getLoggedInUserId();
 
-        Message message = messageService.sendMessage(
+        // Call service passing the authenticated user's ID as the sender
+        MessageDTO dto = messageService.sendMessage(
                 req.conversationId,
-                req.senderId,
+                currentUserId, // Use authenticated user ID instead of trusting request body payload
                 req.content
         );
 
-        MessageDTO dto = MessageMapper.toDTO(message);
+        return Response.status(Response.Status.CREATED).entity(dto).build();
+    }
 
-        return Response.ok(dto).build();
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
     }
 
     @POST
@@ -69,14 +82,11 @@ public class MessageController {
                 conversationService.getOrCreateSupportConversation(userId, adminId);
 
         // 2. Send message using existing messaging logic
-        Message message = messageService.sendMessage(
+        MessageDTO dto = messageService.sendMessage(
                 conversation.getId(),
                 userId,
                 req.content
         );
-
-        // 3. Convert to DTO
-        MessageDTO dto = MessageMapper.toDTO(message);
 
         return Response.ok(dto).build();
     }
@@ -86,13 +96,11 @@ public class MessageController {
     public Response replyToSupport(AdminReplyRequest req) {
 
         // Admin replies inside an existing support conversation
-        Message message = messageService.sendMessage(
+        MessageDTO dto = messageService.sendMessage(
                 req.conversationId,
                 req.adminId,
                 req.content
         );
-
-        MessageDTO dto = MessageMapper.toDTO(message);
 
         return Response.ok(dto).build();
     }

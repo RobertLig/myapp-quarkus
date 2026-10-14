@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.MessageDTO;
 import org.example.myapp.dto.MessagePageDTO;
@@ -47,7 +48,8 @@ public class MessageService {
     @Inject
     RateLimitService rateLimitService;
 
-    public Message sendMessage(Long conversationId, Long senderId, String content) {
+    @Transactional
+    public MessageDTO sendMessage(Long conversationId, Long senderId, String content) {
 
         // Rate limit per user for messaging
         if (!rateLimitService.allowMessage(senderId)) {
@@ -90,7 +92,7 @@ public class MessageService {
 
             if (!otherUserId.equals(senderId)) {
                 if (userBlockRepository.exists(otherUserId, senderId)) {
-                    throw new WebApplicationException("error.message.blocked", 403);
+                    throw DomainException.forbidden("error.message.blocked");
                 }
             }
         }
@@ -132,7 +134,7 @@ public class MessageService {
         String deliveredJson = DeliveredReceiptPayloadBuilder.build(delivered);
         broadcaster.broadcast(conversationId, deliveredJson);
 
-        return message;
+        return dto;
     }
 
     public List<Message> listMessages(Long conversationId, Long userId) {
