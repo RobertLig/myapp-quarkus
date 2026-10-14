@@ -6,6 +6,8 @@ import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.MessageDTO;
 import org.example.myapp.dto.MessagePageDTO;
 import org.example.myapp.dto.MessageSearchDTO;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.mapper.MessageMapper;
 import org.example.myapp.model.*;
 import org.example.myapp.repository.ConversationRepository;
@@ -49,13 +51,13 @@ public class MessageService {
 
         // Rate limit per user for messaging
         if (!rateLimitService.allowMessage(senderId)) {
-            throw new WebApplicationException("error.rate.limit", 429);
+            throw DomainException.tooManyRequests("error.rate.limit");
         }
 
         // Load conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("error.conversation.notfound", 404);
+            throw new EntityNotFoundException("error.conversation.notfound");
         }
 
         // Prevent sending messages to yourself
@@ -65,13 +67,13 @@ public class MessageService {
                 .count();
 
         if (distinctUsers == 1) {
-            throw new WebApplicationException("error.message.self", 400);
+            throw DomainException.badRequest("error.message.self");
         }
 
         // Load sender
         User sender = userRepository.findById(senderId);
         if (sender == null) {
-            throw new WebApplicationException("error.sender.notfound", 404);
+            throw new EntityNotFoundException("error.sender.notfound");
         }
 
         // Check if sender is a participant
@@ -79,7 +81,7 @@ public class MessageService {
                 .anyMatch(cp -> cp.getUser().getId().equals(senderId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("error.message.notparticipant", 403);
+            throw DomainException.forbidden("error.message.notparticipant");
         }
 
         // Check if sender is blocked by any participant

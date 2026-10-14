@@ -69,6 +69,7 @@ public class RateLimitService {
     }
 
     public boolean allowMessage(Long userId) {
+
         return allowed(messageByUser, userId, MESSAGE_LIMIT);
     }
 }

@@ -9,7 +9,6 @@ import jakarta.ws.rs.core.Response;
 import org.example.myapp.dto.*;
 import org.example.myapp.mapper.ConversationMapper;
 import org.example.myapp.model.Conversation;
-import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.service.ConversationService;
 import org.example.myapp.service.MessageService;
 
@@ -25,9 +24,6 @@ public class ConversationController {
 
     @Inject
     MessageService messageService;
-
-    @Inject
-    ConversationMapper conversationMapper;
 
     @Inject
     SecurityIdentity identity;
