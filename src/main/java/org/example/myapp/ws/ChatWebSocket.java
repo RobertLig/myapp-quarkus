@@ -8,7 +8,7 @@ import org.example.myapp.service.AuthService;
 import org.example.myapp.service.ConversationService;
 import org.example.myapp.service.PresenceService;
 
-@ServerEndpoint("/ws/chat/{conversationId}/{userId}")
+@ServerEndpoint("/ws/chat/{conversationId}")
 public class ChatWebSocket {
 
     @Inject
@@ -28,10 +28,9 @@ public class ChatWebSocket {
 
     @OnOpen
     public void onOpen(Session session,
-                       @PathParam("conversationId") Long conversationId,
-                       @PathParam("userId") Long userId) {
+                       @PathParam("conversationId") Long conversationId) {
 
-        // Extract token
+        // 1. Extract token from query parameters
         String token = null;
         var params = session.getRequestParameterMap();
         if (params.containsKey("token") && !params.get("token").isEmpty()) {
@@ -43,38 +42,30 @@ public class ChatWebSocket {
             return;
         }
 
-        // Validate token
-        Long authenticatedUserId;
+        // 2. Validate token and extract the real authenticated user ID
+        Long userId;
         try {
-            //authenticatedUserId = authService.validateAndExtractUserId(token);
-            authenticatedUserId = userId; // TEMPORARY bypass
+            userId = authService.validateAndExtractUserId(token); // Replace with your actual token validation logic
         } catch (Exception e) {
             close(session, "error.auth.invalid.token");
             return;
         }
 
-        // Prevent impersonation
-        if (!authenticatedUserId.equals(userId)) {
-            close(session, "error.auth.user.mismatch");
-            return;
-        }
-
-        // Validate membership
+        // 3. Validate membership (ensure user actually belongs to this conversation)
         boolean isParticipant = conversationService.isUserInConversation(userId, conversationId);
-
         if (!isParticipant) {
             close(session, "error.websocket.notparticipant");
             return;
         }
 
-        // Store session metadata
+        // 4. Store session metadata
         session.getUserProperties().put("conversationId", conversationId);
         session.getUserProperties().put("userId", userId);
 
-        // Register session
+        // 5. Register session
         registry.addSession(conversationId, session);
 
-        // Presence
+        // 6. Broadcast online presence
         presenceService.setOnline(userId);
         broadcaster.broadcastPresence(userId, true);
     }
@@ -90,24 +81,25 @@ public class ChatWebSocket {
 
     @OnClose
     public void onClose(Session session) {
-
         Long conversationId = (Long) session.getUserProperties().get("conversationId");
         Long userId = (Long) session.getUserProperties().get("userId");
 
-        registry.removeSession(conversationId, session);
+        if (conversationId != null && userId != null) {
+            registry.removeSession(conversationId, session);
 
-        // Presence: user is now offline
-        presenceService.setOffline(userId);
-        broadcaster.broadcastPresence(userId, false);
+            presenceService.setOffline(userId);
+            broadcaster.broadcastPresence(userId, false);
+        }
     }
 
     @OnError
     public void onError(Session session, Throwable throwable) {
-        // optional logging
+        // Handle error logging if needed
     }
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        // optional: echo or ignore
+        // Chat messages are sent via REST POST /messages,
+        // but you can handle incoming WS control messages here if needed.
     }
 }

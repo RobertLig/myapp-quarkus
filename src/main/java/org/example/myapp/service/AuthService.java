@@ -48,5 +48,19 @@ public class AuthService {
             throw DomainException.unauthorized("error.token.invalid");
         }
     }
+
+    public Long validateAndExtractUserId(String token) {
+        try {
+            // Parse and validate the token signature and expiration
+            var claims = jwtParser.parse(token);
+
+            // Extract the subject claim (which we stored as String.valueOf(user.getId()))
+            return Long.valueOf(claims.getSubject());
+
+        } catch (Exception e) {
+            // Token is invalid, expired, or malformed
+            throw DomainException.unauthorized("error.token.invalid");
+        }
+    }
 }
 
