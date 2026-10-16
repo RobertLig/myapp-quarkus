@@ -14,6 +14,8 @@ public class ChatBroadcaster {
 
     public void broadcast(Long conversationId, String jsonPayload) {
 
+        System.out.println("Broadcasting to " + registry.getSessions(conversationId).size() + " sessions for conversation " + conversationId);
+
         for (Session session : registry.getSessions(conversationId)) {
             if (session.isOpen()) {
                 try {

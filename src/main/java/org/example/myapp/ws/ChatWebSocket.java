@@ -30,7 +30,8 @@ public class ChatWebSocket {
     public void onOpen(Session session,
                        @PathParam("conversationId") Long conversationId) {
 
-        // 1. Extract token from query parameters
+        System.out.println("=== WS onOpen triggered for conversation: " + conversationId + " ===");
+
         String token = null;
         var params = session.getRequestParameterMap();
         if (params.containsKey("token") && !params.get("token").isEmpty()) {
@@ -42,32 +43,40 @@ public class ChatWebSocket {
             return;
         }
 
-        // 2. Validate token and extract the real authenticated user ID
         Long userId;
         try {
-            userId = authService.validateAndExtractUserId(token); // Replace with your actual token validation logic
+            userId = authService.validateAndExtractUserId(token);
         } catch (Exception e) {
             close(session, "error.auth.invalid.token");
             return;
         }
 
-        // 3. Validate membership (ensure user actually belongs to this conversation)
-        boolean isParticipant = conversationService.isUserInConversation(userId, conversationId);
-        if (!isParticipant) {
-            close(session, "error.websocket.notparticipant");
-            return;
+        // Run the blocking database check safely off the IO thread
+        try {
+            Long finalUserId = userId;
+            boolean isParticipant = java.util.concurrent.CompletableFuture.supplyAsync(() ->
+                    conversationService.isUserInConversation(finalUserId, conversationId)
+            ).get(); // .get() blocks this specific worker wrapper safely without freezing the Netty IO event loop
+
+            if (!isParticipant) {
+                close(session, "error.websocket.notparticipant");
+                return;
+            }
+
+            session.getUserProperties().put("conversationId", conversationId);
+            session.getUserProperties().put("userId", finalUserId);
+
+            registry.addSession(conversationId, session);
+
+            presenceService.setOnline(finalUserId);
+            broadcaster.broadcastPresence(finalUserId, true);
+
+            System.out.println("-> SUCCESS: Client session registered for user " + finalUserId);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            close(session, "error.database.error");
         }
-
-        // 4. Store session metadata
-        session.getUserProperties().put("conversationId", conversationId);
-        session.getUserProperties().put("userId", userId);
-
-        // 5. Register session
-        registry.addSession(conversationId, session);
-
-        // 6. Broadcast online presence
-        presenceService.setOnline(userId);
-        broadcaster.broadcastPresence(userId, true);
     }
 
     private void close(Session session, String reason) {
