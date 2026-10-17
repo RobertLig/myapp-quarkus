@@ -1,7 +1,11 @@
 package org.example.myapp.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class SendSupportMessageRequest {
-    public Long userId;
-    public Long adminId;
+
+    @NotBlank(message = "error.content.blank")
+    @Size(max = 2000, message = "error.content.toolong")
     public String content;
 }

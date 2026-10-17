@@ -1,10 +1,10 @@
 package org.example.myapp.service;
 
-import io.smallrye.common.annotation.Blocking;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
+import org.example.myapp.dto.MessageDTO;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.dto.ConversationListItemDTO;
@@ -43,6 +43,9 @@ public class ConversationService {
 
     @Inject
     ConversationMapper conversationMapper;
+
+    @Inject
+    MessageService messageService;
 
     @Transactional
     public Conversation createConversation(List<Long> participantIds, Long announcementId, Long currentUserId) {
@@ -202,25 +205,37 @@ public class ConversationService {
         return cpRepository.isUserInConversation(userId, conversationId);
     }
 
-    public Conversation getOrCreateSupportConversation(Long userId, Long adminId) {
+    @Transactional
+    public MessageDTO sendSupportMessage(Long userId, Long adminId, String content) {
+        // 1. Get or create the support conversation
+        Conversation conversation = getOrCreateSupportConversation(userId, adminId);
 
+        // 2. Send message using the messaging logic
+        return messageService.sendMessage(
+                conversation.getId(),
+                userId,
+                content
+        );
+    }
+
+    public Conversation getOrCreateSupportConversation(Long userId, Long adminId) {
         // 1. Load user
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // 2. Load admin
         User admin = userRepository.findById(adminId);
         if (admin == null) {
-            throw new WebApplicationException("error.admin.notfound", 404);
+            throw new EntityNotFoundException("error.admin.notfound");
         }
 
         // 3. Check if support conversation already exists
         Conversation existing = conversationRepository.find(
-                "type = ?1 AND EXISTS (" +
+                "SELECT c FROM Conversation c WHERE c.type = ?1 AND EXISTS (" +
                         "SELECT cp FROM ConversationParticipant cp " +
-                        "WHERE cp.conversation.id = Conversation.id AND cp.user.id = ?2" +
+                        "WHERE cp.conversation.id = c.id AND cp.user.id = ?2" +
                         ")",
                 ConversationType.USER_TO_ADMIN,
                 userId

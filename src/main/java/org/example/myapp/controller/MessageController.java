@@ -11,7 +11,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.annotation.security.RolesAllowed;
 
 import org.example.myapp.dto.*;
-import org.example.myapp.model.Conversation;
 import org.example.myapp.service.MessageService;
 import org.example.myapp.service.ConversationService;
 
@@ -23,6 +22,9 @@ import io.quarkus.security.identity.SecurityIdentity;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class MessageController {
+
+    // Default admin ID (1L)
+    private static final Long DEFAULT_ADMIN_ID = 1L;
 
     @Inject
     SecurityIdentity identity;
@@ -68,19 +70,13 @@ public class MessageController {
 
     @POST
     @Path("/support/send")
-    public Response sendSupportMessage(SendSupportMessageRequest req) {
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response sendSupportMessage(@Valid SendSupportMessageRequest req) {
+        Long currentUserId = getLoggedInUserId();
 
-        Long userId = req.userId;      // authenticated user
-        Long adminId = req.adminId;    // your admin user ID
-
-        // 1. Find or create support conversation
-        Conversation conversation =
-                conversationService.getOrCreateSupportConversation(userId, adminId);
-
-        // 2. Send message using existing messaging logic
-        MessageDTO dto = messageService.sendMessage(
-                conversation.getId(),
-                userId,
+        MessageDTO dto = conversationService.sendSupportMessage(
+                currentUserId,
+                DEFAULT_ADMIN_ID,
                 req.content
         );
 
