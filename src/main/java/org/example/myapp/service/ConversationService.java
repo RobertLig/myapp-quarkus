@@ -1,5 +1,6 @@
 package org.example.myapp.service;
 
+import io.smallrye.common.annotation.Blocking;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -196,6 +197,7 @@ public class ConversationService {
                 .toList();
     }
 
+    @Transactional // This manages the transaction and request context automatically when called from a worker thread
     public boolean isUserInConversation(Long userId, Long conversationId) {
         return cpRepository.isUserInConversation(userId, conversationId);
     }

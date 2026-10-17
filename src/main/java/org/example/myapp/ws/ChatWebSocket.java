@@ -39,6 +39,7 @@ public class ChatWebSocket {
         }
 
         if (token == null || token.isBlank()) {
+            System.out.println("-> FAILED: Missing token");
             close(session, "error.auth.missing.token");
             return;
         }
@@ -46,37 +47,45 @@ public class ChatWebSocket {
         Long userId;
         try {
             userId = authService.validateAndExtractUserId(token);
+            System.out.println("-> Token valid. Extracted userId: " + userId);
         } catch (Exception e) {
+            System.out.println("-> FAILED: Token validation threw exception: " + e.getMessage());
             close(session, "error.auth.invalid.token");
             return;
         }
 
-        // Run the blocking database check safely off the IO thread
+        // Offload the blocking, transactional database query to a worker thread safely
+        boolean isParticipant = false;
         try {
             Long finalUserId = userId;
-            boolean isParticipant = java.util.concurrent.CompletableFuture.supplyAsync(() ->
+            isParticipant = java.util.concurrent.CompletableFuture.supplyAsync(() ->
                     conversationService.isUserInConversation(finalUserId, conversationId)
-            ).get(); // .get() blocks this specific worker wrapper safely without freezing the Netty IO event loop
+            ).get(); // Blocks only this background worker thread, keeping the IO event loop free
 
-            if (!isParticipant) {
-                close(session, "error.websocket.notparticipant");
-                return;
-            }
-
-            session.getUserProperties().put("conversationId", conversationId);
-            session.getUserProperties().put("userId", finalUserId);
-
-            registry.addSession(conversationId, session);
-
-            presenceService.setOnline(finalUserId);
-            broadcaster.broadcastPresence(finalUserId, true);
-
-            System.out.println("-> SUCCESS: Client session registered for user " + finalUserId);
-
+            System.out.println("-> Is user " + userId + " participant in conversation " + conversationId + "? " + isParticipant);
         } catch (Exception e) {
+            System.out.println("-> FAILED: Database error: " + e.getMessage());
             e.printStackTrace();
             close(session, "error.database.error");
+            return;
         }
+
+        if (!isParticipant) {
+            System.out.println("-> FAILED: User is not a participant");
+            close(session, "error.websocket.notparticipant");
+            return;
+        }
+
+        // Store session metadata & register
+        session.getUserProperties().put("conversationId", conversationId);
+        session.getUserProperties().put("userId", userId);
+
+        registry.addSession(conversationId, session);
+        System.out.println("-> SUCCESS: Client session registered! Total sessions for conv " + conversationId + " = " + registry.getSessions(conversationId).size());
+
+        // Presence
+        presenceService.setOnline(userId);
+        broadcaster.broadcastPresence(userId, true);
     }
 
     private void close(Session session, String reason) {
