@@ -137,46 +137,41 @@ public class MessageService {
         return dto;
     }
 
-    public List<Message> listMessages(Long conversationId, Long userId) {
-
+    public List<MessageDTO> listMessages(Long conversationId, Long loggedInUserId) {
         // Validate conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("error.conversation.notfound", 404);
+            throw new EntityNotFoundException("error.conversation.notfound");
         }
 
-        // Validate user
-        User user = userRepository.findById(userId);
+        // Validate logged-in user exists
+        User user = userRepository.findById(loggedInUserId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
-        // Check if user is participant
+        // Check if the logged-in user is a participant of the conversation
         boolean isParticipant = conversation.getParticipants().stream()
-                .anyMatch(cp -> cp.getUser().getId().equals(userId));
+                .anyMatch(cp -> cp.getUser().getId().equals(loggedInUserId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("error.message.notparticipant", 403);
+            throw DomainException.forbidden("error.message.notparticipant");
         }
 
-        // Load all messages
+        // Load all messages for the conversation
         List<Message> messages = messageRepository.findByConversation(conversationId);
 
-        // Filter out messages deleted for this user
+        // Filter out messages deleted for this recipient and map to DTO
         return messages.stream()
                 .filter(m -> {
-
-                    // Sender deleted globally → message removed from DB
-                    // (so it never appears here)
-
-                    // Recipient deleted → hide only for that recipient
+                    // If deleted for recipient, hide only if the logged-in user is the recipient (not the sender)
                     if (m.getDeletedForRecipientAt() != null &&
-                            !m.getSender().getId().equals(userId)) {
+                            !m.getSender().getId().equals(loggedInUserId)) {
                         return false;
                     }
-
                     return true;
                 })
+                .map(MessageMapper::toDTO)
                 .toList();
     }
 

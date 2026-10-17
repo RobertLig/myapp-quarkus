@@ -11,9 +11,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.annotation.security.RolesAllowed;
 
 import org.example.myapp.dto.*;
-import org.example.myapp.mapper.MessageMapper;
 import org.example.myapp.model.Conversation;
-import org.example.myapp.model.Message;
 import org.example.myapp.service.MessageService;
 import org.example.myapp.service.ConversationService;
 
@@ -56,16 +54,14 @@ public class MessageController {
 
     @POST
     @Path("/list")
-    public Response listMessages(ListMessagesRequest req) {
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response listMessages(@Valid ListMessagesRequest req) {
+        Long currentUserId = getLoggedInUserId();
 
-        List<Message> messages = messageService.listMessages(
+        List<MessageDTO> dtos = messageService.listMessages(
                 req.conversationId,
-                req.userId
+                currentUserId
         );
-
-        List<MessageDTO> dtos = messages.stream()
-                .map(MessageMapper::toDTO)
-                .toList();
 
         return Response.ok(dtos).build();
     }
