@@ -85,12 +85,13 @@ public class MessageController {
 
     @POST
     @Path("/support/reply")
-    public Response replyToSupport(AdminReplyRequest req) {
+    @RolesAllowed({"ADMIN"})
+    public Response replyToSupport(@Valid AdminReplyRequest req) {
+        Long currentUserId = getLoggedInUserId();
 
-        // Admin replies inside an existing support conversation
-        MessageDTO dto = messageService.sendMessage(
+        MessageDTO dto = conversationService.replyToSupport(
                 req.conversationId,
-                req.adminId,
+                currentUserId,
                 req.content
         );
 

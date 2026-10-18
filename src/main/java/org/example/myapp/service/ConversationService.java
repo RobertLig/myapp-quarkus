@@ -249,24 +249,63 @@ public class ConversationService {
         Conversation conversation = new Conversation();
         conversation.setCreatedAt(new Date());
         conversation.setType(ConversationType.USER_TO_ADMIN);
-        conversationRepository.persist(conversation);
+        conversationRepository.persistAndFlush(conversation);
 
         // 5. Add user participant
         ConversationParticipant pUser = new ConversationParticipant();
         pUser.setUser(user);
         pUser.setConversation(conversation);
         pUser.setJoinedAt(new Date());
-        cpRepository.persist(pUser);
+        cpRepository.persistAndFlush(pUser);
 
         // 6. Add admin participant
         ConversationParticipant pAdmin = new ConversationParticipant();
         pAdmin.setUser(admin);
         pAdmin.setConversation(conversation);
         pAdmin.setJoinedAt(new Date());
-        cpRepository.persist(pAdmin);
+        cpRepository.persistAndFlush(pAdmin);
 
-        // 7. Return the new conversation
+        // 7. FIX: Ensure the in-memory collection is populated so subsequent checks see them immediately
+        if (conversation.getParticipants() == null) {
+            conversation.setParticipants(new java.util.ArrayList<>());
+        }
+        conversation.getParticipants().add(pUser);
+        conversation.getParticipants().add(pAdmin);
+
+        // 8. Return the new conversation
         return conversation;
+    }
+
+    @Transactional
+    public MessageDTO replyToSupport(Long conversationId, Long adminId, String content) {
+        // 1. Verify that the sender is actually an admin
+        User admin = userRepository.findById(adminId);
+        if (admin == null) {
+            throw new EntityNotFoundException("error.admin.notfound");
+        }
+
+        // Check against the Role enum or your DEFAULT_ADMIN_ID constant
+        if (admin.getRole() != Role.ADMIN) {
+            throw DomainException.forbidden("error.admin.unauthorized");
+        }
+
+        // 2. Verify conversation exists and is a support conversation
+        Conversation conversation = conversationRepository.findById(conversationId);
+        if (conversation == null) {
+            throw new EntityNotFoundException("error.conversation.notfound");
+        }
+
+        if (conversation.getType() != ConversationType.USER_TO_ADMIN) {
+            throw DomainException.badRequest("error.conversation.invalidtype");
+        }
+
+        // 3. Delegate to messageService.sendMessage
+        // (which handles participant checks, persistence, events, and WebSocket broadcasting)
+        return messageService.sendMessage(
+                conversationId,
+                adminId,
+                content
+        );
     }
 
     @Transactional(Transactional.TxType.SUPPORTS)
