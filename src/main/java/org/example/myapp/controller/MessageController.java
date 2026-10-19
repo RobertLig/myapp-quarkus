@@ -14,8 +14,6 @@ import org.example.myapp.dto.*;
 import org.example.myapp.service.MessageService;
 import org.example.myapp.service.ConversationService;
 
-import java.util.List;
-
 import io.quarkus.security.identity.SecurityIdentity;
 
 @Path("/messages")
@@ -35,6 +33,10 @@ public class MessageController {
     @Inject
     ConversationService conversationService;
 
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
+    }
+
     @POST
     @RolesAllowed({"USER", "ADMIN"})
     public Response sendMessage(@Valid SendMessageRequest req) {
@@ -48,24 +50,6 @@ public class MessageController {
         );
 
         return Response.status(Response.Status.CREATED).entity(dto).build();
-    }
-
-    private Long getLoggedInUserId() {
-        return Long.valueOf(identity.getPrincipal().getName());
-    }
-
-    @POST
-    @Path("/list")
-    @RolesAllowed({"USER", "ADMIN"})
-    public Response listMessages(@Valid ListMessagesRequest req) {
-        Long currentUserId = getLoggedInUserId();
-
-        List<MessageDTO> dtos = messageService.listMessages(
-                req.conversationId,
-                currentUserId
-        );
-
-        return Response.ok(dtos).build();
     }
 
     @POST

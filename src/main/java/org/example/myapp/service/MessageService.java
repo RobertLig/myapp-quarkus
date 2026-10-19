@@ -137,20 +137,20 @@ public class MessageService {
         return dto;
     }
 
-    public List<MessageDTO> listMessages(Long conversationId, Long loggedInUserId) {
-        // Validate conversation
+    public MessagePageDTO getPaginated(Long conversationId, Long loggedInUserId, Long before, int limit) {
+        // 1. Validate conversation exists
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
             throw new EntityNotFoundException("error.conversation.notfound");
         }
 
-        // Validate logged-in user exists
+        // 2. Validate logged-in user exists
         User user = userRepository.findById(loggedInUserId);
         if (user == null) {
             throw new EntityNotFoundException("error.user.notfound");
         }
 
-        // Check if the logged-in user is a participant of the conversation
+        // 3. Check participant status
         boolean isParticipant = conversation.getParticipants().stream()
                 .anyMatch(cp -> cp.getUser().getId().equals(loggedInUserId));
 
@@ -158,13 +158,12 @@ public class MessageService {
             throw DomainException.forbidden("error.message.notparticipant");
         }
 
-        // Load all messages for the conversation
-        List<Message> messages = messageRepository.findByConversation(conversationId);
+        // 4. Fetch paginated entities
+        List<Message> entities = messageRepository.findPaginated(conversationId, before, limit);
 
-        // Filter out messages deleted for this recipient and map to DTO
-        return messages.stream()
+        // 5. Apply recipient deletion filter and map to DTOs
+        List<MessageDTO> dtos = entities.stream()
                 .filter(m -> {
-                    // If deleted for recipient, hide only if the logged-in user is the recipient (not the sender)
                     if (m.getDeletedForRecipientAt() != null &&
                             !m.getSender().getId().equals(loggedInUserId)) {
                         return false;
@@ -173,19 +172,9 @@ public class MessageService {
                 })
                 .map(MessageMapper::toDTO)
                 .toList();
-    }
 
-    public MessagePageDTO getPaginated(Long conversationId, Long before, int limit) {
-
-        List<Message> entities = messageRepository.findPaginated(conversationId, before, limit);
-
-        List<MessageDTO> dtos = entities.stream()
-                .map(MessageMapper::toDTO)
-                .toList();
-
-        // Check if more messages exist
+        // 6. Check if more messages exist
         boolean hasMore;
-
         if (entities.isEmpty()) {
             hasMore = false;
         } else {

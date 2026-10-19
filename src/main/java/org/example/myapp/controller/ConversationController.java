@@ -56,13 +56,27 @@ public class ConversationController {
     }
 
     @GET
+    @Path("/support")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response listSupportConversations() {
+        // Get user/admin ID securely from the security context
+        Long currentUserId = getLoggedInUserId();
+
+        List<ConversationListItemDTO> dtos = conversationService.listSupportConversations(currentUserId);
+
+        return Response.ok(dtos).build();
+    }
+
+    @GET
     @Path("/{conversationId}/messages")
+    @RolesAllowed({"USER", "ADMIN"})
     public MessagePageDTO getMessages(
             @PathParam("conversationId") Long conversationId,
             @QueryParam("before") Long before,
             @QueryParam("limit") @DefaultValue("30") int limit) {
 
-        return messageService.getPaginated(conversationId, before, limit);
+        Long currentUserId = getLoggedInUserId();
+        return messageService.getPaginated(conversationId, currentUserId, before, limit);
     }
 
     @GET
@@ -78,17 +92,5 @@ public class ConversationController {
         }
 
         return messageService.search(conversationId, query, before, limit);
-    }
-
-    @GET
-    @Path("/support")
-    @RolesAllowed({"USER", "ADMIN"})
-    public Response listSupportConversations() {
-        // Get user/admin ID securely from the security context
-        Long currentUserId = getLoggedInUserId();
-
-        List<ConversationListItemDTO> dtos = conversationService.listSupportConversations(currentUserId);
-
-        return Response.ok(dtos).build();
     }
 }
