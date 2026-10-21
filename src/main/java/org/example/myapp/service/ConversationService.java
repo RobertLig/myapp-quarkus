@@ -3,7 +3,6 @@ package org.example.myapp.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.MessageDTO;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
@@ -129,25 +128,26 @@ public class ConversationService {
         return conversation;
     }
 
+    @Transactional
     public void deleteConversationForUser(Long conversationId, Long userId) {
 
         // Load conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("error.conversation.notfound", 404);
+            throw new EntityNotFoundException("error.conversation.notfound");
         }
 
         // Load user
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Find participant
         ConversationParticipant cp = conversation.getParticipants().stream()
                 .filter(p -> p.getUser().getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new WebApplicationException("error.message.notparticipant", 403));
+                .orElseThrow(() -> DomainException.forbidden("error.message.notparticipant"));
 
         // Mark as deleted
         cp.setDeletedAt(new Date());
@@ -156,25 +156,26 @@ public class ConversationService {
         cp.setUnreadCount(0);
     }
 
+    @Transactional
     public void restoreConversationForUser(Long conversationId, Long userId) {
 
         // Load conversation
         Conversation conversation = conversationRepository.findById(conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("error.conversation.notfound", 404);
+            throw new EntityNotFoundException("error.conversation.notfound");
         }
 
         // Load user
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Find participant
         ConversationParticipant cp = conversation.getParticipants().stream()
                 .filter(p -> p.getUser().getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new WebApplicationException("error.message.notparticipant", 403));
+                .orElseThrow(() -> DomainException.forbidden("error.message.notparticipant"));
 
         // Restore conversation
         cp.setDeletedAt(null);

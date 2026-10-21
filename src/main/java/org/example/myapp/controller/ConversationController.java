@@ -81,16 +81,25 @@ public class ConversationController {
 
     @GET
     @Path("/{conversationId}/search")
-    public MessageSearchDTO searchMessages(
+    @RolesAllowed({"USER", "ADMIN"})
+    public MessagePageDTO searchMessages(
             @PathParam("conversationId") Long conversationId,
             @QueryParam("query") String query,
             @QueryParam("before") Long before,
             @QueryParam("limit") @DefaultValue("30") int limit) {
 
-        if (query == null || query.isBlank()) {
-            throw new BadRequestException("query.required");
-        }
+        Long currentUserId = getLoggedInUserId();
+        return messageService.search(conversationId, currentUserId, query, before, limit);
+    }
 
-        return messageService.search(conversationId, query, before, limit);
+    @DELETE
+    @Path("/{conversationId}")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response deleteConversation(@PathParam("conversationId") Long conversationId) {
+        Long currentUserId = getLoggedInUserId();
+
+        conversationService.deleteConversationForUser(conversationId, currentUserId);
+
+        return Response.ok().build();
     }
 }

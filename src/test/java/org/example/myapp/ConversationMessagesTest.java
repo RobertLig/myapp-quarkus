@@ -85,4 +85,16 @@ public class ConversationMessagesTest {
                 .statusCode(200)
                 .body("messages", notNullValue());
     }
+
+    @Test
+    void testSearchMessagesUnauthorized() {
+        Long conversationId = 1L;
+
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/conversations/{id}/search?query=test", conversationId)
+                .then()
+                .statusCode(401);
+    }
 }

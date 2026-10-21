@@ -3,10 +3,8 @@ package org.example.myapp.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.MessageDTO;
 import org.example.myapp.dto.MessagePageDTO;
-import org.example.myapp.dto.MessageSearchDTO;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.mapper.MessageMapper;
@@ -195,16 +193,49 @@ public class MessageService {
         return page;
     }
 
-    public MessageSearchDTO search(Long conversationId, String query, Long before, int limit) {
+    public MessagePageDTO search(Long conversationId, Long loggedInUserId, String query, Long before, int limit) {
+        // 1. Validate query parameter
+        if (query == null || query.isBlank()) {
+            throw DomainException.badRequest("query.required");
+        }
 
+        // 2. Validate conversation exists
+        Conversation conversation = conversationRepository.findById(conversationId);
+        if (conversation == null) {
+            throw new EntityNotFoundException("error.conversation.notfound");
+        }
+
+        // 3. Validate logged-in user exists
+        User user = userRepository.findById(loggedInUserId);
+        if (user == null) {
+            throw new EntityNotFoundException("error.user.notfound");
+        }
+
+        // 4. Check participant status
+        boolean isParticipant = conversation.getParticipants().stream()
+                .anyMatch(cp -> cp.getUser().getId().equals(loggedInUserId));
+
+        if (!isParticipant) {
+            throw DomainException.forbidden("error.message.notparticipant");
+        }
+
+        // 5. Fetch search entities
         List<Message> entities = messageRepository.search(conversationId, query, before, limit);
 
+        // 6. Apply recipient deletion filter and map to DTOs
         List<MessageDTO> dtos = entities.stream()
+                .filter(m -> {
+                    if (m.getDeletedForRecipientAt() != null &&
+                            !m.getSender().getId().equals(loggedInUserId)) {
+                        return false;
+                    }
+                    return true;
+                })
                 .map(MessageMapper::toDTO)
                 .toList();
 
+        // 7. Check if more messages exist
         boolean hasMore;
-
         if (entities.isEmpty()) {
             hasMore = false;
         } else {
@@ -218,11 +249,11 @@ public class MessageService {
             hasMore = countOlder > 0;
         }
 
-        MessageSearchDTO dto = new MessageSearchDTO();
-        dto.messages = dtos;
-        dto.hasMore = hasMore;
+        MessagePageDTO page = new MessagePageDTO();
+        page.messages = dtos;
+        page.hasMore = hasMore;
 
-        return dto;
+        return page;
     }
 
 }
