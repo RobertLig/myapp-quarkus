@@ -22,10 +22,12 @@ public class PhotoService {
     // -----------------------
 
     public List<Photo> findAll() {
+
         return photoRepository.listAll();
     }
 
     public Optional<Photo> findById(Long id) {
+
         return photoRepository.findByIdOptional(id);
     }
 
@@ -46,6 +48,7 @@ public class PhotoService {
 
     @Transactional
     public boolean delete(Long id) {
+
         return photoRepository.deleteById(id);
     }
 

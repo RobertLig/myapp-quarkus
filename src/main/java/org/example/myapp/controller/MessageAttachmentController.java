@@ -1,6 +1,7 @@
 package org.example.myapp.controller;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -16,12 +17,9 @@ public class MessageAttachmentController {
     AttachmentService attachmentService;
 
     @POST
-    @Path("/{messageId}/attachments")
-    public Response addAttachment(
-            @PathParam("messageId") Long messageId,
-            AttachmentRequest req) {
-
-        attachmentService.addAttachment(messageId, req);
+    @Path("/attachments")
+    public Response addAttachment(@Valid AttachmentRequest req) {
+        attachmentService.addAttachment(req.messageId, req);
         return Response.ok().build();
     }
 }

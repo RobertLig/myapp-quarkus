@@ -2,8 +2,9 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.AttachmentRequest;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.*;
 import org.example.myapp.repository.*;
 import org.example.myapp.ws.ChatBroadcaster;
@@ -28,16 +29,19 @@ public class AttachmentService {
     @Inject
     ChatBroadcaster broadcaster;
 
+    @Inject
+    ImageLimitService imageLimitService;
+
     public void addAttachment(Long messageId, AttachmentRequest req) {
 
         Message message = messageRepository.findById(messageId);
         if (message == null) {
-            throw new WebApplicationException("Message not found", 404);
+            throw new EntityNotFoundException("error.message.notfound");
         }
 
         User user = userRepository.findById(req.userId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Validate user is a participant
@@ -45,7 +49,12 @@ public class AttachmentService {
                 .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("error.message.notparticipant", 403);
+            throw DomainException.forbidden("error.message.notparticipant");
+        }
+
+        // Limit Check
+        if (!imageLimitService.canAddMessageAttachment(message)) {
+            throw DomainException.tooManyRequests("error.attachment.limit");
         }
 
         // Create attachment
