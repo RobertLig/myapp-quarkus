@@ -3,6 +3,7 @@ package org.example.myapp.controller;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -80,5 +81,15 @@ public class MessageController {
         );
 
         return Response.ok(dto).build();
+    }
+
+    @DELETE
+    @Path("/{messageId}")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response deleteMessage(@jakarta.ws.rs.PathParam("messageId") Long messageId) {
+        Long currentUserId = getLoggedInUserId();
+
+        messageService.deleteMessage(messageId, currentUserId);
+        return Response.ok().build();
     }
 }

@@ -14,6 +14,7 @@ import org.example.myapp.repository.MessageRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.ws.ChatBroadcaster;
+import org.example.myapp.ws.DeletedEventPayloadBuilder;
 import org.example.myapp.ws.DeliveredReceiptPayloadBuilder;
 import org.example.myapp.ws.MessagePayloadBuilder;
 
@@ -254,6 +255,59 @@ public class MessageService {
         page.hasMore = hasMore;
 
         return page;
+    }
+
+    @Transactional
+    public void deleteMessage(Long messageId, Long userId) {
+        // Load message
+        Message message = messageRepository.findById(messageId);
+        if (message == null) {
+            throw new EntityNotFoundException("error.message.notfound");
+        }
+
+        // Load user
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new EntityNotFoundException("error.user.notfound");
+        }
+
+        // Load conversation
+        Conversation conversation = conversationRepository.findById(message.getConversation().getId());
+        if (conversation == null) {
+            throw new EntityNotFoundException("error.conversation.notfound");
+        }
+
+        // Check if user is a participant in the conversation
+        boolean isParticipant = conversation.getParticipants().stream()
+                .anyMatch(cp -> cp.getUser().getId().equals(userId));
+
+        if (!isParticipant) {
+            throw DomainException.forbidden("error.message.notparticipant");
+        }
+
+        Long senderId = message.getSender().getId();
+        Long conversationId = message.getConversation().getId();
+
+        // Sender deletes → global delete
+        if (senderId.equals(userId)) {
+            message.setDeletedAt(new Date());
+        } else {
+            // Recipient deletes → hide only for themselves
+            message.setDeletedForRecipientAt(new Date());
+        }
+
+        // Create delete event
+        MessageEvent event = new MessageEvent();
+        event.setType(EventType.DELETED);
+        event.setUser(message.getSender());
+        event.setMessage(message);
+        event.setCreatedAt(new Date());
+
+        eventRepository.persist(event);
+
+        // Broadcast delete event
+        String json = DeletedEventPayloadBuilder.build(event);
+        broadcaster.broadcast(conversationId, json);
     }
 
 }
