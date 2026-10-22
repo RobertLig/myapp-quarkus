@@ -119,4 +119,54 @@ public class ConversationControllerTest {
                 .then()
                 .statusCode(403);
     }
+
+    @Test
+    @TestSecurity(user = "1", roles = {"USER"})
+    public void testRestoreConversation_Success() {
+        given()
+                .contentType(ContentType.JSON)
+                .pathParam("conversationId", testConversationId)
+                .when()
+                .post("/conversations/{conversationId}/restore")
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @TestSecurity(user = "1", roles = {"ADMIN"})
+    public void testRestoreConversation_AdminCanRestore() {
+        given()
+                .contentType(ContentType.JSON)
+                .pathParam("conversationId", testConversationId)
+                .when()
+                .post("/conversations/{conversationId}/restore")
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @TestSecurity(user = "1", roles = {"USER"})
+    public void testRestoreConversation_ConversationNotFound() {
+        Long nonExistentConversationId = 99999L;
+
+        given()
+                .contentType(ContentType.JSON)
+                .pathParam("conversationId", nonExistentConversationId)
+                .when()
+                .post("/conversations/{conversationId}/restore")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "999", roles = {"USER"})
+    public void testRestoreConversation_UserNotParticipant() {
+        given()
+                .contentType(ContentType.JSON)
+                .pathParam("conversationId", testConversationId)
+                .when()
+                .post("/conversations/{conversationId}/restore")
+                .then()
+                .statusCode(403);
+    }
 }

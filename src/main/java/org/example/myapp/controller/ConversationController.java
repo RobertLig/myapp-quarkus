@@ -102,4 +102,15 @@ public class ConversationController {
 
         return Response.ok().build();
     }
+
+    @POST
+    @Path("/{conversationId}/restore")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response restoreConversation(@PathParam("conversationId") Long conversationId) {
+        Long currentUserId = getLoggedInUserId();
+
+        conversationService.restoreConversationForUser(conversationId, currentUserId);
+
+        return Response.ok().build();
+    }
 }
