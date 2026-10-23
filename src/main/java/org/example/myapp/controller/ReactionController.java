@@ -1,6 +1,9 @@
 package org.example.myapp.controller;
 
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -15,13 +18,20 @@ public class ReactionController {
     @Inject
     ReactionService reactionService;
 
-    @POST
-    @Path("/{messageId}/reactions")
-    public Response react(
-            @PathParam("messageId") Long messageId,
-            ReactionRequest req) {
+    @Inject
+    SecurityIdentity identity;
 
-        reactionService.react(messageId, req);
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
+    }
+
+    @POST
+    @Path("/reactions")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response react(@Valid ReactionRequest req) {
+
+        Long currentUserId = getLoggedInUserId();
+        reactionService.react(req.messageId, req, currentUserId);
         return Response.ok().build();
     }
 }

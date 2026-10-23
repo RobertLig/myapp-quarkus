@@ -2,8 +2,10 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
+import jakarta.transaction.Transactional;
 import org.example.myapp.dto.ReactionRequest;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.*;
 import org.example.myapp.repository.MessageEventRepository;
 import org.example.myapp.repository.MessageReactionRepository;
@@ -32,31 +34,32 @@ public class ReactionService {
     @Inject
     ChatBroadcaster broadcaster;
 
-    public void react(Long messageId, ReactionRequest req) {
+    @Transactional
+    public void react(Long messageId, ReactionRequest req, Long userId) {
 
         Message message = messageRepository.findById(messageId);
         if (message == null) {
-            throw new WebApplicationException("error.message.notfound", 404);
+            throw new EntityNotFoundException("error.message.notfound");
         }
 
-        User user = userRepository.findById(req.userId);
+        User user = userRepository.findById(userId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         Long conversationId = message.getConversation().getId();
 
         // Check if user is participant
         boolean isParticipant = message.getConversation().getParticipants().stream()
-                .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
+                .anyMatch(cp -> cp.getUser().getId().equals(userId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("error.message.notparticipant", 403);
+            throw DomainException.forbidden("error.message.notparticipant");
         }
 
         // Find existing reaction
         MessageReaction existing = reactionRepository.find(
-                "message.id = ?1 AND user.id = ?2", messageId, req.userId
+                "message.id = ?1 AND user.id = ?2", messageId, userId
         ).firstResult();
 
         // Remove reaction
