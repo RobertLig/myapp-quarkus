@@ -2,8 +2,11 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.MessageEventRequest;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.*;
 import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.MessageEventRepository;
@@ -33,26 +36,27 @@ public class MessageEventService {
     @Inject
     ChatBroadcaster broadcaster;
 
-    public MessageEvent createEvent(MessageEventRequest req) {
+    @Transactional
+    public MessageEvent createEvent(MessageEventRequest req, Long currentUserId) {
 
         // Validate conversation
         Conversation conversation = conversationRepository.findById(req.conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("error.conversation.notfound", 404);
+            throw new EntityNotFoundException("error.conversation.notfound");
         }
 
         // Validate user
-        User user = userRepository.findById(req.userId);
+        User user = userRepository.findById(currentUserId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound ", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Check participant membership
         boolean isParticipant = conversation.getParticipants().stream()
-                .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
+                .anyMatch(cp -> cp.getUser().getId().equals(currentUserId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("error.message.notparticipant", 403);
+            throw DomainException.forbidden("error.message.notparticipant");
         }
 
         Message message = null;
@@ -63,11 +67,11 @@ public class MessageEventService {
             message = messageRepository.findById(req.messageId);
 
             if (message == null) {
-                throw new WebApplicationException("error.message.notfound", 404);
+                throw new EntityNotFoundException("error.message.notfound");
             }
 
             if (!message.getConversation().getId().equals(req.conversationId)) {
-                throw new WebApplicationException("error.message.notinconversation", 400);
+                throw DomainException.badRequest("error.message.notinconversation");
             }
         }
 
@@ -86,9 +90,9 @@ public class MessageEventService {
             payload = ReadReceiptPayloadBuilder.build(event);
 
             ConversationParticipant cp = conversation.getParticipants().stream()
-                    .filter(p -> p.getUser().getId().equals(req.userId))
+                    .filter(p -> p.getUser().getId().equals(currentUserId))
                     .findFirst()
-                    .orElseThrow(() -> new WebApplicationException("error.participant.notfound", 404));
+                    .orElseThrow(() -> new EntityNotFoundException("error.participant.notfound"));
 
             cp.setLastReadMessageId(req.messageId);
             cp.setUnreadCount(0);

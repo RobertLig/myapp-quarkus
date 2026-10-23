@@ -1,6 +1,7 @@
 package org.example.myapp.controller;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -13,6 +14,9 @@ import org.example.myapp.mapper.MessageEventMapper;
 import org.example.myapp.model.MessageEvent;
 import org.example.myapp.service.MessageEventService;
 
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
+
 @Path("/events")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -21,10 +25,18 @@ public class MessageEventController {
     @Inject
     MessageEventService eventService;
 
-    @POST
-    public Response createEvent(MessageEventRequest req) {
+    @Inject
+    SecurityIdentity identity;
 
-        MessageEvent event = eventService.createEvent(req);
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
+    }
+
+    @POST
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response createEvent(@Valid MessageEventRequest req) {
+        Long currentUserId = getLoggedInUserId();
+        MessageEvent event = eventService.createEvent(req, currentUserId);
 
         MessageEventResponse dto = MessageEventMapper.toDTO(event);
 
