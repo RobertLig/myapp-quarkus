@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.example.myapp.dto.AttachmentRequest;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
@@ -32,21 +33,22 @@ public class AttachmentService {
     @Inject
     ImageLimitService imageLimitService;
 
-    public void addAttachment(Long messageId, AttachmentRequest req) {
+    @Transactional
+    public void addAttachment(Long messageId, AttachmentRequest req, Long currentUserId) {
 
         Message message = messageRepository.findById(messageId);
         if (message == null) {
             throw new EntityNotFoundException("error.message.notfound");
         }
 
-        User user = userRepository.findById(req.userId);
+        User user = userRepository.findById(currentUserId);
         if (user == null) {
             throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Validate user is a participant
         boolean isParticipant = message.getConversation().getParticipants().stream()
-                .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
+                .anyMatch(cp -> cp.getUser().getId().equals(currentUserId));
 
         if (!isParticipant) {
             throw DomainException.forbidden("error.message.notparticipant");

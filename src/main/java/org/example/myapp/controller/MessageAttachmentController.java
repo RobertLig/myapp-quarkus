@@ -1,5 +1,7 @@
 package org.example.myapp.controller;
 
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -16,10 +18,19 @@ public class MessageAttachmentController {
     @Inject
     AttachmentService attachmentService;
 
+    @Inject
+    SecurityIdentity identity;
+
+    private Long getLoggedInUserId() {
+        return Long.valueOf(identity.getPrincipal().getName());
+    }
+
     @POST
     @Path("/attachments")
+    @RolesAllowed({"USER", "ADMIN"})
     public Response addAttachment(@Valid AttachmentRequest req) {
-        attachmentService.addAttachment(req.messageId, req);
+        Long currentUserId = getLoggedInUserId();
+        attachmentService.addAttachment(req.messageId, req, currentUserId);
         return Response.ok().build();
     }
 }

@@ -9,9 +9,6 @@ public class AttachmentRequest {
     @NotNull(message = "messageId.required")
     public Long messageId;
 
-    @NotNull(message = "userId.required")
-    public Long userId;
-
     @NotBlank(message = "url.required")
     @Pattern(regexp = "^https?://.*", message = "url.invalid")
     public String url;
