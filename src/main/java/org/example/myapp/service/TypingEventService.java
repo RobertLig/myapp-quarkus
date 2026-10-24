@@ -4,6 +4,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import org.example.myapp.dto.TypingEventRequest;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.Conversation;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.ConversationRepository;
@@ -22,26 +24,26 @@ public class TypingEventService {
     @Inject
     ChatBroadcaster broadcaster;
 
-    public void handleTypingEvent(TypingEventRequest req) {
+    public void handleTypingEvent(TypingEventRequest req, Long currentUserId) {
 
         // Validate conversation
         Conversation conversation = conversationRepository.findById(req.conversationId);
         if (conversation == null) {
-            throw new WebApplicationException("error.conversation.notfound", 404);
+            throw new EntityNotFoundException("error.conversation.notfound");
         }
 
         // Validate user
-        User user = userRepository.findById(req.userId);
+        User user = userRepository.findById(currentUserId);
         if (user == null) {
-            throw new WebApplicationException("error.user.notfound", 404);
+            throw new EntityNotFoundException("error.user.notfound");
         }
 
         // Check participant membership
         boolean isParticipant = conversation.getParticipants().stream()
-                .anyMatch(cp -> cp.getUser().getId().equals(req.userId));
+                .anyMatch(cp -> cp.getUser().getId().equals(currentUserId));
 
         if (!isParticipant) {
-            throw new WebApplicationException("error.message.notparticipant", 403);
+            throw DomainException.forbidden("error.message.notparticipant");
         }
 
         // Build JSON payload
@@ -55,7 +57,7 @@ public class TypingEventService {
         """.formatted(
                 req.type,
                 req.conversationId,
-                req.userId,
+                currentUserId,
                 System.currentTimeMillis()
         );
 
