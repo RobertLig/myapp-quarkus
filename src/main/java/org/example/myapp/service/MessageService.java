@@ -48,6 +48,15 @@ public class MessageService {
     @Inject
     RateLimitService rateLimitService;
 
+    @Inject
+    ImageStoreService imageStoreService;
+
+    @Inject
+    org.example.myapp.repository.MessageAttachmentRepository messageAttachmentRepository;
+
+    @Inject
+    org.example.myapp.repository.MessageReactionRepository messageReactionRepository;
+
     @Transactional
     public MessageDTO sendMessage(Long conversationId, Long senderId, String content) {
 
@@ -295,6 +304,21 @@ public class MessageService {
 
         // Sender deletes → global delete
         if (senderId.equals(userId)) {
+            // Clean up attachments (S3 files and DB records)
+            List<org.example.myapp.model.MessageAttachment> attachments = messageAttachmentRepository.findByMessageId(messageId);
+            List<String> attachmentUrls = attachments.stream()
+                    .map(org.example.myapp.model.MessageAttachment::getUrl)
+                    .toList();
+
+            // Delete S3 files
+            imageStoreService.deleteAll(attachmentUrls);
+
+            // Delete attachment DB records
+            messageAttachmentRepository.deleteByMessageId(messageId);
+
+            // Delete reaction DB records
+            messageReactionRepository.deleteByMessageId(messageId);
+
             message.setDeletedAt(new Date());
         } else {
             // Recipient deletes → hide only for themselves

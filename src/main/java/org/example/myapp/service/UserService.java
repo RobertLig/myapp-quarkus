@@ -53,6 +53,9 @@ public class UserService {
     @Inject
     RateLimitService rateLimitService;
 
+    @Inject
+    org.example.myapp.repository.UserBlockRepository userBlockRepository;
+
     private static final Logger log = Logger.getLogger(UserService.class);
 
     @Transactional
@@ -225,6 +228,9 @@ public class UserService {
     public void deleteUser(Long userId) {
         User user = userRepository.findByIdOptional(userId)
                 .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
+
+        // Clean up UserBlock records where this user is either blocker or blocked
+        userBlockRepository.deleteByBlockerOrBlocked(userId);
 
         // Fetch user's announcements to gather S3 photo URLs before cascading DB deletion
         List<Announcement> announcements = announcementRepository.list("user.id", userId);
