@@ -4,7 +4,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.example.myapp.dto.PresignResponseDTO;
+import org.example.myapp.exception.DomainException;
+import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.exception.FieldValidationException;
+import org.example.myapp.model.Message;
+import org.example.myapp.repository.MessageRepository;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -29,6 +33,12 @@ public class AttachmentPresignService {
 
     @Inject
     S3Client s3;
+
+    @Inject
+    MessageRepository messageRepository;
+
+    @Inject
+    ImageLimitService imageLimitService;
 
     private S3Presigner presigner;
 
@@ -66,7 +76,7 @@ public class AttachmentPresignService {
 
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L; // 10MB
 
-    public PresignResponseDTO presign(String contentType, Long fileSize, Long currentUserId) {
+    public PresignResponseDTO presign(String contentType, Long fileSize, Long messageId, Long currentUserId) {
         // Validate content type
         if (contentType == null || contentType.isBlank()) {
             throw new FieldValidationException("contentType", "contentType.required");
@@ -83,6 +93,17 @@ public class AttachmentPresignService {
 
         if (fileSize > MAX_FILE_SIZE_BYTES) {
             throw new FieldValidationException("fileSize", "fileSize.toobig");
+        }
+
+        // Validate message exists
+        Message message = messageRepository.findById(messageId);
+        if (message == null) {
+            throw new EntityNotFoundException("error.message.notfound");
+        }
+
+        // Limit Check
+        if (!imageLimitService.canAddMessageAttachment(message)) {
+            throw DomainException.tooManyRequests("error.attachment.limit");
         }
 
         String key = "attachments/" + UUID.randomUUID();

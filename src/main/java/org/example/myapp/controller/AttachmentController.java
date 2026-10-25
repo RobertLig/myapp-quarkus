@@ -33,6 +33,9 @@ public class AttachmentController {
         @jakarta.validation.constraints.Min(value = 1)
         @jakarta.validation.constraints.Max(value = 10485760) // 10MB max
         public Long fileSize; // file size in bytes
+
+        @jakarta.validation.constraints.NotNull
+        public Long messageId;
     }
 
     @POST
@@ -40,7 +43,7 @@ public class AttachmentController {
     @RolesAllowed({"USER", "ADMIN"})
     public Response presign(PresignRequestDTO req) {
         Long currentUserId = getLoggedInUserId();
-        PresignResponseDTO dto = presignService.presign(req.contentType, req.fileSize, currentUserId);
+        PresignResponseDTO dto = presignService.presign(req.contentType, req.fileSize, req.messageId, currentUserId);
         return Response.ok(dto).build();
     }
 }
