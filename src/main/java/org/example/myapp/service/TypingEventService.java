@@ -12,8 +12,14 @@ import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.ws.ChatBroadcaster;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 @ApplicationScoped
 public class TypingEventService {
+
+    private static final long DEBOUNCE_MS = 2000; // 2 seconds
+    private final Map<String, Long> lastBroadcastTimes = new ConcurrentHashMap<>();
 
     @Inject
     ConversationRepository conversationRepository;
@@ -46,6 +52,18 @@ public class TypingEventService {
             throw DomainException.forbidden("error.message.notparticipant");
         }
 
+        // Debounce: only broadcast if 2 seconds have passed since last broadcast for this user+conversation
+        String key = currentUserId + ":" + req.conversationId;
+        long now = System.currentTimeMillis();
+        Long lastBroadcast = lastBroadcastTimes.get(key);
+
+        if (lastBroadcast != null && (now - lastBroadcast) < DEBOUNCE_MS) {
+            return; // Skip this event, too soon since last broadcast
+        }
+
+        // Update last broadcast time
+        lastBroadcastTimes.put(key, now);
+
         // Build JSON payload
         String json = """
         {
@@ -63,5 +81,10 @@ public class TypingEventService {
 
         // Broadcast to all participants
         broadcaster.broadcast(req.conversationId, json);
+    }
+
+    // Package-private method for testing - clears debounce state
+    void clearDebounceState() {
+        lastBroadcastTimes.clear();
     }
 }

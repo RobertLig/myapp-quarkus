@@ -14,6 +14,8 @@ import org.example.myapp.repository.ConversationRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.repository.AnnouncementRepository;
+import org.example.myapp.ws.ChatBroadcaster;
+import org.example.myapp.ws.UnreadCountPayloadBuilder;
 import org.hibernate.Hibernate;
 
 import java.util.ArrayList;
@@ -45,6 +47,9 @@ public class ConversationService {
 
     @Inject
     MessageService messageService;
+
+    @Inject
+    ChatBroadcaster broadcaster;
 
     @Transactional
     public Conversation createConversation(List<Long> participantIds, Long announcementId, Long currentUserId) {
@@ -154,6 +159,10 @@ public class ConversationService {
 
         // Reset unread counter
         cp.setUnreadCount(0);
+
+        // Broadcast unread count update to user
+        String json = UnreadCountPayloadBuilder.build(cp);
+        broadcaster.broadcastToUser(userId, json);
     }
 
     @Transactional
@@ -182,6 +191,10 @@ public class ConversationService {
 
         // Reset unread counter (recommended)
         cp.setUnreadCount(0);
+
+        // Broadcast unread count update to user
+        String json = UnreadCountPayloadBuilder.build(cp);
+        broadcaster.broadcastToUser(userId, json);
     }
 
     @Transactional(Transactional.TxType.SUPPORTS)

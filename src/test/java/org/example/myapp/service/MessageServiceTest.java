@@ -25,6 +25,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
@@ -167,5 +169,29 @@ public class MessageServiceTest {
         assertEquals("hello world", result.messages.get(0).content);
         assertEquals("hello from user1", result.messages.get(1).content);
         assertTrue(result.hasMore);
+    }
+
+    @Test
+    void testSendMessage_broadcastsMessageAndDeliveredReceipt() {
+        when(conversationRepository.findById(10L)).thenReturn(conversation);
+        when(userRepository.findById(1L)).thenReturn(user1);
+        when(rateLimitService.allowMessage(1L)).thenReturn(true);
+
+        messageService.sendMessage(10L, 1L, "Hello");
+
+        // Verify broadcast was called twice (message + delivered receipt)
+        verify(broadcaster, times(2)).broadcast(eq(10L), anyString());
+    }
+
+    @Test
+    void testSendMessage_broadcastsUnreadCountToRecipients() {
+        when(conversationRepository.findById(10L)).thenReturn(conversation);
+        when(userRepository.findById(1L)).thenReturn(user1);
+        when(rateLimitService.allowMessage(1L)).thenReturn(true);
+
+        messageService.sendMessage(10L, 1L, "Hello");
+
+        // Verify broadcastToUser was called for recipient (user2, not sender user1)
+        verify(broadcaster).broadcastToUser(eq(2L), anyString());
     }
 }

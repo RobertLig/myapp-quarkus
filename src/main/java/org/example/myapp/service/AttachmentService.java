@@ -9,6 +9,7 @@ import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.*;
 import org.example.myapp.repository.*;
 import org.example.myapp.ws.ChatBroadcaster;
+import org.example.myapp.ws.UnreadCountPayloadBuilder;
 
 import java.util.Date;
 
@@ -69,6 +70,19 @@ public class AttachmentService {
         attachment.setCreatedAt(new Date());
 
         attachmentRepository.persist(attachment);
+
+        // Increment unread count for recipients (excluding sender)
+        for (ConversationParticipant cp : message.getConversation().getParticipants()) {
+            Long participantId = cp.getUser().getId();
+
+            if (!participantId.equals(currentUserId)) {
+                cp.setUnreadCount(cp.getUnreadCount() + 1);
+
+                // Broadcast unread count update to recipient
+                String unreadCountJson = UnreadCountPayloadBuilder.build(cp);
+                broadcaster.broadcastToUser(participantId, unreadCountJson);
+            }
+        }
 
         broadcastAttachment(message, user, attachment);
     }
