@@ -17,6 +17,7 @@ import org.example.myapp.ws.ChatBroadcaster;
 import org.example.myapp.ws.DeletedEventPayloadBuilder;
 import org.example.myapp.ws.DeliveredReceiptPayloadBuilder;
 import org.example.myapp.ws.MessagePayloadBuilder;
+import org.example.myapp.ws.UnreadCountPayloadBuilder;
 
 import java.util.Date;
 import java.util.List;
@@ -110,6 +111,10 @@ public class MessageService {
 
             if (!participantId.equals(senderId)) {
                 cp.setUnreadCount(cp.getUnreadCount() + 1);
+
+                // Broadcast unread count update to recipient
+                String unreadCountJson = UnreadCountPayloadBuilder.build(cp);
+                broadcaster.broadcastToUser(participantId, unreadCountJson);
             }
         }
 

@@ -51,4 +51,16 @@ public class ChatBroadcaster {
             }
         }
     }
+
+    public void broadcastToUser(Long userId, String jsonPayload) {
+        for (Session session : registry.getSessionsByUserId(userId)) {
+            if (session.isOpen()) {
+                try {
+                    session.getBasicRemote().sendText(jsonPayload);
+                } catch (IOException ignored) {
+                    // optional logging
+                }
+            }
+        }
+    }
 }

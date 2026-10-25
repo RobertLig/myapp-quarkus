@@ -80,7 +80,7 @@ public class ChatWebSocket {
         session.getUserProperties().put("conversationId", conversationId);
         session.getUserProperties().put("userId", userId);
 
-        registry.addSession(conversationId, session);
+        registry.addSession(conversationId, userId, session);
         System.out.println("-> SUCCESS: Client session registered! Total sessions for conv " + conversationId + " = " + registry.getSessions(conversationId).size());
 
         // Presence
@@ -103,7 +103,7 @@ public class ChatWebSocket {
         Long userId = (Long) session.getUserProperties().get("userId");
 
         if (conversationId != null && userId != null) {
-            registry.removeSession(conversationId, session);
+            registry.removeSession(conversationId, userId, session);
 
             presenceService.setOffline(userId);
             broadcaster.broadcastPresence(userId, false);
