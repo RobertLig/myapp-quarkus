@@ -43,6 +43,9 @@ public class AnnouncementService {
     @Inject
     ImageStoreService imageStoreService;
 
+    @Inject
+    org.example.myapp.repository.ConversationRepository conversationRepository;
+
     // -----------------------
     // CRUD
     // -----------------------
@@ -174,6 +177,9 @@ public class AnnouncementService {
 
         // Ownership validation
         checkOwnership(currentUserId, announcement);
+
+        // Nullify announcement reference in conversations
+        conversationRepository.nullifyAnnouncement(id);
 
         // Extract S3 image URLs before deleting the entity
         List<String> photoUrls = announcement.getPhotos().stream()

@@ -2,6 +2,7 @@ package org.example.myapp.repository;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 import org.example.myapp.model.Conversation;
 
 import java.util.List;
@@ -19,5 +20,10 @@ public class ConversationRepository implements PanacheRepository<Conversation> {
             GROUP BY c.id
             HAVING COUNT(p) = ?2
         """, userIds, userIds.size()).firstResultOptional();
+    }
+
+    @Transactional
+    public void nullifyAnnouncement(Long announcementId) {
+        update("SET announcement = NULL WHERE announcement.id = ?1", announcementId);
     }
 }
