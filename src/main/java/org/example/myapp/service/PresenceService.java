@@ -7,20 +7,21 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 public class PresenceService {
 
-    private final Map<Long, Boolean> online = new ConcurrentHashMap<>();
+    private final Map<Long, Integer> sessionCounts = new ConcurrentHashMap<>();
 
-    public void setOnline(Long userId) {
-
-        online.put(userId, true);
+    public void addSession(Long userId) {
+        sessionCounts.merge(userId, 1, Integer::sum);
     }
 
-    public void setOffline(Long userId) {
-
-        online.put(userId, false);
+    public void removeSession(Long userId) {
+        sessionCounts.merge(userId, -1, Integer::sum);
     }
 
     public boolean isOnline(Long userId) {
+        return sessionCounts.getOrDefault(userId, 0) > 0;
+    }
 
-        return online.getOrDefault(userId, false);
+    public int getSessionCount(Long userId) {
+        return sessionCounts.getOrDefault(userId, 0);
     }
 }
