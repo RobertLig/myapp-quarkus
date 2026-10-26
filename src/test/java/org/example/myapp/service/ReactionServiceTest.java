@@ -92,7 +92,7 @@ public class ReactionServiceTest {
 
         when(messageRepository.findById(100L)).thenReturn(message);
         when(userRepository.findById(1L)).thenReturn(user1);
-        when(reactionRepository.find(anyString())).thenReturn(query);
+        when(reactionRepository.find(anyString(), any(Object[].class))).thenReturn(query);
 
         reactionService.react(100L, req, 1L);
 
@@ -113,7 +113,7 @@ public class ReactionServiceTest {
 
         when(messageRepository.findById(100L)).thenReturn(message);
         when(userRepository.findById(1L)).thenReturn(user1);
-        when(reactionRepository.find(anyString())).thenReturn(query);
+        when(reactionRepository.find(anyString(), any(Object[].class))).thenReturn(query);
 
         reactionService.react(100L, req, 1L);
 

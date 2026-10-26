@@ -23,7 +23,7 @@ class ImageUploadPresignServiceTest {
         System.setProperty("aws.secretAccessKey", "test-secret-key");
 
         try {
-            PresignResponseDTO response = service.presign("image/png", 512000L);
+            PresignResponseDTO response = service.presign("image/png", 5L * 1024L * 1024L);
             assertTrue(response.uploadUrl.startsWith("http"));
             assertTrue(response.fileUrl.matches(".*/images/[0-9a-f-]{36}"));
         } finally {
@@ -39,7 +39,8 @@ class ImageUploadPresignServiceTest {
 
     @Test
     void presignRejectsImageOverLimit() {
-        assertThrows(FieldValidationException.class, () -> service.presign("image/jpeg", 512001L));
+        assertThrows(FieldValidationException.class,
+                () -> service.presign("image/jpeg", 5L * 1024L * 1024L + 1));
     }
 
     private void restoreSystemProperty(String key, String value) {

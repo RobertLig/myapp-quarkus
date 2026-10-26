@@ -31,7 +31,7 @@ public class AttachmentController {
 
         @jakarta.validation.constraints.NotNull
         @jakarta.validation.constraints.Min(value = 1)
-        @jakarta.validation.constraints.Max(value = 10485760) // 10MB max
+        @jakarta.validation.constraints.Max(value = 5_242_880) // 5MB max
         public Long fileSize; // file size in bytes
 
         @jakarta.validation.constraints.NotNull

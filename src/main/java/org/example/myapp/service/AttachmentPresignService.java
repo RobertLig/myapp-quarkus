@@ -74,7 +74,7 @@ public class AttachmentPresignService {
             "application/x-7z-compressed"
     );
 
-    private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L; // 10MB
+    private static final long MAX_FILE_SIZE_BYTES = 5L * 1024L * 1024L; // 5MB
 
     public PresignResponseDTO presign(String contentType, Long fileSize, Long messageId, Long currentUserId) {
         // Validate content type

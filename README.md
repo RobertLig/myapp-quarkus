@@ -37,6 +37,15 @@ production. The previously committed key must be considered compromised: rotate
 any deployed keypair that matches it and invalidate tokens signed with the old
 key.
 
+Production also requires a configured PostgreSQL connection
+(`QUARKUS_DATASOURCE_JDBC_URL`, `QUARKUS_DATASOURCE_USERNAME`, and
+`QUARKUS_DATASOURCE_PASSWORD`), `CORS_ORIGINS` set to the deployed frontend
+origin(s), and an `AWS_S3_BUCKET`. Set `SMTP_HOST`, `SMTP_PORT`,
+`QUARKUS_MAILER_USERNAME`, `QUARKUS_MAILER_PASSWORD`, and `MAIL_FROM` to
+configure a real SMTP service and verified sender. Required production values
+are intentionally not defaulted to local or example services. The mailer is
+mocked only in dev and test profiles.
+
 ## Packaging and running the application
 
 The application can be packaged using:

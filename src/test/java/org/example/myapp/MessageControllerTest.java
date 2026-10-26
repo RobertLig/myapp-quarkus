@@ -96,6 +96,7 @@ public class MessageControllerTest {
             supportConv.setCreatedAt(new Date());
             conversationRepository.persistAndFlush(supportConv);
         }
+        supportConv.setType(ConversationType.USER_TO_ADMIN);
 
         // Add admin as participant to support conversation
         boolean adminInSupportConv = supportConv.getParticipants().stream()

@@ -17,6 +17,6 @@ public class ImageUploadCompleteRequestDTO {
 
     @NotNull
     @Min(value = 1)
-    @Max(value = 512000)
+    @Max(value = 5_242_880)
     public Long fileSize;
 }
