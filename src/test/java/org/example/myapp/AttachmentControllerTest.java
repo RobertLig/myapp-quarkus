@@ -27,10 +27,10 @@ public class AttachmentControllerTest {
         mockResponse.uploadUrl = "https://bucket.s3.eu-central-1.amazonaws.com/attachments/uuid?X-Amz-Signature=signature";
         mockResponse.fileUrl = "https://bucket.s3.eu-central-1.amazonaws.com/attachments/uuid";
 
-        Mockito.when(presignService.presign(eq("image/png"), eq(1024000L), eq(100L)))
+        Mockito.when(presignService.presign(eq("image/png"), eq(1024000L), eq(100L), eq(100L)))
                 .thenReturn(mockResponse);
 
-        String requestBody = "{ \"contentType\": \"image/png\", \"fileSize\": 1024000 }";
+        String requestBody = "{ \"contentType\": \"image/png\", \"fileSize\": 1024000, \"messageId\": 100 }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -46,10 +46,10 @@ public class AttachmentControllerTest {
     @Test
     @TestSecurity(user = "100", roles = {"USER"})
     public void testPresign_InvalidContentType() {
-        Mockito.when(presignService.presign(eq("application/exe"), eq(1024000L), eq(100L)))
+        Mockito.when(presignService.presign(eq("application/exe"), eq(1024000L), eq(100L), eq(100L)))
                 .thenThrow(new FieldValidationException("contentType", "contentType.invalid"));
 
-        String requestBody = "{ \"contentType\": \"application/exe\", \"fileSize\": 1024000 }";
+        String requestBody = "{ \"contentType\": \"application/exe\", \"fileSize\": 1024000, \"messageId\": 100 }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -65,10 +65,10 @@ public class AttachmentControllerTest {
     @Test
     @TestSecurity(user = "100", roles = {"USER"})
     public void testPresign_FileSizeTooBig() {
-        Mockito.when(presignService.presign(eq("image/png"), eq(15L * 1024L * 1024L), eq(100L)))
+        Mockito.when(presignService.presign(eq("image/png"), eq(15L * 1024L * 1024L), eq(100L), eq(100L)))
                 .thenThrow(new FieldValidationException("fileSize", "fileSize.toobig"));
 
-        String requestBody = "{ \"contentType\": \"image/png\", \"fileSize\": 15728640 }";
+        String requestBody = "{ \"contentType\": \"image/png\", \"fileSize\": 15728640, \"messageId\": 100 }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -88,10 +88,10 @@ public class AttachmentControllerTest {
         mockResponse.uploadUrl = "https://bucket.s3.eu-central-1.amazonaws.com/attachments/uuid?X-Amz-Signature=signature";
         mockResponse.fileUrl = "https://bucket.s3.eu-central-1.amazonaws.com/attachments/uuid";
 
-        Mockito.when(presignService.presign(eq("application/pdf"), eq(2048000L), eq(100L)))
+        Mockito.when(presignService.presign(eq("application/pdf"), eq(2048000L), eq(100L), eq(100L)))
                 .thenReturn(mockResponse);
 
-        String requestBody = "{ \"contentType\": \"application/pdf\", \"fileSize\": 2048000 }";
+        String requestBody = "{ \"contentType\": \"application/pdf\", \"fileSize\": 2048000, \"messageId\": 100 }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -106,7 +106,7 @@ public class AttachmentControllerTest {
 
     @Test
     public void testPresign_Unauthorized() {
-        String requestBody = "{ \"contentType\": \"image/png\", \"fileSize\": 1024000 }";
+        String requestBody = "{ \"contentType\": \"image/png\", \"fileSize\": 1024000, \"messageId\": 100 }";
 
         given()
                 .contentType(ContentType.JSON)

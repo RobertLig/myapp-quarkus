@@ -10,9 +10,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.i18n.MessageService;
-import org.jboss.resteasy.reactive.multipart.FileUpload;
-import org.jboss.resteasy.reactive.RestForm;
 
+import org.example.myapp.dto.ImagePresignRequestDTO;
+import org.example.myapp.dto.ImageUploadCompleteRequestDTO;
 import org.example.myapp.dto.UserDTO;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
@@ -77,12 +77,19 @@ public class UserController {
     }
 
     @POST
-    @Path("/me/avatar")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Path("/me/avatar/presign")
     @RolesAllowed({"USER", "ADMIN"})
-    public Response uploadAvatar(@RestForm("file") FileUpload fileUpload) {
+    public Response presignAvatar(@Valid ImagePresignRequestDTO request) {
         Long userId = getLoggedInUserId();
-        String url = avatarService.uploadAvatar(userId, fileUpload);
+        return Response.ok(avatarService.presignAvatar(userId, request.contentType, request.fileSize)).build();
+    }
+
+    @POST
+    @Path("/me/avatar")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response completeAvatarUpload(@Valid ImageUploadCompleteRequestDTO request) {
+        Long userId = getLoggedInUserId();
+        String url = avatarService.completeAvatarUpload(userId, request);
         return Response.ok(Map.of("avatarUrl", url)).build();
     }
 
@@ -97,4 +104,3 @@ public class UserController {
         )).build();
     }
 }
-

@@ -4,14 +4,14 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.core.Context;
 import org.example.myapp.dto.AnnouncementDTO;
+import org.example.myapp.dto.ImagePresignRequestDTO;
+import org.example.myapp.dto.ImageUploadCompleteRequestDTO;
 import org.example.myapp.dto.PaginationResponse;
 import org.example.myapp.dto.PhotoDTO;
 import org.example.myapp.dto.AnnouncementSearchDTO;
 import org.example.myapp.service.AnnouncementService;
 import org.example.myapp.service.AnnouncementPhotoService;
 import org.example.myapp.i18n.MessageService;
-import org.jboss.resteasy.reactive.RestForm;
-import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -155,13 +155,22 @@ public class AnnouncementController {
     // ------------------------------------------------------------
 
     @POST
-    @Path("/{id}/photos")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Path("/{id}/photos/presign")
     @RolesAllowed({"USER", "ADMIN"})
-    public Response uploadPhoto(@PathParam("id") Long announcementId,
-                                @RestForm("file") FileUpload fileUpload) {
+    public Response presignPhoto(@PathParam("id") Long announcementId,
+                                 @Valid ImagePresignRequestDTO request) {
         Long currentUserId = getLoggedInUserId();
-        PhotoDTO photoDTO = announcementPhotoService.uploadPhoto(announcementId, currentUserId, fileUpload);
+        return Response.ok(announcementPhotoService.presignPhoto(
+                announcementId, currentUserId, request.contentType, request.fileSize)).build();
+    }
+
+    @POST
+    @Path("/{id}/photos")
+    @RolesAllowed({"USER", "ADMIN"})
+    public Response completePhotoUpload(@PathParam("id") Long announcementId,
+                                        @Valid ImageUploadCompleteRequestDTO request) {
+        Long currentUserId = getLoggedInUserId();
+        PhotoDTO photoDTO = announcementPhotoService.completePhotoUpload(announcementId, currentUserId, request);
         return Response.status(Response.Status.CREATED).entity(photoDTO).build();
     }
 

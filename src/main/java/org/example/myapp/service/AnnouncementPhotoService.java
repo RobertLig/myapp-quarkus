@@ -4,17 +4,16 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.example.myapp.exception.EntityNotFoundException; //check it
 import jakarta.transaction.Transactional;
+import org.example.myapp.dto.ImageUploadCompleteRequestDTO;
 import org.example.myapp.dto.PhotoDTO;
+import org.example.myapp.dto.PresignResponseDTO;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.FieldValidationException;
 import org.example.myapp.model.Announcement;
 import org.example.myapp.model.Photo;
 import org.example.myapp.repository.AnnouncementRepository;
 import org.example.myapp.repository.PhotoRepository;
-import org.jboss.resteasy.reactive.multipart.FileUpload;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -38,9 +37,33 @@ public class AnnouncementPhotoService {
     @Inject
     ImageLimitService imageLimitService;
 
-    @Transactional
-    public PhotoDTO uploadPhoto(Long announcementId, Long currentUserId, FileUpload fileUpload) {
+    @Inject
+    ImageUploadPresignService imageUploadPresignService;
 
+    @Transactional
+    public PresignResponseDTO presignPhoto(Long announcementId, Long currentUserId,
+                                           String contentType, Long fileSize) {
+        Announcement announcement = findAuthorizedAnnouncement(announcementId, currentUserId);
+        checkPhotoUploadLimits(announcement, currentUserId);
+        return imageUploadPresignService.presign(contentType, fileSize);
+    }
+
+    @Transactional
+    public PhotoDTO completePhotoUpload(Long announcementId, Long currentUserId,
+                                        ImageUploadCompleteRequestDTO request) {
+        Announcement announcement = findAuthorizedAnnouncement(announcementId, currentUserId);
+        checkPhotoUploadLimits(announcement, currentUserId);
+        imageUploadPresignService.verifyUploadedImage(request.fileUrl, request.contentType, request.fileSize);
+
+        int nextPosition = announcement.getPhotos().size();
+        Photo photo = new Photo(request.fileUrl, nextPosition);
+        photo.setAnnouncement(announcement);
+        announcement.getPhotos().add(photo);
+        photoRepository.persist(photo);
+        return toDTO(photo);
+    }
+
+    private void checkPhotoUploadLimits(Announcement announcement, Long currentUserId) {
         // Limit: Max 3 photo uploads per user per hour
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         long recentPhotosCount = photoRepository.count(
@@ -51,50 +74,19 @@ public class AnnouncementPhotoService {
             throw DomainException.tooManyRequests("error.rate.limit");
         }
 
-        if (fileUpload == null || fileUpload.uploadedFile() == null) {
-            throw new FieldValidationException("photo", "photo.empty"); //photos? (photo?)
-        }
-
-        // 1. CHECK FILE SIZE FIRST (Prevents memory spikes before reading bytes)
-        long maxSizeBytes = 500L * 1024L; // match your ImageStoreService limit (500 KB)
-        if (fileUpload.size() > maxSizeBytes) {
-            throw new FieldValidationException("photo", "photo.toobig");
-        }
-
-        Announcement announcement = announcementRepository.findByIdOptional(announcementId)
-                .orElseThrow(() -> new EntityNotFoundException("error.announcement.notfound"));
-
-        // Authorization Check
-        if (!announcement.getUser().getId().equals(currentUserId)) {
-            throw DomainException.forbidden("error.unauthorized.access");
-        }
-
         // Limit Check
         if (!imageLimitService.canAddAnnouncementPhoto(announcement)) {
             throw new FieldValidationException("photo", "photo.limit"); //photos? (photo?)
         }
+    }
 
-        // Read Bytes
-        byte[] fileBytes;
-        try {
-            fileBytes = Files.readAllBytes(fileUpload.uploadedFile());
-        } catch (IOException e) {
-            throw new RuntimeException("error.internal", e);
+    private Announcement findAuthorizedAnnouncement(Long announcementId, Long currentUserId) {
+        Announcement announcement = announcementRepository.findByIdOptional(announcementId)
+                .orElseThrow(() -> new EntityNotFoundException("error.announcement.notfound"));
+        if (!announcement.getUser().getId().equals(currentUserId)) {
+            throw DomainException.forbidden("error.unauthorized.access");
         }
-
-        // Upload to S3
-        String url = imageStoreService.upload(fileBytes);
-
-        // Next position calculation
-        int nextPosition = announcement.getPhotos().size();
-
-        Photo photo = new Photo(url, nextPosition);
-        photo.setAnnouncement(announcement);
-        announcement.getPhotos().add(photo);
-
-        photoRepository.persist(photo);
-
-        return toDTO(photo);
+        return announcement;
     }
 
     @Transactional
