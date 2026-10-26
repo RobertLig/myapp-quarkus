@@ -6,6 +6,22 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 
 ## Running the application in dev mode
 
+Generate a local JWT signing key outside the repository before starting the
+application or running tests:
+
+```shell
+mkdir -p ~/.myapp
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+  -out ~/.myapp/jwt-dev-private.pem
+openssl pkey -in ~/.myapp/jwt-dev-private.pem -pubout \
+  -out ~/.myapp/jwt-dev-public.pem
+chmod 600 ~/.myapp/jwt-dev-private.pem
+```
+
+Development and test profiles use these files by default. You can override the
+locations with `JWT_SIGNING_KEY_LOCATION` and
+`JWT_VERIFY_PUBLIC_KEY_LOCATION`.
+
 You can run your application in dev mode that enables live coding using:
 
 ```shell script
@@ -13,6 +29,13 @@ You can run your application in dev mode that enables live coding using:
 ```
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+
+For production, provide `JWT_SIGNING_KEY_LOCATION` as the path to a
+deployment-managed private-key secret and `JWT_VERIFY_PUBLIC_KEY_LOCATION` as
+the path to its matching public key. Do not use the local development key in
+production. The previously committed key must be considered compromised: rotate
+any deployed keypair that matches it and invalidate tokens signed with the old
+key.
 
 ## Packaging and running the application
 

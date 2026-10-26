@@ -76,7 +76,7 @@ public class AnnouncementPhotoService {
 
         // Limit Check
         if (!imageLimitService.canAddAnnouncementPhoto(announcement)) {
-            throw new FieldValidationException("photo", "photo.limit"); //photos? (photo?)
+            throw new FieldValidationException("photo", "photo.limit");
         }
     }
 

@@ -27,7 +27,7 @@ import java.util.UUID;
 @ApplicationScoped
 public class ImageUploadPresignService {
 
-    private static final long MAX_FILE_SIZE_BYTES = 500L * 1024L;
+    private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/jpg", "image/png");
 
     @ConfigProperty(name = "bucket.name")

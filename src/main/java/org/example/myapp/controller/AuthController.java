@@ -6,7 +6,16 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
+import jakarta.annotation.PostConstruct;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.example.myapp.dto.*;
 import org.example.myapp.mapper.UserMapper;
@@ -26,6 +35,25 @@ public class AuthController {
 
     @Context
     io.vertx.core.http.HttpServerRequest request;
+
+    @ConfigProperty(name = "rate-limit.trusted-proxies")
+    Optional<String> trustedProxyConfig;
+
+    private Set<InetAddress> trustedProxyAddresses = Set.of();
+
+    @PostConstruct
+    void configureTrustedProxies() {
+        if (trustedProxyConfig.isEmpty() || trustedProxyConfig.get().isBlank()) {
+            return;
+        }
+
+        trustedProxyAddresses = Arrays.stream(trustedProxyConfig.get().split(","))
+                .map(String::trim)
+                .map(address -> parseIpAddress(address)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Invalid IP address in rate-limit.trusted-proxies: " + address)))
+                .collect(Collectors.toUnmodifiableSet());
+    }
 
     @GET
     @Path("/verify")
@@ -144,10 +172,42 @@ public class AuthController {
     }
 
     private String getClientIp() {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
+        String remoteIp = request.remoteAddress().host();
+        if (!isTrustedProxy(remoteIp)) {
+            return remoteIp;
         }
-        return request.remoteAddress().host();
+
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff == null || xff.isBlank()) {
+            return remoteIp;
+        }
+
+        String[] forwardedAddresses = xff.split(",");
+        for (int i = forwardedAddresses.length - 1; i >= 0; i--) {
+            String address = forwardedAddresses[i].trim();
+            InetAddress parsedAddress = parseIpAddress(address).orElse(null);
+            if (parsedAddress == null) {
+                return remoteIp;
+            }
+            if (!trustedProxyAddresses.contains(parsedAddress)) {
+                return parsedAddress.getHostAddress();
+            }
+        }
+        return remoteIp;
+    }
+
+    private boolean isTrustedProxy(String address) {
+        return parseIpAddress(address).filter(trustedProxyAddresses::contains).isPresent();
+    }
+
+    private Optional<InetAddress> parseIpAddress(String address) {
+        if (address.isBlank() || !address.matches("[0-9a-fA-F:.]+")) {
+            return java.util.Optional.empty();
+        }
+        try {
+            return java.util.Optional.of(InetAddress.getByName(address));
+        } catch (UnknownHostException e) {
+            return java.util.Optional.empty();
+        }
     }
 }
