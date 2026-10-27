@@ -3,6 +3,7 @@ package org.example.myapp.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
 import org.example.myapp.dto.RegistrationDTO;
@@ -52,6 +53,9 @@ public class UserService {
 
     @Inject
     RateLimitService rateLimitService;
+
+    @ConfigProperty(name = "frontend.base-url")
+    String frontendBaseUrl;
 
     @Inject
     org.example.myapp.repository.UserBlockRepository userBlockRepository;
@@ -140,7 +144,7 @@ public class UserService {
                 "email.verify.intro",
                 "email.verify.button",
                 "email.verify.fallback",
-                "https://yourdomain.com/auth/verify?token=" + token
+                frontendLink("/auth/verify", token)
         );
 
         return user;
@@ -278,6 +282,10 @@ public class UserService {
     }
 
     private boolean verifyPassword(String password, String storedHash, String salt) {
+        if (password == null || storedHash == null || salt == null) {
+            return false;
+        }
+
         String hash = hashPassword(password, salt);
         return storedHash.equals(hash);
     }
@@ -299,7 +307,7 @@ public class UserService {
     }
 
     @Transactional
-    public void requestPasswordReset(String email, String trap, String clientIp) {
+    public void requestPasswordReset(String email, String trap, String clientIp, Locale preferredLocale) {
 
         // 1. Honeypot (if you add a trap field to reset form)
         if (trap != null && !trap.isBlank()) {
@@ -340,13 +348,17 @@ public class UserService {
             return; // silent success
         }
 
+        if (user.getLocale() == null) {
+            user.setLocale(preferredLocale != null ? preferredLocale : Locale.en);
+        }
+
         // 6. Real reset email
         rateLimitService.decaySuspicion(clientIp);
 
         String token = tokenService.generateToken();
         user.setResetPasswordToken(token);
 
-        String link = "https://yourdomain.com/auth/reset?token=" + token;
+        String link = frontendLink("/auth/reset", token);
 
         emailService.sendActionEmail(
                 user.getEmail(),
@@ -357,6 +369,10 @@ public class UserService {
                 "email.reset.fallback",
                 link
         );
+    }
+
+    private String frontendLink(String path, String token) {
+        return frontendBaseUrl.replaceAll("/+$", "") + path + "?token=" + token;
     }
 
     @Transactional
@@ -381,7 +397,7 @@ public class UserService {
     }
 
     @Transactional
-    public User loginWithGoogle(String idToken) {
+    public User loginWithGoogle(String idToken, Locale preferredLocale) {
 
         GooglePayload payload = googleService.verify(idToken);
 
@@ -411,6 +427,10 @@ public class UserService {
             if (user.getGoogleId() == null) {
                 user.setGoogleId(googleId);
             }
+        }
+
+        if (user.getLocale() == null) {
+            user.setLocale(preferredLocale != null ? preferredLocale : Locale.en);
         }
 
         return user;

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.example.myapp.dto.*;
 import org.example.myapp.i18n.MessageService;
 import org.example.myapp.mapper.UserMapper;
+import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
 import org.example.myapp.service.UserService;
 import org.example.myapp.service.AuthService;
@@ -69,7 +70,7 @@ public class AuthController {
     public Response requestReset(@Valid PasswordResetRequestDTO dto, @Context HttpHeaders headers) {
 
         String ip = getClientIp();
-        userService.requestPasswordReset(dto.getEmail(), dto.getTrap(), ip);
+        userService.requestPasswordReset(dto.getEmail(), dto.getTrap(), ip, resolveUserLocale(headers));
 
         return Response.ok(Map.of("message", messageService.get("success.reset.email.sent", headers) )).build();
     }
@@ -87,9 +88,18 @@ public class AuthController {
     @POST
     @Path("/google")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response googleLogin(@Valid GoogleLoginDTO dto) {
-        User user = userService.loginWithGoogle(dto.getIdToken());
+    public Response googleLogin(@Valid GoogleLoginDTO dto, @Context HttpHeaders headers) {
+        User user = userService.loginWithGoogle(dto.getIdToken(), resolveUserLocale(headers));
         return buildAuthResponse(user);
+    }
+
+    private Locale resolveUserLocale(HttpHeaders headers) {
+        var languages = headers == null ? null : headers.getAcceptableLanguages();
+        if (languages != null && !languages.isEmpty()
+                && "pl".equalsIgnoreCase(languages.get(0).getLanguage())) {
+            return Locale.pl;
+        }
+        return Locale.en;
     }
 
     @POST
