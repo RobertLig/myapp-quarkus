@@ -9,7 +9,6 @@ import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.exception.FieldValidationException;
 import org.example.myapp.model.Message;
 import org.example.myapp.repository.MessageRepository;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -28,9 +27,6 @@ public class AttachmentPresignService {
     @ConfigProperty(name = "s3.public-url")
     String s3BaseUrl;
 
-    @ConfigProperty(name = "quarkus.s3.aws.region")
-    String region;
-
     @Inject
     S3Client s3;
 
@@ -40,14 +36,8 @@ public class AttachmentPresignService {
     @Inject
     ImageLimitService imageLimitService;
 
-    private S3Presigner presigner;
-
-    @jakarta.annotation.PostConstruct
-    public void init() {
-        this.presigner = S3Presigner.builder()
-                .region(Region.of(region))
-                .build();
-    }
+    @Inject
+    S3Presigner presigner;
 
     // Allowed MIME types for message attachments
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(

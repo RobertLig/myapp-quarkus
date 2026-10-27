@@ -22,6 +22,9 @@ Development and test profiles use these files by default. You can override the
 locations with `JWT_SIGNING_KEY_LOCATION` and
 `JWT_VERIFY_PUBLIC_KEY_LOCATION`.
 
+The dev profile also configures the local S3 Dev Services bucket to accept
+browser uploads from `http://localhost:3000` and `http://127.0.0.1:3000`.
+
 You can run your application in dev mode that enables live coding using:
 
 ```shell script

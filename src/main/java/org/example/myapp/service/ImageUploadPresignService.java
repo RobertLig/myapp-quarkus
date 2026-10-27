@@ -1,13 +1,11 @@
 package org.example.myapp.service;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.example.myapp.dto.PresignResponseDTO;
 import org.example.myapp.exception.FieldValidationException;
 import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -36,20 +34,11 @@ public class ImageUploadPresignService {
     @ConfigProperty(name = "s3.public-url")
     String s3BaseUrl;
 
-    @ConfigProperty(name = "quarkus.s3.aws.region")
-    String region;
-
     @Inject
     S3Client s3;
 
-    private S3Presigner presigner;
-
-    @PostConstruct
-    void init() {
-        presigner = S3Presigner.builder()
-                .region(Region.of(region))
-                .build();
-    }
+    @Inject
+    S3Presigner presigner;
 
     public PresignResponseDTO presign(String contentType, Long fileSize) {
         String validatedContentType = validateImage(contentType, fileSize);
