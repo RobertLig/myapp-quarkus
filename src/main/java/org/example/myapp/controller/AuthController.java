@@ -2,10 +2,8 @@ package org.example.myapp.controller;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.*;
 import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Response;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -18,11 +16,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.example.myapp.dto.*;
+import org.example.myapp.i18n.MessageService;
 import org.example.myapp.mapper.UserMapper;
 import org.example.myapp.model.User;
 import org.example.myapp.service.UserService;
 import org.example.myapp.service.AuthService;
-import jakarta.ws.rs.core.NewCookie;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -32,6 +30,9 @@ public class AuthController {
     UserService userService;
 
     @Inject AuthService authService;
+
+    @Inject
+    MessageService messageService;
 
     @Context
     io.vertx.core.http.HttpServerRequest request;
@@ -57,30 +58,30 @@ public class AuthController {
 
     @GET
     @Path("/verify")
-    public Response verifyEmail(@QueryParam("token") String token) {
+    public Response verifyEmail(@QueryParam("token") String token, @Context HttpHeaders headers) {
         userService.verifyEmail(token);
-        return Response.ok(Map.of("message", "success.email.verified")).build();
+        return Response.ok(Map.of("message", messageService.get("success.email.verified", headers) )).build();
     }
 
     @POST
     @Path("/reset/request")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response requestReset(@Valid PasswordResetRequestDTO dto) {
+    public Response requestReset(@Valid PasswordResetRequestDTO dto, @Context HttpHeaders headers) {
 
         String ip = getClientIp();
         userService.requestPasswordReset(dto.getEmail(), dto.getTrap(), ip);
 
-        return Response.ok(Map.of("message", "success.reset.email.sent")).build();
+        return Response.ok(Map.of("message", messageService.get("success.reset.email.sent", headers) )).build();
     }
 
     @POST
     @Path("/reset/confirm")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response confirmReset(@Valid PasswordResetConfirmDTO dto) {
+    public Response confirmReset(@Valid PasswordResetConfirmDTO dto, @Context HttpHeaders headers) {
 
         userService.resetPassword(dto.getToken(), dto.getPassword());
 
-        return Response.ok(Map.of("message", "success.reset.completed")).build();
+        return Response.ok(Map.of("message", messageService.get("success.reset.completed", headers) )).build();
     }
 
     @POST
@@ -123,14 +124,14 @@ public class AuthController {
     @POST
     @Path("/register")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response register(@Valid RegistrationDTO dto) {
+    public Response register(@Valid RegistrationDTO dto, @Context HttpHeaders headers) {
         String ip = getClientIp();
 
         User user = userService.register(dto, ip);
 
         if (user.getId() == -1L) {
             // honeypot triggered → pretend success
-            return Response.ok(Map.of("message", "success.registration")).build();
+            return Response.ok(Map.of("message", messageService.get("success.registration", headers))).build();
         }else {
             return Response.ok(UserMapper.toDTO(user)).build();
         }
@@ -138,11 +139,11 @@ public class AuthController {
 
     @POST
     @Path("/refresh")
-    public Response refresh(@CookieParam("refreshToken") String refreshToken) {
+    public Response refresh(@CookieParam("refreshToken") String refreshToken, @Context HttpHeaders headers) {
 
         if (refreshToken == null || refreshToken.isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "Refresh token cookie is missing"))
+                    .entity(Map.of("error", messageService.get("missing.refresh.token.cookie", headers) )) //"Refresh token cookie is missing"
                     .build();
         }
 
@@ -155,7 +156,7 @@ public class AuthController {
 
     @POST
     @Path("/logout")
-    public Response logout() {
+    public Response logout(@Context HttpHeaders headers) {
 
         NewCookie clearedCookie = new NewCookie.Builder("refreshToken")
                 .value("")
@@ -167,7 +168,7 @@ public class AuthController {
                 .build();
 
         return Response.ok(
-                Map.of("message", "success.logout")
+                Map.of("message", messageService.get("success.logout", headers) )
         ).cookie(clearedCookie).build();
     }
 
