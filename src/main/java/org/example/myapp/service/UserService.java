@@ -243,6 +243,9 @@ public class UserService {
                 .flatMap(a -> a.getPhotos().stream())
                 .map(Photo::getUrl)
                 .collect(Collectors.toList());
+        if (user.getPhotoUrl() != null) {
+            photoUrls.add(user.getPhotoUrl());
+        }
 
         // Deleting the user automatically cascades to Announcements and Photos in DB
         userRepository.delete(user);
