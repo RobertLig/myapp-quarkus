@@ -18,6 +18,9 @@ public class UserDTO {
     private Gender gender;
     private String phone;
     private String photoUrl;
+    private boolean ageRangeProvided;
+    private boolean genderProvided;
+    private boolean phoneProvided;
 
     // Locale is set automatically by frontend (navigator.language)
     private Locale locale;
@@ -48,6 +51,18 @@ public class UserDTO {
         return phone;
     }
 
+    public boolean isAgeRangeProvided() {
+        return ageRangeProvided;
+    }
+
+    public boolean isGenderProvided() {
+        return genderProvided;
+    }
+
+    public boolean isPhoneProvided() {
+        return phoneProvided;
+    }
+
     public String getPhotoUrl() {
         return photoUrl;
     }
@@ -68,14 +83,17 @@ public class UserDTO {
 
     public void setAgeRange(AgeRange ageRange) {
         this.ageRange = ageRange;
+        this.ageRangeProvided = true;
     }
 
     public void setGender(Gender gender) {
         this.gender = gender;
+        this.genderProvided = true;
     }
 
     public void setPhone(String phone) {
         this.phone = phone;
+        this.phoneProvided = true;
     }
 
     public void setPhotoUrl(String photoUrl) {

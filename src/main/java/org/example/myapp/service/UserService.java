@@ -220,9 +220,9 @@ public class UserService {
 
         user.setLocale(locale);
 
-        if (dto.getAgeRange() != null) user.setAgeRange(dto.getAgeRange());
-        if (dto.getGender() != null) user.setGender(dto.getGender());
-        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.isAgeRangeProvided()) user.setAgeRange(dto.getAgeRange());
+        if (dto.isGenderProvided()) user.setGender(dto.getGender());
+        if (dto.isPhoneProvided()) user.setPhone(dto.getPhone());
         if (dto.getPhotoUrl() != null) user.setPhotoUrl(dto.getPhotoUrl());
 
         return user;
