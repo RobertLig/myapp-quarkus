@@ -240,6 +240,7 @@ public class AnnouncementService {
 
     @Transactional
     public PaginationResponse<AnnouncementDTO> search(AnnouncementSearchDTO filters, int page, int size, String targetLang) {
+        filters.language = "pl".equalsIgnoreCase(targetLang) ? "pl" : "en";
         List<Announcement> results = announcementRepository.search(filters, page, size);
         long total = announcementRepository.countSearch(filters);
 
