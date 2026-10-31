@@ -146,28 +146,11 @@ public class AnnouncementService {
                 defaultLang
         );
 
-        // Mutate existing collection safely (Works for both CREATE and UPDATE)
-        if (announcement.getTranslations() == null) {
-            announcement.setTranslations(new ArrayList<>(newTranslations));
-        } else {
-            announcement.getTranslations().clear();
-            if (newTranslations != null) {
-                announcement.getTranslations().addAll(newTranslations);
-            }
-        }
+        announcementTranslationService.synchronizeTranslations(announcement, newTranslations);
 
         // --- STOPS ---
         var newStops = stopService.generateStops(dto.stops, announcement);
-
-        // Mutate existing collection safely (Works for both CREATE and UPDATE)
-        if (announcement.getStops() == null) {
-            announcement.setStops(new ArrayList<>(newStops));
-        } else {
-            announcement.getStops().clear();
-            if (newStops != null) {
-                announcement.getStops().addAll(newStops);
-            }
-        }
+        stopService.synchronizeStops(announcement, newStops);
     }
 
     @Transactional

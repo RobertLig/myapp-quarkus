@@ -64,7 +64,7 @@ public class Stop {
 
     public int getPosition() { return position; }
 
-    public void SetPosition(int position) { this.position = position; }
+    public void setPosition(int position) { this.position = position; }
 
     public Announcement getAnnouncement() {
         return announcement;

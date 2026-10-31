@@ -5,6 +5,8 @@ import org.example.myapp.dto.AnnouncementTranslationDTO;
 import org.example.myapp.model.Announcement;
 import org.example.myapp.model.translation.AnnouncementTranslation;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import jakarta.inject.Inject;
 
@@ -82,6 +84,47 @@ public class AnnouncementTranslationService {
             t.setAnnouncement(announcement);
         }
         announcement.setTranslations(translations);
+    }
+
+    public void synchronizeTranslations(Announcement announcement, List<AnnouncementTranslation> translations) {
+        List<AnnouncementTranslation> current = announcement.getTranslations();
+        if (current == null) {
+            current = new ArrayList<>();
+            announcement.setTranslations(current);
+        }
+
+        List<AnnouncementTranslation> pending = new ArrayList<>(translations);
+        for (Iterator<AnnouncementTranslation> iterator = current.iterator(); iterator.hasNext();) {
+            AnnouncementTranslation existing = iterator.next();
+            int matchIndex = -1;
+            for (int index = 0; index < pending.size(); index++) {
+                if (sameLanguage(existing, pending.get(index))) {
+                    matchIndex = index;
+                    break;
+                }
+            }
+
+            if (matchIndex < 0) {
+                iterator.remove();
+                continue;
+            }
+
+            AnnouncementTranslation replacement = pending.remove(matchIndex);
+            existing.setTitle(replacement.getTitle());
+            existing.setDescription(replacement.getDescription());
+            existing.setAnnouncement(announcement);
+        }
+
+        for (AnnouncementTranslation translation : pending) {
+            translation.setAnnouncement(announcement);
+            current.add(translation);
+        }
+    }
+
+    private boolean sameLanguage(AnnouncementTranslation left, AnnouncementTranslation right) {
+        return left.getLanguage() != null
+                && right.getLanguage() != null
+                && left.getLanguage().equalsIgnoreCase(right.getLanguage());
     }
 
     // -----------------------
