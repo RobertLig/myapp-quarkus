@@ -196,6 +196,16 @@ public class AnnouncementRepository implements PanacheRepository<Announcement> {
             params.put("userId", f.userId);
         }
 
+        if (f.ownerAgeRange != null) {
+            jpql.append(" AND a.user.ageRange = :ownerAgeRange");
+            params.put("ownerAgeRange", f.ownerAgeRange);
+        }
+
+        if (f.ownerGender != null) {
+            jpql.append(" AND a.user.gender = :ownerGender");
+            params.put("ownerGender", f.ownerGender);
+        }
+
         // Text search in translations
         if (f.text != null && !f.text.isBlank()) {
 

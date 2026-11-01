@@ -1,5 +1,8 @@
 package org.example.myapp.dto;
 
+import org.example.myapp.model.AgeRange;
+import org.example.myapp.model.Gender;
+
 import java.time.LocalDateTime;
 
 public class AnnouncementSearchDTO {
@@ -44,6 +47,8 @@ public class AnnouncementSearchDTO {
 
     // User filter
     public Long userId; // optional
+    public AgeRange ownerAgeRange;
+    public Gender ownerGender;
 
     // Text search
     public String text;      // search phrase
