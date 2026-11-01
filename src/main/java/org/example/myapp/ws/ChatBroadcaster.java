@@ -5,8 +5,6 @@ import jakarta.inject.Inject;
 import jakarta.websocket.Session;
 import org.jboss.logging.Logger;
 
-import java.io.IOException;
-
 @ApplicationScoped
 public class ChatBroadcaster {
 
@@ -56,8 +54,13 @@ public class ChatBroadcaster {
             }
 
             try {
-                session.getBasicRemote().sendText(jsonPayload);
-            } catch (IOException | IllegalStateException e) {
+                session.getAsyncRemote().sendText(jsonPayload, result -> {
+                    if (!result.isOK()) {
+                        log.warn("Failed to send WebSocket message to session " + session.getId(),
+                                result.getException());
+                    }
+                });
+            } catch (IllegalStateException e) {
                 log.warn("Failed to send WebSocket message to session " + session.getId(), e);
             }
         }
