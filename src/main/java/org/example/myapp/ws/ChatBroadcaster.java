@@ -3,6 +3,7 @@ package org.example.myapp.ws;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.Session;
+import org.example.myapp.repository.UserBlockRepository;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -12,6 +13,9 @@ public class ChatBroadcaster {
 
     @Inject
     ChatSessionRegistry registry;
+
+    @Inject
+    UserBlockRepository userBlockRepository;
 
     public void broadcast(Long conversationId, String jsonPayload) {
 
@@ -23,16 +27,20 @@ public class ChatBroadcaster {
     }
 
     public void broadcastPresence(Long userId, boolean online) {
-
-        String json = """
-    {
-        "event": "PRESENCE",
-        "userId": %d,
-        "online": %b
+        String json = presencePayload(userId, online);
+        for (Session session : registry.getAllSessions()) {
+            Long recipientId = (Long) session.getUserProperties().get("userId");
+            if (recipientId == null || !userBlockRepository.exists(recipientId, userId)) {
+                send(session, json);
+            }
+        }
     }
-    """.formatted(userId, online);
 
-        broadcastToAll(json);
+    public void broadcastPresenceToUser(Long userId, boolean online, Long recipientId) {
+        String json = presencePayload(userId, online);
+        for (Session session : registry.getSessionsByUserId(recipientId)) {
+            send(session, json);
+        }
     }
 
     public void broadcastToAll(String jsonPayload) {
@@ -64,5 +72,15 @@ public class ChatBroadcaster {
                 log.warn("Failed to send WebSocket message to session " + session.getId(), e);
             }
         }
+    }
+
+    private String presencePayload(Long userId, boolean online) {
+        return """
+                {
+                    "event": "PRESENCE",
+                    "userId": %d,
+                    "online": %b
+                }
+                """.formatted(userId, online);
     }
 }

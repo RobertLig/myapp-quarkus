@@ -7,6 +7,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.example.myapp.dto.BlockUserRequest;
 import org.example.myapp.service.BlockUserService;
+import org.example.myapp.service.PresenceService;
+import org.example.myapp.ws.ChatBroadcaster;
 
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
@@ -22,6 +24,12 @@ public class BlockUserController {
     @Inject
     SecurityIdentity identity;
 
+    @Inject
+    PresenceService presenceService;
+
+    @Inject
+    ChatBroadcaster broadcaster;
+
     private Long getLoggedInUserId() {
         return Long.valueOf(identity.getPrincipal().getName());
     }
@@ -32,6 +40,7 @@ public class BlockUserController {
     public Response block(@Valid BlockUserRequest req) {
         Long currentUserId = getLoggedInUserId();
         blockUserService.block(currentUserId, req);
+        broadcaster.broadcastPresenceToUser(req.blockedId, false, currentUserId);
         return Response.ok().build();
     }
 
@@ -41,6 +50,11 @@ public class BlockUserController {
     public Response unblock(@Valid BlockUserRequest req) {
         Long currentUserId = getLoggedInUserId();
         blockUserService.unblock(currentUserId, req);
+        broadcaster.broadcastPresenceToUser(
+                req.blockedId,
+                presenceService.isOnline(req.blockedId),
+                currentUserId
+        );
         return Response.ok().build();
     }
 }

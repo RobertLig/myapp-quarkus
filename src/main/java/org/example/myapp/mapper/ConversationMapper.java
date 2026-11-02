@@ -7,6 +7,7 @@ import org.example.myapp.dto.ConversationListItemDTO;
 import org.example.myapp.model.Conversation;
 import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.model.User;
+import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.service.PresenceService;
 
 @ApplicationScoped
@@ -14,6 +15,9 @@ public class ConversationMapper {
 
     @Inject
     PresenceService presenceService;
+
+    @Inject
+    UserBlockRepository userBlockRepository;
 
     public static ConversationDTO toDTO(Conversation c) {
         ConversationDTO dto = new ConversationDTO();
@@ -48,7 +52,8 @@ public class ConversationMapper {
                 .orElse(null);
 
         if (otherUser != null) {
-            dto.otherUserOnline = presenceService.isOnline(otherUser.getId());
+            dto.otherUserOnline = !userBlockRepository.exists(cp.getUser().getId(), otherUser.getId())
+                    && presenceService.isOnline(otherUser.getId());
         }
 
         return dto;

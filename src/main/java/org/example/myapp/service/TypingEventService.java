@@ -7,8 +7,10 @@ import org.example.myapp.dto.TypingEventRequest;
 import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.model.Conversation;
+import org.example.myapp.model.EventType;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.ConversationRepository;
+import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.ws.ChatBroadcaster;
 
@@ -26,6 +28,9 @@ public class TypingEventService {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    UserBlockRepository userBlockRepository;
 
     @Inject
     ChatBroadcaster broadcaster;
@@ -50,6 +55,15 @@ public class TypingEventService {
 
         if (!isParticipant) {
             throw DomainException.forbidden("error.message.notparticipant");
+        }
+
+        // Do not reveal typing activity to a participant who has blocked the sender.
+        boolean senderIsBlocked = conversation.getParticipants().stream()
+                .map(cp -> cp.getUser().getId())
+                .filter(participantId -> !participantId.equals(currentUserId))
+                .anyMatch(participantId -> userBlockRepository.exists(participantId, currentUserId));
+        if (senderIsBlocked && req.type == EventType.TYPING_START) {
+            return;
         }
 
         // Debounce: only broadcast if 2 seconds have passed since last broadcast for this user+conversation

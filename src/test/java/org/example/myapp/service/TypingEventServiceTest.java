@@ -9,6 +9,7 @@ import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.model.EventType;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.ConversationRepository;
+import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.ws.ChatBroadcaster;
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,6 +37,9 @@ public class TypingEventServiceTest {
 
     @InjectMock
     UserRepository userRepository;
+
+    @InjectMock
+    UserBlockRepository userBlockRepository;
 
     @InjectMock
     ChatBroadcaster broadcaster;
@@ -103,5 +108,35 @@ public class TypingEventServiceTest {
 
         // Verify broadcast was called exactly once (debounce prevented second call)
         verify(broadcaster, times(1)).broadcast(eq(10L), anyString());
+    }
+
+    @Test
+    void testHandleTypingEvent_doesNotBroadcastWhenSenderIsBlocked() {
+        TypingEventRequest req = new TypingEventRequest();
+        req.conversationId = 10L;
+        req.type = EventType.TYPING_START;
+
+        when(conversationRepository.findById(10L)).thenReturn(conversation);
+        when(userRepository.findById(2L)).thenReturn(user2);
+        when(userBlockRepository.exists(1L, 2L)).thenReturn(true);
+
+        typingEventService.handleTypingEvent(req, 2L);
+
+        verify(broadcaster, never()).broadcast(anyLong(), anyString());
+    }
+
+    @Test
+    void testHandleTypingEvent_broadcastsStopWhenSenderIsBlocked() {
+        TypingEventRequest req = new TypingEventRequest();
+        req.conversationId = 10L;
+        req.type = EventType.TYPING_STOP;
+
+        when(conversationRepository.findById(10L)).thenReturn(conversation);
+        when(userRepository.findById(2L)).thenReturn(user2);
+        when(userBlockRepository.exists(1L, 2L)).thenReturn(true);
+
+        typingEventService.handleTypingEvent(req, 2L);
+
+        verify(broadcaster).broadcast(eq(10L), anyString());
     }
 }
