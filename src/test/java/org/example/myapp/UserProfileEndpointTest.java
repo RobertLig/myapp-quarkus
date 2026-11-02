@@ -5,11 +5,14 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import org.example.myapp.dto.UserDTO;
+import org.example.myapp.model.Role;
 import org.example.myapp.model.User;
 import org.example.myapp.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+
+import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -22,6 +25,22 @@ public class UserProfileEndpointTest {
 
     @InjectMock
     UserService userService;
+
+    @Test
+    @TestSecurity(user = "100", roles = {"ADMIN"})
+    public void testProfileIncludesRole() {
+        User user = new User();
+        user.setId(100L);
+        user.setRole(Role.ADMIN);
+        Mockito.when(userService.getUserById(100L)).thenReturn(Optional.of(user));
+
+        given()
+                .when()
+                .get("/users/me")
+                .then()
+                .statusCode(200)
+                .body("role", org.hamcrest.Matchers.equalTo("ADMIN"));
+    }
 
     @Test
     @TestSecurity(user = "100", roles = {"USER"})

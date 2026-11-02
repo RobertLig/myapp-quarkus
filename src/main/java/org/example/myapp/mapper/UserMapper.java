@@ -24,6 +24,7 @@ public class UserMapper {
         dto.setAgeRange(user.getAgeRange());
         dto.setGender(user.getGender());
         dto.setPhone(user.getPhone());
+        dto.setRole(user.getRole());
         return dto;
     }
 }
