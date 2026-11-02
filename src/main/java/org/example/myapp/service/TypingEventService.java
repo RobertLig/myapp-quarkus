@@ -66,17 +66,18 @@ public class TypingEventService {
             return;
         }
 
-        // Debounce: only broadcast if 2 seconds have passed since last broadcast for this user+conversation
+        // Debounce repeated start events, but always deliver stop events so typing can resume.
         String key = currentUserId + ":" + req.conversationId;
         long now = System.currentTimeMillis();
-        Long lastBroadcast = lastBroadcastTimes.get(key);
-
-        if (lastBroadcast != null && (now - lastBroadcast) < DEBOUNCE_MS) {
-            return; // Skip this event, too soon since last broadcast
+        if (req.type == EventType.TYPING_START) {
+            Long lastBroadcast = lastBroadcastTimes.get(key);
+            if (lastBroadcast != null && (now - lastBroadcast) < DEBOUNCE_MS) {
+                return;
+            }
+            lastBroadcastTimes.put(key, now);
+        } else if (req.type == EventType.TYPING_STOP) {
+            lastBroadcastTimes.remove(key);
         }
-
-        // Update last broadcast time
-        lastBroadcastTimes.put(key, now);
 
         // Build JSON payload
         String json = """

@@ -111,6 +111,25 @@ public class TypingEventServiceTest {
     }
 
     @Test
+    void testHandleTypingEvent_allowsTypingToResumeAfterStop() {
+        when(conversationRepository.findById(10L)).thenReturn(conversation);
+        when(userRepository.findById(1L)).thenReturn(user1);
+
+        TypingEventRequest start = new TypingEventRequest();
+        start.conversationId = 10L;
+        start.type = EventType.TYPING_START;
+        TypingEventRequest stop = new TypingEventRequest();
+        stop.conversationId = 10L;
+        stop.type = EventType.TYPING_STOP;
+
+        typingEventService.handleTypingEvent(start, 1L);
+        typingEventService.handleTypingEvent(stop, 1L);
+        typingEventService.handleTypingEvent(start, 1L);
+
+        verify(broadcaster, times(3)).broadcast(eq(10L), anyString());
+    }
+
+    @Test
     void testHandleTypingEvent_doesNotBroadcastWhenSenderIsBlocked() {
         TypingEventRequest req = new TypingEventRequest();
         req.conversationId = 10L;
