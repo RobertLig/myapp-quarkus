@@ -156,8 +156,15 @@ public class MessageServiceTest {
         m3.setContent("hello world");
         m3.setCreatedAt(new Date(3000L));
 
+        Message m4 = new Message();
+        m4.setConversation(conversation);
+        m4.setSender(user2);
+        m4.setContent("hello deleted");
+        m4.setCreatedAt(new Date(4000L));
+        m4.setDeletedAt(new Date(4500L));
+
         when(messageRepository.search(eq(10L), eq("hello"), isNull(), eq(30)))
-                .thenReturn(List.of(m3, m2, m1));
+                .thenReturn(List.of(m4, m3, m2, m1));
 
         when(messageRepository.count(anyString(), any(Object[].class)))
                 .thenReturn(1L);

@@ -18,13 +18,13 @@ public class MessageRepository implements PanacheRepository<Message> {
 
         if (beforeTimestamp == null) {
             // Initial load: newest messages
-            return find("conversation.id = ?1 ORDER BY createdAt DESC", conversationId)
+            return find("conversation.id = ?1 AND deletedAt IS NULL ORDER BY createdAt DESC", conversationId)
                     .page(0, limit)
                     .list();
         }
 
         // Load older messages
-        return find("conversation.id = ?1 AND createdAt < ?2 ORDER BY createdAt DESC",
+        return find("conversation.id = ?1 AND deletedAt IS NULL AND createdAt < ?2 ORDER BY createdAt DESC",
                 conversationId, new Date(beforeTimestamp))
                 .page(0, limit)
                 .list();
@@ -34,14 +34,14 @@ public class MessageRepository implements PanacheRepository<Message> {
 
         if (beforeTimestamp == null) {
             // Initial search: newest matches
-            return find("conversation.id = ?1 AND content ILIKE ?2 ORDER BY createdAt DESC",
+            return find("conversation.id = ?1 AND deletedAt IS NULL AND content ILIKE ?2 ORDER BY createdAt DESC",
                     conversationId, "%" + query + "%")
                     .page(0, limit)
                     .list();
         }
 
         // Search older matches
-        return find("conversation.id = ?1 AND content ILIKE ?2 AND createdAt < ?3 ORDER BY createdAt DESC",
+        return find("conversation.id = ?1 AND deletedAt IS NULL AND content ILIKE ?2 AND createdAt < ?3 ORDER BY createdAt DESC",
                 conversationId, "%" + query + "%", new Date(beforeTimestamp))
                 .page(0, limit)
                 .list();

@@ -177,6 +177,9 @@ public class MessageService {
         // 5. Apply recipient deletion filter and map to DTOs
         List<MessageDTO> dtos = entities.stream()
                 .filter(m -> {
+                    if (m.getDeletedAt() != null) {
+                        return false;
+                    }
                     if (m.getDeletedForRecipientAt() != null &&
                             !m.getSender().getId().equals(loggedInUserId)) {
                         return false;
@@ -194,7 +197,7 @@ public class MessageService {
             Date oldestLoaded = entities.get(entities.size() - 1).getCreatedAt();
 
             long countOlder = messageRepository.count(
-                    "conversation.id = ?1 AND createdAt < ?2",
+                    "conversation.id = ?1 AND deletedAt IS NULL AND createdAt < ?2",
                     conversationId, oldestLoaded
             );
 
@@ -240,6 +243,9 @@ public class MessageService {
         // 6. Apply recipient deletion filter and map to DTOs
         List<MessageDTO> dtos = entities.stream()
                 .filter(m -> {
+                    if (m.getDeletedAt() != null) {
+                        return false;
+                    }
                     if (m.getDeletedForRecipientAt() != null &&
                             !m.getSender().getId().equals(loggedInUserId)) {
                         return false;
@@ -257,7 +263,7 @@ public class MessageService {
             Date oldestLoaded = entities.get(entities.size() - 1).getCreatedAt();
 
             long countOlder = messageRepository.count(
-                    "conversation.id = ?1 AND content ILIKE ?2 AND createdAt < ?3",
+                    "conversation.id = ?1 AND deletedAt IS NULL AND content ILIKE ?2 AND createdAt < ?3",
                     conversationId, "%" + query + "%", oldestLoaded
             );
 
