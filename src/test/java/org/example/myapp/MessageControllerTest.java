@@ -175,6 +175,21 @@ public class MessageControllerTest {
     }
 
     @Test
+    @TestSecurity(user = "1", roles = {"USER"})
+    public void testReplyToSupport_UsesCurrentDatabaseRoleWhenTokenRoleIsStale() {
+        String requestBody = "{ \"conversationId\": 1, \"content\": \"Reply with refreshed database role\" }";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/messages/support/reply")
+                .then()
+                .statusCode(200)
+                .body("content", is("Reply with refreshed database role"));
+    }
+
+    @Test
     @TestSecurity(user = "1", roles = {"ADMIN"})
     public void testReplyToSupport_ValidationFailure() {
         String requestBody = "{ \"content\": \"\" }";

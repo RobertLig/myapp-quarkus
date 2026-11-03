@@ -70,7 +70,7 @@ public class MessageController {
 
     @POST
     @Path("/support/reply")
-    @RolesAllowed({"ADMIN"})
+    @RolesAllowed({"USER", "ADMIN"})
     public Response replyToSupport(@Valid AdminReplyRequest req) {
         Long currentUserId = getLoggedInUserId();
 
