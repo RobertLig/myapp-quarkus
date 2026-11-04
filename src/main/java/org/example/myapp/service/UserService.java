@@ -2,6 +2,7 @@ package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.example.myapp.auth.GooglePayload;
@@ -17,6 +18,12 @@ import org.example.myapp.model.Announcement;
 import org.example.myapp.model.Photo;
 import org.example.myapp.repository.UserRepository;
 import org.example.myapp.repository.AnnouncementRepository;
+import org.example.myapp.repository.ConversationParticipantRepository;
+import org.example.myapp.repository.ConversationRepository;
+import org.example.myapp.repository.MessageAttachmentRepository;
+import org.example.myapp.repository.MessageEventRepository;
+import org.example.myapp.repository.MessageReactionRepository;
+import org.example.myapp.repository.MessageRepository;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -35,6 +42,9 @@ public class UserService {
 
     @Inject
     AnnouncementRepository announcementRepository;
+
+    @Inject
+    EntityManager entityManager;
 
     @Inject
     ImageStoreService imageStoreService;
@@ -59,6 +69,24 @@ public class UserService {
 
     @Inject
     org.example.myapp.repository.UserBlockRepository userBlockRepository;
+
+    @Inject
+    ConversationRepository conversationRepository;
+
+    @Inject
+    ConversationParticipantRepository conversationParticipantRepository;
+
+    @Inject
+    MessageRepository messageRepository;
+
+    @Inject
+    MessageEventRepository messageEventRepository;
+
+    @Inject
+    MessageReactionRepository messageReactionRepository;
+
+    @Inject
+    MessageAttachmentRepository messageAttachmentRepository;
 
     private static final Logger log = Logger.getLogger(UserService.class);
 
@@ -243,11 +271,33 @@ public class UserService {
                 .flatMap(a -> a.getPhotos().stream())
                 .map(Photo::getUrl)
                 .collect(Collectors.toList());
+        List<String> attachmentUrls = messageAttachmentRepository.findByUserId(userId).stream()
+                .map(org.example.myapp.model.MessageAttachment::getUrl)
+                .toList();
+        photoUrls.addAll(attachmentUrls);
         if (user.getPhotoUrl() != null) {
             photoUrls.add(user.getPhotoUrl());
         }
 
-        // Deleting the user automatically cascades to Announcements and Photos in DB
+        // Keep shared conversations and messages, but remove their references to this account.
+        announcements.forEach(announcement -> conversationRepository.nullifyAnnouncement(announcement.getId()));
+        // Bulk updates bypass managed entities; clear stale conversation-to-announcement references.
+        entityManager.flush();
+        entityManager.clear();
+
+        user = userRepository.findByIdOptional(userId)
+                .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
+        announcements = announcementRepository.list("user.id", userId);
+        for (Announcement announcement : announcements) {
+            announcementRepository.delete(announcement);
+        }
+        messageAttachmentRepository.deleteByUserId(userId);
+        messageReactionRepository.deleteByUserId(userId);
+        messageEventRepository.deleteByUserId(userId);
+        conversationParticipantRepository.deleteByUserId(userId);
+        messageRepository.nullifySender(userId);
+
+        // Delete the user after removing all foreign-key references to it.
         userRepository.delete(user);
 
         // Clean up files stored in AWS S3

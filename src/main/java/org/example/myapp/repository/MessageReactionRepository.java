@@ -12,4 +12,9 @@ public class MessageReactionRepository implements PanacheRepository<MessageReact
     public void deleteByMessageId(Long messageId) {
         delete("message.id", messageId);
     }
+
+    @Transactional
+    public void deleteByUserId(Long userId) {
+        delete("user.id", userId);
+    }
 }

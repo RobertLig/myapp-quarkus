@@ -9,7 +9,7 @@ public class MessageMapper {
         MessageDTO dto = new MessageDTO();
         dto.id = message.getId();
         dto.conversationId = message.getConversation().getId();
-        dto.senderId = message.getSender().getId();
+        dto.senderId = message.getSender() != null ? message.getSender().getId() : null;
         dto.content = message.getContent();
         dto.createdAt = message.getCreatedAt();
         dto.deletedAt = message.getDeletedAt();

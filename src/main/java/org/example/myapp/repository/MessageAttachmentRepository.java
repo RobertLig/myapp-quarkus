@@ -14,6 +14,15 @@ public class MessageAttachmentRepository implements PanacheRepository<MessageAtt
         return list("message.id", messageId);
     }
 
+    public List<MessageAttachment> findByUserId(Long userId) {
+        return list("user.id", userId);
+    }
+
+    @Transactional
+    public void deleteByUserId(Long userId) {
+        delete("user.id", userId);
+    }
+
     @Transactional
     public void deleteByMessageId(Long messageId) {
         delete("message.id", messageId);

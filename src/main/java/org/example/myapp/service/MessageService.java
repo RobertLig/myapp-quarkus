@@ -181,7 +181,7 @@ public class MessageService {
                         return false;
                     }
                     if (m.getDeletedForRecipientAt() != null &&
-                            !m.getSender().getId().equals(loggedInUserId)) {
+                            (m.getSender() == null || !m.getSender().getId().equals(loggedInUserId))) {
                         return false;
                     }
                     return true;
@@ -247,7 +247,7 @@ public class MessageService {
                         return false;
                     }
                     if (m.getDeletedForRecipientAt() != null &&
-                            !m.getSender().getId().equals(loggedInUserId)) {
+                            (m.getSender() == null || !m.getSender().getId().equals(loggedInUserId))) {
                         return false;
                     }
                     return true;
@@ -305,11 +305,11 @@ public class MessageService {
             throw DomainException.forbidden("error.message.notparticipant");
         }
 
-        Long senderId = message.getSender().getId();
+        Long senderId = message.getSender() != null ? message.getSender().getId() : null;
         Long conversationId = message.getConversation().getId();
 
         // Sender deletes → global delete
-        if (senderId.equals(userId)) {
+        if (userId.equals(senderId)) {
             // Clean up attachments (S3 files and DB records)
             List<org.example.myapp.model.MessageAttachment> attachments = messageAttachmentRepository.findByMessageId(messageId);
             List<String> attachmentUrls = attachments.stream()
@@ -334,7 +334,7 @@ public class MessageService {
         // Create delete event
         MessageEvent event = new MessageEvent();
         event.setType(EventType.DELETED);
-        event.setUser(message.getSender());
+        event.setUser(user);
         event.setMessage(message);
         event.setCreatedAt(new Date());
 

@@ -7,6 +7,12 @@ import org.example.myapp.model.Announcement;
 import org.example.myapp.model.Photo;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.AnnouncementRepository;
+import org.example.myapp.repository.ConversationParticipantRepository;
+import org.example.myapp.repository.ConversationRepository;
+import org.example.myapp.repository.MessageAttachmentRepository;
+import org.example.myapp.repository.MessageEventRepository;
+import org.example.myapp.repository.MessageReactionRepository;
+import org.example.myapp.repository.MessageRepository;
 import org.example.myapp.repository.UserBlockRepository;
 import org.example.myapp.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -33,6 +39,24 @@ class UserServiceTest {
     UserBlockRepository userBlockRepository;
 
     @InjectMock
+    ConversationRepository conversationRepository;
+
+    @InjectMock
+    ConversationParticipantRepository conversationParticipantRepository;
+
+    @InjectMock
+    MessageRepository messageRepository;
+
+    @InjectMock
+    MessageEventRepository messageEventRepository;
+
+    @InjectMock
+    MessageReactionRepository messageReactionRepository;
+
+    @InjectMock
+    MessageAttachmentRepository messageAttachmentRepository;
+
+    @InjectMock
     ImageStoreService imageStoreService;
 
     @Test
@@ -43,6 +67,7 @@ class UserServiceTest {
         User user = new User();
         user.setPhotoUrl(avatarUrl);
         Announcement announcement = new Announcement("sender", user);
+        announcement.setId(7L);
         announcement.getPhotos().add(new Photo(announcementPhotoUrl, 0));
 
         when(userRepository.findByIdOptional(userId)).thenReturn(Optional.of(user));
@@ -50,6 +75,12 @@ class UserServiceTest {
 
         userService.deleteUser(userId);
 
+        verify(conversationRepository).nullifyAnnouncement(announcement.getId());
+        verify(messageAttachmentRepository).deleteByUserId(userId);
+        verify(messageReactionRepository).deleteByUserId(userId);
+        verify(messageEventRepository).deleteByUserId(userId);
+        verify(conversationParticipantRepository).deleteByUserId(userId);
+        verify(messageRepository).nullifySender(userId);
         verify(userRepository).delete(user);
         verify(imageStoreService).deleteAll(List.of(announcementPhotoUrl, avatarUrl));
     }
