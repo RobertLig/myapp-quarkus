@@ -4,12 +4,15 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.example.myapp.exception.FieldValidationException;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 
 @QuarkusTest
 public class ImageStoreServiceTest {
@@ -58,5 +61,14 @@ public class ImageStoreServiceTest {
         // Valid PNG Magic Bytes: 0x89 0x50 0x4E 0x47
         byte[] pngHeader = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
         assertDoesNotThrow(() -> imageStoreService.validateAndDetectMime(pngHeader));
+    }
+
+    @Test
+    public void testDeleteMessageAttachmentUsesBucketKey() {
+        imageStoreService.delete("https://bucket.s3.eu-central-1.amazonaws.com/attachments/attachment-id");
+
+        ArgumentCaptor<DeleteObjectRequest> requestCaptor = ArgumentCaptor.forClass(DeleteObjectRequest.class);
+        verify(s3Client).deleteObject(requestCaptor.capture());
+        assertEquals("attachments/attachment-id", requestCaptor.getValue().key());
     }
 }

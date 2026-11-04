@@ -104,9 +104,11 @@ public class ImageStoreService {
     }
 
     private String extractKey(String url) {
-        int idx = url.indexOf("/images/");
-        if (idx != -1) {
-            return url.substring(idx + 1);
+        for (String prefix : List.of("/images/", "/attachments/")) {
+            int idx = url.indexOf(prefix);
+            if (idx != -1) {
+                return url.substring(idx + 1);
+            }
         }
         return url;
     }
