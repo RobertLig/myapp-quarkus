@@ -49,6 +49,13 @@ configure a real SMTP service and verified sender. Required production values
 are intentionally not defaulted to local or example services. The mailer is
 mocked only in dev and test profiles.
 
+Production database schema changes are managed with Flyway migrations in
+`src/main/resources/db/migration`. The production profile applies pending
+migrations at startup and validates the Hibernate mappings against the schema.
+Development and test profiles do not run Flyway automatically and retain their
+existing schema setup. Add future database changes as new versioned migration
+files; do not edit a migration that has already been applied to a database.
+
 ## Packaging and running the application
 
 The application can be packaged using:
