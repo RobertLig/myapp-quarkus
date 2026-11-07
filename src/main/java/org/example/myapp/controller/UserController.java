@@ -39,6 +39,9 @@ public class UserController {
     @Inject
     MessageService messageService;
 
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
     private Long getLoggedInUserId() {
         return Long.valueOf(identity.getPrincipal().getName());
     }
@@ -51,7 +54,7 @@ public class UserController {
         User user = userService.getUserById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("error.user.notfound"));
 
-        return Response.ok(UserMapper.toProfileDTO(user)).build();
+        return Response.ok(UserMapper.toProfileDTO(user, privateObjectUrlService::readUrl)).build();
     }
 
     @PUT
@@ -60,7 +63,7 @@ public class UserController {
     public Response updateMe(@Valid UserDTO dto) {
         Long userId = getLoggedInUserId();
         User updated = userService.updateProfile(userId, dto);
-        return Response.ok(UserMapper.toProfileDTO(updated)).build();
+        return Response.ok(UserMapper.toProfileDTO(updated, privateObjectUrlService::readUrl)).build();
     }
 
     @DELETE

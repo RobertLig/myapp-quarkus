@@ -34,6 +34,9 @@ public class AttachmentService {
     @Inject
     ImageLimitService imageLimitService;
 
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
     @Transactional
     public void addAttachment(Long messageId, AttachmentRequest req, Long currentUserId) {
 
@@ -114,7 +117,7 @@ public class AttachmentService {
                 message.getConversation().getId(),
                 message.getId(),
                 user.getId(),
-                attachment.getUrl(),
+                privateObjectUrlService.readUrl(attachment.getUrl()),
                 attachment.getType(),
                 attachment.getSize(),
                 new Date().getTime()

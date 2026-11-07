@@ -52,6 +52,9 @@ public class MessageService {
     ImageStoreService imageStoreService;
 
     @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
+    @Inject
     org.example.myapp.repository.MessageAttachmentRepository messageAttachmentRepository;
 
     @Inject
@@ -128,7 +131,7 @@ public class MessageService {
         }
 
         // Convert to DTO
-        MessageDTO dto = MessageMapper.toDTO(message);
+        MessageDTO dto = MessageMapper.toDTO(message, privateObjectUrlService::readUrl);
 
         // Broadcast the message itself
         String messageJson = MessagePayloadBuilder.build(dto);
@@ -186,7 +189,7 @@ public class MessageService {
                     }
                     return true;
                 })
-                .map(MessageMapper::toDTO)
+                .map(message -> MessageMapper.toDTO(message, privateObjectUrlService::readUrl))
                 .toList();
 
         // 6. Check if more messages exist
@@ -252,7 +255,7 @@ public class MessageService {
                     }
                     return true;
                 })
-                .map(MessageMapper::toDTO)
+                .map(message -> MessageMapper.toDTO(message, privateObjectUrlService::readUrl))
                 .toList();
 
         // 7. Check if more messages exist

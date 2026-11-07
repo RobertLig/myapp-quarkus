@@ -31,8 +31,8 @@ public class ImageUploadPresignService {
     @ConfigProperty(name = "bucket.name")
     String bucketName;
 
-    @ConfigProperty(name = "s3.public-url")
-    String s3BaseUrl;
+    @ConfigProperty(name = "s3.object-url-base")
+    String objectUrlBase;
 
     @Inject
     S3Client s3;
@@ -56,7 +56,7 @@ public class ImageUploadPresignService {
 
         PresignResponseDTO response = new PresignResponseDTO();
         response.uploadUrl = presigned.url().toString();
-        response.fileUrl = publicUrlFor(key);
+        response.fileUrl = objectUrlFor(key);
         return response;
     }
 
@@ -119,7 +119,7 @@ public class ImageUploadPresignService {
     }
 
     private String extractIssuedKey(String fileUrl) {
-        String prefix = normalizedBaseUrl() + "/images/";
+        String prefix = normalizedObjectUrlBase() + "/images/";
         if (fileUrl == null || !fileUrl.startsWith(prefix)) {
             throw new FieldValidationException("fileUrl", "url.invalid");
         }
@@ -135,16 +135,16 @@ public class ImageUploadPresignService {
         return "images/" + keySuffix;
     }
 
-    private String publicUrlFor(String key) {
-        return normalizedBaseUrl() + "/" + key;
+    private String objectUrlFor(String key) {
+        return normalizedObjectUrlBase() + "/" + key;
     }
 
-    private String normalizedBaseUrl() {
-        int end = s3BaseUrl.length();
-        while (end > 0 && s3BaseUrl.charAt(end - 1) == '/') {
+    private String normalizedObjectUrlBase() {
+        int end = objectUrlBase.length();
+        while (end > 0 && objectUrlBase.charAt(end - 1) == '/') {
             end--;
         }
-        return s3BaseUrl.substring(0, end);
+        return objectUrlBase.substring(0, end);
     }
 
     private boolean matchesImageSignature(String contentType, byte[] bytes) {

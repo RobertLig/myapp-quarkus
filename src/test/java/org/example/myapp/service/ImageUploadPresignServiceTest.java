@@ -15,6 +15,9 @@ class ImageUploadPresignServiceTest {
     @Inject
     ImageUploadPresignService service;
 
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
     @Test
     void presignReturnsImageKeyAndUploadUrl() {
         String oldAccessKey = System.getProperty("aws.accessKeyId");
@@ -41,6 +44,15 @@ class ImageUploadPresignServiceTest {
     void presignRejectsImageOverLimit() {
         assertThrows(FieldValidationException.class,
                 () -> service.presign("image/jpeg", 5L * 1024L * 1024L + 1));
+    }
+
+    @Test
+    void privateObjectReadUrlIsPresigned() {
+        PresignResponseDTO response = service.presign("image/png", 100L);
+
+        String readUrl = privateObjectUrlService.readUrl(response.fileUrl);
+        assertTrue(readUrl.startsWith("http"));
+        assertTrue(readUrl.contains("X-Amz-Signature="));
     }
 
     private void restoreSystemProperty(String key, String value) {

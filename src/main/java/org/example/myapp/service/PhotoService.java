@@ -17,6 +17,9 @@ public class PhotoService {
     @Inject
     PhotoRepository photoRepository;
 
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
     // -----------------------
     // CRUD
     // -----------------------
@@ -73,7 +76,7 @@ public class PhotoService {
     public PhotoDTO toDTO(Photo photo) {
         PhotoDTO dto = new PhotoDTO();
         dto.id = photo.getId();
-        dto.url = photo.getUrl();
+        dto.url = privateObjectUrlService.readUrl(photo.getUrl());
         dto.position = photo.getPosition();
         return dto;
     }

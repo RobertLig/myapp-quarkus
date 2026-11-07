@@ -40,6 +40,9 @@ public class AnnouncementPhotoService {
     @Inject
     ImageUploadPresignService imageUploadPresignService;
 
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
     @Transactional
     public PresignResponseDTO presignPhoto(Long announcementId, Long currentUserId,
                                            String contentType, Long fileSize) {
@@ -207,7 +210,7 @@ public class AnnouncementPhotoService {
     public PhotoDTO toDTO(Photo photo) {
         PhotoDTO dto = new PhotoDTO();
         dto.id = photo.getId();
-        dto.url = photo.getUrl();
+        dto.url = privateObjectUrlService.readUrl(photo.getUrl());
         dto.position = photo.getPosition();
         return dto;
     }

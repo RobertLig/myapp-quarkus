@@ -8,6 +8,7 @@ import org.example.myapp.model.Conversation;
 import org.example.myapp.model.ConversationParticipant;
 import org.example.myapp.model.User;
 import org.example.myapp.repository.UserBlockRepository;
+import org.example.myapp.service.PrivateObjectUrlService;
 import org.example.myapp.service.PresenceService;
 
 @ApplicationScoped
@@ -19,12 +20,15 @@ public class ConversationMapper {
     @Inject
     UserBlockRepository userBlockRepository;
 
-    public static ConversationDTO toDTO(Conversation c) {
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
+    public static ConversationDTO toDTO(Conversation c, java.util.function.Function<String, String> readUrl) {
         ConversationDTO dto = new ConversationDTO();
         dto.id = c.getId();
         dto.createdAt = c.getCreatedAt();
         dto.participants = c.getParticipants().stream()
-                .map(cp -> UserMapper.toDTO(cp.getUser()))
+                .map(cp -> UserMapper.toDTO(cp.getUser(), readUrl))
                 .toList();
         return dto;
     }
@@ -38,7 +42,7 @@ public class ConversationMapper {
         dto.deletedAt = cp.getDeletedAt();
 
         dto.participants = c.getParticipants().stream()
-                .map(p -> UserMapper.toDTO(p.getUser()))
+                .map(p -> UserMapper.toDTO(p.getUser(), privateObjectUrlService::readUrl))
                 .toList();
 
         dto.unreadCount = cp.getUnreadCount();

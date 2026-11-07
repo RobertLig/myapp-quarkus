@@ -23,8 +23,8 @@ public class ImageStoreService {
     @ConfigProperty(name = "bucket.name")
     String bucketName;
 
-    @ConfigProperty(name = "s3.public-url")
-    String s3BaseUrl;
+    @ConfigProperty(name = "s3.object-url-base")
+    String objectUrlBase;
 
     @Inject
     S3Client s3;
@@ -76,7 +76,7 @@ public class ImageStoreService {
                 .build();
 
         s3.putObject(req, RequestBody.fromBytes(file));
-        return s3BaseUrl + "/" + key;
+        return objectUrlBase + "/" + key;
     }
 
     public void delete(String url) {

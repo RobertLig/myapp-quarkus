@@ -24,8 +24,8 @@ public class AttachmentPresignService {
     @ConfigProperty(name = "bucket.name")
     String bucketName;
 
-    @ConfigProperty(name = "s3.public-url")
-    String s3BaseUrl;
+    @ConfigProperty(name = "s3.object-url-base")
+    String objectUrlBase;
 
     @Inject
     S3Client s3;
@@ -111,7 +111,7 @@ public class AttachmentPresignService {
 
         PresignResponseDTO dto = new PresignResponseDTO();
         dto.uploadUrl = presigned.url().toString();
-        dto.fileUrl = s3BaseUrl + "/" + key;
+        dto.fileUrl = objectUrlBase + "/" + key;
 
         return dto;
     }

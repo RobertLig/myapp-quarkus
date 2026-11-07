@@ -43,7 +43,23 @@ key.
 Production also requires a configured PostgreSQL connection
 (`QUARKUS_DATASOURCE_JDBC_URL`, `QUARKUS_DATASOURCE_USERNAME`, and
 `QUARKUS_DATASOURCE_PASSWORD`), `CORS_ORIGINS` set to the deployed frontend
-origin(s), and an `AWS_S3_BUCKET`. Set `SMTP_HOST`, `SMTP_PORT`,
+origin(s), and these Supabase S3 settings:
+
+- `SUPABASE_S3_BUCKET` (for example, `wayline`)
+- `SUPABASE_S3_ENDPOINT` (the project's S3 endpoint, ending in `/storage/v1/s3`)
+- `SUPABASE_S3_REGION` (for example, `eu-west-1`)
+- `SUPABASE_S3_ACCESS_KEY_ID`
+- `SUPABASE_S3_SECRET_ACCESS_KEY`
+
+Create the access key pair under Supabase **Storage → S3 Access Keys** and set
+the values as backend environment variables in Render. Do not use the separate
+Supabase **URL Signing Keys** for S3 access, and never commit or share the
+secret access key. Configure the bucket's CORS rules to allow your deployed
+frontend origin to perform browser `PUT`, `GET`, and `HEAD` requests.
+
+The API stores stable object references and returns signed read URLs that
+expire after 15 minutes; uploads continue to use presigned `PUT` URLs.
+Set `SMTP_HOST`, `SMTP_PORT`,
 `QUARKUS_MAILER_USERNAME`, `QUARKUS_MAILER_PASSWORD`, and `MAIL_FROM` to
 configure a real SMTP service and verified sender. Required production values
 are intentionally not defaulted to local or example services. The mailer is

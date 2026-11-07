@@ -11,6 +11,7 @@ import org.example.myapp.mapper.ConversationMapper;
 import org.example.myapp.model.Conversation;
 import org.example.myapp.service.ConversationService;
 import org.example.myapp.service.MessageService;
+import org.example.myapp.service.PrivateObjectUrlService;
 
 import java.util.List;
 
@@ -28,13 +29,16 @@ public class ConversationController {
     @Inject
     SecurityIdentity identity;
 
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
     @POST
     @RolesAllowed({"USER", "ADMIN"})
     public Response createConversation(CreateConversationRequest req) {
         Long currentUserId = getLoggedInUserId();
 
         Conversation conversation = conversationService.createConversation(req.participantIds, req.announcementId, currentUserId);
-        ConversationDTO dto = ConversationMapper.toDTO(conversation);
+        ConversationDTO dto = ConversationMapper.toDTO(conversation, privateObjectUrlService::readUrl);
 
         return Response.ok(dto).build();
     }

@@ -22,6 +22,7 @@ import org.example.myapp.model.Locale;
 import org.example.myapp.model.User;
 import org.example.myapp.service.UserService;
 import org.example.myapp.service.AuthService;
+import org.example.myapp.service.PrivateObjectUrlService;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -34,6 +35,9 @@ public class AuthController {
 
     @Inject
     MessageService messageService;
+
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
 
     @Context
     io.vertx.core.http.HttpServerRequest request;
@@ -126,7 +130,7 @@ public class AuthController {
         return Response.ok(
                 Map.of(
                         "token", accessToken,
-                        "user", UserMapper.toDTO(user)
+                        "user", UserMapper.toDTO(user, privateObjectUrlService::readUrl)
                 )
         ).cookie(cookie).build();
     }
@@ -143,7 +147,7 @@ public class AuthController {
             // honeypot triggered → pretend success
             return Response.ok(Map.of("message", messageService.get("success.registration", headers))).build();
         }else {
-            return Response.ok(UserMapper.toDTO(user)).build();
+            return Response.ok(UserMapper.toDTO(user, privateObjectUrlService::readUrl)).build();
         }
     }
 

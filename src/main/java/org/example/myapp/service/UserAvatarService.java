@@ -24,6 +24,9 @@ public class UserAvatarService {
     @Inject
     ImageUploadPresignService imageUploadPresignService;
 
+    @Inject
+    PrivateObjectUrlService privateObjectUrlService;
+
     @Transactional
     public PresignResponseDTO presignAvatar(Long userId, String contentType, Long fileSize) {
         User user = userService.getUserById(userId)
@@ -47,7 +50,7 @@ public class UserAvatarService {
 
         imageUploadPresignService.verifyUploadedImage(request.fileUrl, request.contentType, request.fileSize);
         user.setPhotoUrl(request.fileUrl);
-        return request.fileUrl;
+        return privateObjectUrlService.readUrl(request.fileUrl);
     }
 
     @Transactional
