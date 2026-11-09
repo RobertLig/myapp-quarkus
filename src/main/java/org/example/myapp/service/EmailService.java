@@ -1,12 +1,16 @@
 package org.example.myapp.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
 
-import io.quarkus.mailer.Mailer;
 import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.reactive.ReactiveMailer;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 import java.util.Locale;
 
 import org.example.myapp.i18n.MessageService;
@@ -15,10 +19,15 @@ import org.example.myapp.i18n.MessageService;
 public class EmailService {
 
     @Inject
-    Mailer mailer;
+    ReactiveMailer mailer;
+
+    @Inject
+    Event<Mail> emailRequests;
 
     @Inject
     MessageService messageService;
+
+    private static final Logger log = Logger.getLogger(EmailService.class);
 
     @ConfigProperty(name = "quarkus.mailer.from")
     String from;
@@ -53,8 +62,13 @@ public class EmailService {
 </div>
 """.formatted(subject, intro, link, button, fallback, link);
 
-        mailer.send(
-                Mail.withHtml(email, subject, html).setFrom(from)
+        emailRequests.fire(Mail.withHtml(email, subject, html).setFrom(from));
+    }
+
+    void sendAfterCommit(@Observes(during = TransactionPhase.AFTER_SUCCESS) Mail mail) {
+        mailer.send(mail).subscribe().with(
+                ignored -> log.info("Action email sent"),
+                failure -> log.error("Failed to send action email", failure)
         );
     }
 }
