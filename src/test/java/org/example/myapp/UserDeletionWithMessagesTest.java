@@ -57,6 +57,10 @@ class UserDeletionWithMessagesTest {
     @Test
     @Transactional
     void deletingUserKeepsConversationHistoryAndRemovesAccountReferences() {
+        entityManager.createNativeQuery(
+                "SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id) FROM users), 1), EXISTS (SELECT 1 FROM users))")
+                .getSingleResult();
+
         User accountToDelete = new User();
         accountToDelete.setEmail("delete-with-messages@example.com");
         accountToDelete.setName("Deleted user");

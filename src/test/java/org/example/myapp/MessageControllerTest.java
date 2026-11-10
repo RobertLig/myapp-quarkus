@@ -51,7 +51,7 @@ public class MessageControllerTest {
         User admin = userRepository.findById(1L);
         if (admin == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (1, 'ADMIN', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (1, 'ADMIN')")
                     .executeUpdate();
             admin = userRepository.findById(1L);
         } else {
@@ -62,7 +62,7 @@ public class MessageControllerTest {
         User user2 = userRepository.findById(2L);
         if (user2 == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (2, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (2, 'USER')")
                     .executeUpdate();
             user2 = userRepository.findById(2L);
         } else {
@@ -74,7 +74,7 @@ public class MessageControllerTest {
         User user3 = userRepository.findById(3L);
         if (user3 == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (3, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (3, 'USER')")
                     .executeUpdate();
             user3 = userRepository.findById(3L);
         }
@@ -84,7 +84,7 @@ public class MessageControllerTest {
         User user999 = userRepository.findById(999L);
         if (user999 == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (999, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (999, 'USER')")
                     .executeUpdate();
         }
 

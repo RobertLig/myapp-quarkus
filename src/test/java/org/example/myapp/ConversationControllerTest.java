@@ -43,7 +43,7 @@ public class ConversationControllerTest {
         if (user == null) {
             // Use native SQL to insert with explicit ID and all required fields
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (1, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (1, 'USER')")
                     .executeUpdate();
             user = userRepository.findById(1L);
         } else {
@@ -55,7 +55,7 @@ public class ConversationControllerTest {
         User user999 = userRepository.findById(999L);
         if (user999 == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (999, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (999, 'USER')")
                     .executeUpdate();
         }
 

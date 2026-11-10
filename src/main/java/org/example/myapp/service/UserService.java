@@ -4,12 +4,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.example.myapp.auth.GooglePayload;
 import org.example.myapp.auth.GoogleService;
-import org.example.myapp.dto.RegistrationDTO;
 import org.example.myapp.dto.UserDTO;
-import org.example.myapp.exception.DomainException;
 import org.example.myapp.exception.EntityNotFoundException;
 import org.example.myapp.exception.FieldValidationException;
 import org.example.myapp.model.Locale;
@@ -25,14 +22,9 @@ import org.example.myapp.repository.MessageEventRepository;
 import org.example.myapp.repository.MessageReactionRepository;
 import org.example.myapp.repository.MessageRepository;
 
-import java.util.Base64;
 import java.util.Optional;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class UserService {
@@ -50,22 +42,7 @@ public class UserService {
     ImageStoreService imageStoreService;
 
     @Inject
-    EmailService emailService;
-
-    @Inject
-    TokenService tokenService;
-
-    @Inject
     GoogleService googleService;
-
-    @Inject
-    DisposableEmailService disposableEmailService;
-
-    @Inject
-    RateLimitService rateLimitService;
-
-    @ConfigProperty(name = "frontend.base-url")
-    String frontendBaseUrl;
 
     @Inject
     org.example.myapp.repository.UserBlockRepository userBlockRepository;
@@ -87,130 +64,6 @@ public class UserService {
 
     @Inject
     MessageAttachmentRepository messageAttachmentRepository;
-
-    private static final Logger log = Logger.getLogger(UserService.class);
-
-    @Transactional
-    public User register(RegistrationDTO dto, String clientIp) {
-
-        // Honeypot check — if filled, it's a bot
-        if (dto.getTrap() != null && !dto.getTrap().isBlank()) {
-
-            rateLimitService.addSuspicion(clientIp, 5);
-
-            log.warn("Honeypot triggered by IP: " + clientIp);
-
-            // mimic real processing time
-            randomDelay();
-
-            // return a fake user DTO without persisting anything
-            return fakeUser(dto);
-        }
-
-        // Disposable email detection
-        if (disposableEmailService.isDisposable(dto.getEmail())) {
-            rateLimitService.addSuspicion(clientIp, 3);
-
-            log.warn("Disposable email blocked. IP: " + clientIp + ", email: " + dto.getEmail());
-
-            randomDelay();
-
-            return fakeUser(dto); // same silent fake success as honeypot
-        }
-
-        if (!rateLimitService.allowRegister(clientIp)) {
-            rateLimitService.addSuspicion(clientIp, 2);
-            throw DomainException.tooManyRequests("error.rate.limit");
-        }
-
-        //ip throttle
-        if (rateLimitService.isThrottled(clientIp)) {
-            log.warn("IP throttled: " + clientIp);
-            randomDelay();
-            return fakeUser(dto); // silent fake success
-        }
-
-        rateLimitService.decaySuspicion(clientIp);
-
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new FieldValidationException("email", "error.email.inuse");
-        }
-
-        User user = new User();
-
-        // Basic fields
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-
-        // Generate salt
-        String salt = generateSalt();
-        user.setSalt(salt);
-
-        // Hash password with salt
-        user.setPassword(hashPassword(dto.getPassword(), salt));
-
-        // Email verification
-        String token = tokenService.generateToken();
-        user.setVerificationToken(token);
-        user.setEmailVerified(false);
-
-        Locale locale = dto.getLocale() != null
-                ? dto.getLocale() //.name()
-                : Locale.en;
-
-        user.setLocale(locale);
-
-        user.setTermsAccepted(dto.getTermsAccepted());
-
-        userRepository.persist(user);
-
-        // Send email (or return link in dev mode)
-        emailService.sendActionEmail(
-                user.getEmail(),
-                user.getLocale().name(),
-                "email.verify.subject",
-                "email.verify.intro",
-                "email.verify.button",
-                "email.verify.fallback",
-                frontendLink("/auth/verify", token)
-        );
-
-        return user;
-    }
-
-    private User fakeUser(RegistrationDTO dto) {
-        User fake = new User();
-        fake.setId(-1L); // impossible ID
-        fake.setEmail(dto.getEmail());
-        fake.setName(dto.getName());
-        fake.setEmailVerified(false);
-        return fake;
-    }
-
-    private void randomDelay() {
-        try {
-            long delay = 150 + (long)(Math.random() * 300); // 150–450 ms
-            Thread.sleep(delay);
-        } catch (InterruptedException ignored) {}
-    }
-
-    public User login(String email, String password) {
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new FieldValidationException("email", "error.login.invalid");
-        }
-
-        if (!verifyPassword(password, user.getPassword(), user.getSalt())) {
-            throw new FieldValidationException("email", "error.login.invalid");
-        }
-
-        if (!user.isEmailVerified()) {
-            throw new FieldValidationException("email", "error.email.notverified");
-        }
-
-        return user;
-    }
 
     @Transactional
     public User updateProfile(Long userId, UserDTO dto) {
@@ -235,11 +88,6 @@ public class UserService {
             }
 
             user.setEmail(dto.getEmail());
-        }
-
-        // Password (hash with existing salt)
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            user.setPassword(hashPassword(dto.getPassword(), user.getSalt()));
         }
 
         Locale locale = dto.getLocale() != null
@@ -308,147 +156,6 @@ public class UserService {
         return userRepository.findByIdOptional(id);
     }
 
-    // PBKDF2 hashing
-    private String hashPassword(String password, String salt) {
-        try {
-            PBEKeySpec spec = new PBEKeySpec(
-                    password.toCharArray(),
-                    Base64.getDecoder().decode(salt),
-                    65536,
-                    256
-            );
-
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            byte[] hash = skf.generateSecret(spec).getEncoded();
-
-            return Base64.getEncoder().encodeToString(hash);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String generateSalt() {
-        byte[] salt = new byte[16];
-        new java.security.SecureRandom().nextBytes(salt);
-        return Base64.getEncoder().encodeToString(salt);
-    }
-
-    private boolean verifyPassword(String password, String storedHash, String salt) {
-        if (password == null || storedHash == null || salt == null) {
-            return false;
-        }
-
-        String hash = hashPassword(password, salt);
-        return storedHash.equals(hash);
-    }
-
-    @Transactional
-    public void verifyEmail(String token) {
-
-        User user = userRepository.find("verificationToken", token).firstResult();
-
-        if (user == null) {
-            throw new FieldValidationException("token", "error.verification.invalid");
-        }
-
-        user.setEmailVerified(true);
-        user.setVerificationToken(null);
-
-        userRepository.persist(user);   // <-- REQUIRED
-        userRepository.flush();         // <-- OPTIONAL but recommended
-    }
-
-    @Transactional
-    public void requestPasswordReset(String email, String trap, String clientIp, Locale preferredLocale) {
-
-        // 1. Honeypot (if you add a trap field to reset form)
-        if (trap != null && !trap.isBlank()) {
-            rateLimitService.addSuspicion(clientIp, 5);
-            log.warn("Reset honeypot triggered by IP: " + clientIp);
-            randomDelay();
-            return; // silent success
-        }
-
-        // 2. Disposable email detection
-        if (disposableEmailService.isDisposable(email)) {
-            rateLimitService.addSuspicion(clientIp, 3);
-            log.warn("Disposable email blocked for reset. IP: " + clientIp + ", email: " + email);
-            randomDelay();
-            return; // silent success
-        }
-
-        // 3. Rate limit
-        if (!rateLimitService.allowReset(clientIp)) {
-            rateLimitService.addSuspicion(clientIp, 2);
-            randomDelay();
-            return; // silent success
-        }
-
-        // 4. IP throttle
-        if (rateLimitService.isThrottled(clientIp)) {
-            log.warn("IP throttled for reset: " + clientIp);
-            randomDelay();
-            return; // silent success
-        }
-
-        // 5. Normal flow (silent for non-existing emails)
-        User user = userRepository.find("email", email).firstResult();
-
-        if (user == null) {
-            // DO NOT reveal anything
-            randomDelay();
-            return; // silent success
-        }
-
-        if (user.getLocale() == null) {
-            user.setLocale(preferredLocale != null ? preferredLocale : Locale.en);
-        }
-
-        // 6. Real reset email
-        rateLimitService.decaySuspicion(clientIp);
-
-        String token = tokenService.generateToken();
-        user.setResetPasswordToken(token);
-
-        String link = frontendLink("/auth/reset", token);
-
-        emailService.sendActionEmail(
-                user.getEmail(),
-                user.getLocale().name(),
-                "email.reset.subject",
-                "email.reset.intro",
-                "email.reset.button",
-                "email.reset.fallback",
-                link
-        );
-    }
-
-    private String frontendLink(String path, String token) {
-        return frontendBaseUrl.replaceAll("/+$", "") + path + "?token=" + token;
-    }
-
-    @Transactional
-    public void resetPassword(String token, String newPassword) {
-
-        User user = userRepository.find("resetPasswordToken", token).firstResult();
-
-        if (user == null) {
-            throw new FieldValidationException("token", "error.reset.invalid");
-        }
-
-        // Generate new salt
-        String salt = generateSalt();
-        user.setSalt(salt);
-
-        // Hash new password
-        String hashed = hashPassword(newPassword, salt);
-        user.setPassword(hashed);
-
-        // Invalidate token
-        user.setResetPasswordToken(null);
-    }
-
     @Transactional
     public User loginWithGoogle(String idToken, Locale preferredLocale) {
 
@@ -472,8 +179,6 @@ public class UserService {
             user.setEmail(email);
             user.setName(name);
             user.setGoogleId(googleId);
-            user.setEmailVerified(true);
-            user.setTermsAccepted(true);
             userRepository.persist(user);
         } else {
             // 4️⃣ If user exists but googleId is missing → attach it

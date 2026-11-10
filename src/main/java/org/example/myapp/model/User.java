@@ -16,8 +16,6 @@ public class User {
     // ===== BASIC INFO =====
     private String name;
     private String email;
-    private String password;
-    private String salt;
 
     @Enumerated(EnumType.STRING)
     private AgeRange ageRange;
@@ -32,11 +30,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
-    private boolean emailVerified = false;
-
-    private String verificationToken;
-    private String resetPasswordToken;
-
     // ===== AUDIT =====
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -49,8 +42,6 @@ public class User {
     // ===== RELATIONS =====
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Announcement> announcements;
-
-    private boolean termsAccepted;
 
     // ===== LIFECYCLE CALLBACKS =====
     @PrePersist
@@ -79,19 +70,7 @@ public class User {
         return email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public String getSalt() { return salt; }
-
     public Role getRole() { return role; }
-
-    public boolean isEmailVerified() { return emailVerified; }
-
-    public String getVerificationToken() { return verificationToken; }
-
-    public String getResetPasswordToken() { return resetPasswordToken; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -131,19 +110,7 @@ public class User {
         this.email = email;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setSalt(String salt) { this.salt = salt; }
-
     public void setRole(Role role) { this.role = role; }
-
-    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
-
-    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
-
-    public void setResetPasswordToken(String resetPasswordToken) { this.resetPasswordToken = resetPasswordToken; }
 
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -180,6 +147,4 @@ public class User {
         this.googleId = googleId;
     }
 
-    public boolean isTermsAccepted() { return termsAccepted; }
-    public void setTermsAccepted(boolean termsAccepted) { this.termsAccepted = termsAccepted; }
 }

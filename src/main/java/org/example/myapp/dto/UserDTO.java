@@ -12,8 +12,6 @@ public class UserDTO {
     @Email(message = "{validation.user.email.invalid}")
     private String email;
 
-    private String password;
-
     private AgeRange ageRange;
     private Gender gender;
     private String phone;
@@ -33,10 +31,6 @@ public class UserDTO {
 
     public String getEmail() {
         return email;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     public AgeRange getAgeRange() {
@@ -75,10 +69,6 @@ public class UserDTO {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public void setAgeRange(AgeRange ageRange) {

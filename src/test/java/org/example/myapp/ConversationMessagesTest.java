@@ -51,7 +51,7 @@ public class ConversationMessagesTest {
         User user = userRepository.findById(id);
         if (user == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (?1, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (?1, 'USER')")
                     .setParameter(1, id)
                     .executeUpdate();
             user = userRepository.findById(id);

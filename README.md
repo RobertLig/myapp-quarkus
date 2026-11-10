@@ -59,11 +59,9 @@ frontend origin to perform browser `PUT`, `GET`, and `HEAD` requests.
 
 The API stores stable object references and returns signed read URLs that
 expire after 15 minutes; uploads continue to use presigned `PUT` URLs.
-Set `SMTP_HOST`, `SMTP_PORT`,
-`QUARKUS_MAILER_USERNAME`, `QUARKUS_MAILER_PASSWORD`, and `MAIL_FROM` to
-configure a real SMTP service and verified sender. Required production values
-are intentionally not defaulted to local or example services. The mailer is
-mocked only in dev and test profiles.
+
+Authentication uses Google sign-in. The API verifies Google ID tokens and
+issues its own short-lived access token and HTTP-only refresh cookie.
 
 Production database schema changes are managed with Flyway migrations in
 `src/main/resources/db/migration`. The production profile applies pending

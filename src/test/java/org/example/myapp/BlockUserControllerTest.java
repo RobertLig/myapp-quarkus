@@ -41,7 +41,7 @@ public class BlockUserControllerTest {
         User user2 = userRepository.findById(2L);
         if (user2 == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (2, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (2, 'USER')")
                     .executeUpdate();
             user2 = userRepository.findById(2L);
         } else {
@@ -53,7 +53,7 @@ public class BlockUserControllerTest {
         User user3 = userRepository.findById(3L);
         if (user3 == null) {
             userRepository.getEntityManager()
-                    .createNativeQuery("INSERT INTO users (id, role, emailverified, termsaccepted) VALUES (3, 'USER', false, false)")
+                    .createNativeQuery("INSERT INTO users (id, role) VALUES (3, 'USER')")
                     .executeUpdate();
             user3 = userRepository.findById(3L);
         }

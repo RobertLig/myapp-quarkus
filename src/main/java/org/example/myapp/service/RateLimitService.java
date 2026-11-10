@@ -14,16 +14,7 @@ public class RateLimitService {
         Instant windowStart;
     }
 
-    private final Map<Object, Counter> registerByIp = new ConcurrentHashMap<>();
-    private final Map<Object, Counter> resetByIp = new ConcurrentHashMap<>();
-
-    private static final int REGISTER_LIMIT = 5;      // 5 per hour per IP
-    private static final int RESET_LIMIT = 5;         // 5 per hour per IP
     private static final long WINDOW_SECONDS = 3600;  // 1 hour
-
-    private final Map<String, Integer> ipSuspicion = new ConcurrentHashMap<>();
-
-    private static final int SUSPICION_THRESHOLD = 10; // block after 10 suspicious events
 
     private final Map<Object, Counter> messageByUser = new ConcurrentHashMap<>();
 
@@ -46,26 +37,6 @@ public class RateLimitService {
 
         c.count++;
         return c.count <= limit;
-    }
-
-    public boolean allowRegister(String ip) {
-        return allowed(registerByIp, ip, REGISTER_LIMIT);
-    }
-
-    public boolean allowReset(String ip) {
-        return allowed(resetByIp, ip, RESET_LIMIT);
-    }
-
-    public void addSuspicion(String ip, int amount) {
-        ipSuspicion.merge(ip, amount, Integer::sum);
-    }
-
-    public boolean isThrottled(String ip) {
-        return ipSuspicion.getOrDefault(ip, 0) >= SUSPICION_THRESHOLD;
-    }
-
-    public void decaySuspicion(String ip) {
-        ipSuspicion.computeIfPresent(ip, (k, v) -> Math.max(0, v - 1));
     }
 
     public boolean allowMessage(Long userId) {
