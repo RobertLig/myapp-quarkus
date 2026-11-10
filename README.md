@@ -60,8 +60,9 @@ frontend origin to perform browser `PUT`, `GET`, and `HEAD` requests.
 The API stores stable object references and returns signed read URLs that
 expire after 15 minutes; uploads continue to use presigned `PUT` URLs.
 
-Authentication uses Google sign-in. The API verifies Google ID tokens and
-issues its own short-lived access token and HTTP-only refresh cookie.
+Authentication and account creation use Google sign-in only; the API does not
+support email-and-password registration or login. It verifies Google ID tokens
+and issues its own short-lived access token and HTTP-only refresh cookie.
 
 Production database schema changes are managed with Flyway migrations in
 `src/main/resources/db/migration`. The production profile applies pending
