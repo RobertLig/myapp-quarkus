@@ -67,7 +67,7 @@ public class AuthController {
                         "token", accessToken,
                         "user", UserMapper.toDTO(user, privateObjectUrlService::readUrl)
                 )
-        ).cookie(cookie).build();
+        ).header(HttpHeaders.SET_COOKIE, withPartitionedAttribute(cookie)).build();
     }
 
     @POST
@@ -102,7 +102,11 @@ public class AuthController {
 
         return Response.ok(
                 Map.of("message", messageService.get("success.logout", headers) )
-        ).cookie(clearedCookie).build();
+        ).header(HttpHeaders.SET_COOKIE, withPartitionedAttribute(clearedCookie)).build();
+    }
+
+    private static String withPartitionedAttribute(NewCookie cookie) {
+        return cookie + "; Partitioned";
     }
 
 }
